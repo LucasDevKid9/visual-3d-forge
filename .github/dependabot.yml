@@ -4,5 +4,8 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    # 一次只留一个 PR。刚开张就连开五个 action 升级 PR，
+    # 对访客是噪音，对维护者是五份没人看的 diff。
+    open-pull-requests-limit: 1
     commit-message:
       prefix: "ci"
