@@ -1,0 +1,118 @@
+{
+  "tool": "visual-3d-forge/vendor.py",
+  "three_version": "0.187.0",
+  "profile": "standard",
+  "include": [
+    "controls/MapControls.js",
+    "controls/OrbitControls.js",
+    "controls/TrackballControls.js",
+    "environments/RoomEnvironment.js",
+    "lines/Line2.js",
+    "lines/LineGeometry.js",
+    "lines/LineMaterial.js",
+    "lines/LineSegments2.js",
+    "lines/LineSegmentsGeometry.js",
+    "loaders/GLTFLoader.js",
+    "loaders/HDRLoader.js",
+    "loaders/RGBELoader.js",
+    "renderers/CSS2DRenderer.js",
+    "renderers/CSS3DRenderer.js",
+    "utils/BufferGeometryUtils.js",
+    "utils/SkeletonUtils.js"
+  ],
+  "file_count": 18,
+  "total_bytes": 2448397,
+  "files": [
+    {
+      "path": "addons/controls/MapControls.js",
+      "bytes": 3070,
+      "sha256_12": "5a686152c498"
+    },
+    {
+      "path": "addons/controls/OrbitControls.js",
+      "bytes": 41009,
+      "sha256_12": "0d3050ac4162"
+    },
+    {
+      "path": "addons/controls/TrackballControls.js",
+      "bytes": 24048,
+      "sha256_12": "cce95baddf58"
+    },
+    {
+      "path": "addons/environments/RoomEnvironment.js",
+      "bytes": 4960,
+      "sha256_12": "55f466192cc8"
+    },
+    {
+      "path": "addons/lines/Line2.js",
+      "bytes": 1486,
+      "sha256_12": "69dd2120d4df"
+    },
+    {
+      "path": "addons/lines/LineGeometry.js",
+      "bytes": 3479,
+      "sha256_12": "b7ec6b0011e3"
+    },
+    {
+      "path": "addons/lines/LineMaterial.js",
+      "bytes": 14529,
+      "sha256_12": "5f4ba22891c5"
+    },
+    {
+      "path": "addons/lines/LineSegments2.js",
+      "bytes": 11780,
+      "sha256_12": "333fa4f46ae9"
+    },
+    {
+      "path": "addons/lines/LineSegmentsGeometry.js",
+      "bytes": 7419,
+      "sha256_12": "c3eca20e644c"
+    },
+    {
+      "path": "addons/loaders/GLTFLoader.js",
+      "bytes": 119861,
+      "sha256_12": "532ac726e120"
+    },
+    {
+      "path": "addons/loaders/HDRLoader.js",
+      "bytes": 12079,
+      "sha256_12": "0986b578f9ac"
+    },
+    {
+      "path": "addons/loaders/RGBELoader.js",
+      "bytes": 268,
+      "sha256_12": "6c08f9c44104"
+    },
+    {
+      "path": "addons/renderers/CSS2DRenderer.js",
+      "bytes": 7990,
+      "sha256_12": "256abfc6ae1a"
+    },
+    {
+      "path": "addons/renderers/CSS3DRenderer.js",
+      "bytes": 11126,
+      "sha256_12": "cd1f6bfaff0e"
+    },
+    {
+      "path": "addons/utils/BufferGeometryUtils.js",
+      "bytes": 40059,
+      "sha256_12": "bf5f7738a2ba"
+    },
+    {
+      "path": "addons/utils/SkeletonUtils.js",
+      "bytes": 11535,
+      "sha256_12": "b1632a703206"
+    },
+    {
+      "path": "three.core.js",
+      "bytes": 1474799,
+      "sha256_12": "613e370f7663"
+    },
+    {
+      "path": "three.module.js",
+      "bytes": 658900,
+      "sha256_12": "104f56145899"
+    }
+  ],
+  "external": {}
+}

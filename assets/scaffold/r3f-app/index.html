@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>V3D · R3F 场景</title>
+  <style>
+    html, body, #root { height: 100%; margin: 0; background: #070d14; }
+    canvas { display: block; }
+    #hud {
+      position: fixed; left: 20px; top: 18px; z-index: 10;
+      font: 12px/1.6 ui-monospace, "SF Mono", Consolas, monospace;
+      color: #7c9fb4; letter-spacing: .08em; pointer-events: none;
+    }
+    #hud b { color: #38f2ff; font-weight: 500; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <div id="hud"><b>V3D</b> / R3F TRACK</div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>
