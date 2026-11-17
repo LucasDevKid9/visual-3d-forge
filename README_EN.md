@@ -1,121 +1,196 @@
-# Visual 3D Forge
+<p align="center">
+  <img src="docs/assets/banner.svg" alt="Visual 3D Forge — compile one sentence into a double-clickable 3D web page" width="100%">
+</p>
 
-**Compile "one reference image + one sentence" into a 3D web page you can double-click open.**
+<h3 align="center">When AI builds 3D, it fails the same way every time: <em>it spins, but it isn't the object.</em></h3>
 
-[中文说明](README.md) · MIT · three.js r187 pinned
+<p align="center">
+  <a href="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-3d3d3d"></a>
+  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-68-4c8a5a">
+  <img alt="deps" src="https://img.shields.io/badge/runtime%20deps-0-4c8a5a">
+  <img alt="three" src="https://img.shields.io/badge/three.js-r187-000">
+</p>
 
-![Planetary gearbox example](docs/screenshot.png)
+<p align="center">
+  <a href="https://lucasdevkid9.github.io/visual-3d-forge/"><b>▶ Live playground — nothing to install, just drag a slider</b></a>
+</p>
 
-<sub>`examples/planetary-gear-3d/` — module 2 mm, 18/21/60 teeth, ratio 4.33, exploded 62%. Fully procedural, no external textures.</sub>
+<p align="center">
+  <img src="docs/assets/demo.gif" alt="Planetary gearbox: exploded view and meshing animation" width="760">
+</p>
 
-## The problem
+<p align="center">
+  <sub>Planetary gearbox · module 2 mm · 18 / 21 / 60 teeth · ratio 4.33 · fully procedural, zero external textures</sub>
+</p>
 
-Ask an AI for a 3D page and it fails in a very specific way: **it spins, but it doesn't look like the thing.**
-Not because the model is weak, but because the **intermediate representation is missing** — it jumps from
-one sentence straight to `new THREE.Mesh`, with no layer saying *which parts make up this object, how big
-each one is, and what it is made of*. Without that layer, the model can only fetch the nearest template
-from its training distribution, and everything comes out as the same smooth box.
+---
 
-This skill inserts the IR:
+## The problem isn't the model. It's the missing representation.
 
-```
-request ─▶ intent card ─▶ part tree + dimension table + material hypotheses ─▶ geometry strategy ─▶ code ─▶ 19 checks
-                                  └──────────────── IR ────────────────┘
-```
+Jumping straight from a sentence to `new THREE.Mesh(...)` skips a layer:
 
-**Build the model before writing code.** That is the one non-negotiable ordering rule.
+> **What parts is this made of? How big is each one? What material? Who guarantees the dimensions agree with each other?**
+
+Without that layer, the model can only reach for the most similar template in its training distribution — which is why everything comes out as the same smooth box. It turns. It just isn't a *thing that was built*.
+
+This skill inserts an **IR** (intermediate representation) in the middle. It doesn't write prompts. It **compiles**:
+
+<p align="center">
+  <img src="docs/assets/pipeline.svg" alt="Compile pipeline: request → intent card → IR → geometry strategy → code → 19 contract checks" width="100%">
+</p>
+
+**Model first, code second.** That is the one ordering rule that cannot be negotiated — because it is the only one that explains *why it looks right*.
+
+---
+
+## How it differs from "just ask GPT for three.js"
+
+| | Direct code generation | Visual 3D Forge |
+|---|---|---|
+| Intermediate artifact | none | part tree + dimension table + material assumptions |
+| Where dimensions come from | "roughly this" from training | one dimension table, everything derives from it |
+| Reference image | "make it like this" | R1–R5 grading that caps the **claimable precision** |
+| Failure mode | blank page / all black / clipping | 19 static contract checks with a fix direction |
+| Can it say no? | never | **5 gates, any of which can veto the task** |
+| Deliverable | a snippet | a `.html` you double-click |
+
+That last row matters: a pipeline that only ever says yes isn't a pipeline, it's a template. **G0's exit condition is "don't open WebGL"** — if the goal is merely to make a page move, CSS is the more correct answer.
+
+---
+
+## Live playground: change a number, watch the constraints bite
+
+[**lucasdevkid9.github.io/visual-3d-forge**](https://lucasdevkid9.github.io/visual-3d-forge/)
+
+Not a screen recording — the real thing:
+
+- Drag module / sun teeth / ring teeth and the **geometry is genuinely rebuilt** (not scaled)
+- Three assembly constraints checked live: **concentric** (z₂ must be an integer), **assembly** ((z₁+z₃) divisible by 3), **adjacency** (planets must not collide)
+- Violate one and the scene **refuses to rebuild** — it stays on the last legal state and offers a one-click correction to the nearest valid tooth count
+- Click any part for its role and material; contact ratio εα computed from the transverse contact formula
+
+It will refuse you, on purpose, at least once. That moment explains the project better than any paragraph.
+
+---
 
 ## Four delivery modes
 
-| Mode | Artifact | Measured size | Deps | When |
+| Mode | Output | Measured size | Network | When |
 |---|---|---|---|---|
-| **D0** | single `.html` | 13 KB | online (jsDelivr) | **default** |
-| **D1** | single `.html` | 2852 KB | none | offline / intranet |
-| **D2** | `.html` + `vendor/` | 13 KB + 2391 KB | none | readable sources |
-| **D3** | React Three Fiber app | npm | build chain | React integration |
+| **D0** | one `.html` | 13 KB | CDN | **default** |
+| **D1** | one `.html` | 2852 KB | none | offline / air-gapped / USB stick |
+| **D2** | `.html` + `vendor/` | 13 KB + 2391 KB | none | you want readable source |
+| **D3** | React Three Fiber project | npm | build chain | integrating into a React app |
 
-The mode follows the runtime environment, not "which one is fancier". If you pick D1, it must be truly
-zero external requests — the validator checks.
+The mode is chosen by the **runtime environment**, not by which sounds better. If you declare D1, there must be zero external requests — the validator counts every URL.
 
-## Five entry gates
+---
 
-Passed before the first line of code; **any gate may veto the whole task**.
-
-| Gate | Question | Veto case |
-|---|---|---|
-| **G0 carrier** | Is a third dimension actually needed? | "make it move" is not a reason → use CSS/2D |
-| **G1 intent** | Seven-field intent card complete? | object / purpose / audience / scale / must-have / droppable / mode |
-| **G2 reference** | Which level, R1–R5? | below R3 you may not claim "exact reproduction" |
-| **G3 budget** | Triangle & draw-call tier fixed? | web scenes don't need hundreds of thousands of triangles |
-| **G4 dependency** | Where will this run? | offline requirement with a CDN build |
-
-G0's exit is **"don't use WebGL"**. A pipeline that can only say yes is not a pipeline, it's a template.
-
-## Quick start
+## Up and running in three minutes
 
 ```bash
-# 1. decide the mode (references/00-delivery-modes.md), assume D1 (offline single file)
+git clone https://github.com/LucasDevKid9/visual-3d-forge.git
+cd visual-3d-forge
 
-# 2. start from a scaffold — never hand-write the pipeline in a blank file
-cp assets/scaffold/forged-scene.html ./task-x01/scene.html
+# 1. Start from a scaffold — never hand-write the pipeline in an empty file
+cp assets/scaffold/forged-scene.html ./my-scene.html
 
-# 3. modify the subject → bundle → check APIs → validate
-python3 scripts/bundle.py --src ./task-x01/scene.html --out ./task-x01/offline.html --vendor ./assets/vendor
-python3 scripts/validate_scene.py ./task-x01/offline.html --strict
+# 2. Describe your object (you edit the dimension table and part tree, not ad-hoc meshes)
+#    Rules: references/03-geometry-modeling.md
+
+# 3. Bundle to a single offline file, then run the contract
+python3 scripts/bundle.py --src ./my-scene.html --out ./offline.html --vendor ./assets/vendor
+python3 scripts/validate_scene.py ./offline.html --strict
 ```
 
-Measured: 13.3 KB source → 2851.5 KB single file, 19/19 checks pass, zero remote references.
+All three must be green before you ship. Measured: 13.3 KB source → 2851.5 KB single file, 19/19 checks, zero remote references.
 
-## The four tools
+> To use as an AI skill: drop the whole directory into your host's `skills/`, with `SKILL.md` at its root.
 
-| Script | Purpose | The hard part |
+---
+
+## Four tools, zero third-party dependencies
+
+| Script | What it does | The part that's actually hard |
 |---|---|---|
-| `vendor.py` | trim three.js from source | resolves addon relative-import closure recursively; emits `manifest.json` with hashes |
-| `bundle.py` | inline vendor into one file | **must recursively inline the relative closure and rewrite to `vf-int-N`** — otherwise `./three.core.js` inside a data URL fails to resolve → white screen |
-| `api_lookup.py` | verify an API really exists | 488-entry symbol table; `check` diffs the artifact and suggests the closest correct name |
-| `validate_scene.py` | pre-delivery static self-check | 19 checks (D1) / 18 (D0, D2); `--strict` makes warnings fatal |
+| `vendor.py` | Prunes the three.js import closure | recursive resolution of addon-relative imports, sha256 manifest |
+| `bundle.py` | Inlines vendor into one file | **a dependency imported once and re-exported once must reuse its specifier** — otherwise: white screen |
+| `api_lookup.py` | Checks whether an API really exists | 488-symbol table, set difference against the artifact, nearest correct name |
+| `validate_scene.py` | Pre-delivery static audit | 19 checks (D1) / 18 (D0, D2); `--strict` turns warnings into failures |
+
+The `bundle.py` row isn't hypothetical. v2.0 died exactly there: `three.module.js` both `import`s and `export ... from './three.core.js'`, the second pass minted a never-registered `vf-int-2`, and the browser refused the whole module graph. There's a dedicated regression fixture on it now.
+
+---
+
+## Contracts, not documentation
+
+```bash
+python3 -m pytest tests/ -q     # 68 passed
+```
+
+Every number in this README has an assertion that can falsify it in under ten seconds:
+
+| Layer | What is asserted |
+|---|---|
+| **Docs** | frontmatter fields, index ↔ files bidirectional, no placeholders, no local absolute paths |
+| **Deps** | all 18 manifest files re-hashed, three `REVISION = 187`, importmap points local |
+| **Tools** | every script's `--help` and `--self-test`, stdlib-only imports |
+| **End-to-end** | D0/D2 scaffolds pass 18 → bundle to D1 → 19/19 → zero remote refs → size within 2.0–4.0 MB |
+| **Negative** | remove the importmap: default warns only, `--strict` must go red; remove an import: must go red |
+| **Presentation** | playground importmap resolves file-by-file, solver predicates present, SVGs script-free, GIF is animated |
+
+The negative cases are the point. **A test suite that only checks the happy path is not a test suite.**
+
+---
+
+## Ten red lines (hitting one disqualifies the output)
+
+> precision lies · API hallucination · material split · metalness-as-gloss · decorative physics ·
+> default camera · perpetual orbit · uniform spin as motion design · particles as camouflage · inconsistent multi-view
+
+They're written as negations because **a rule someone can point at and say "you broke this" is a rule that gets followed**.
+
+---
+
+## Honest limits
+
+1. **Static checks cannot judge aesthetics.** 19/19 green ≠ good-looking.
+2. **`api_lookup.py` needs the three.js source** (`npm pack three@0.187.0`). This package ships build artifacts only, so that gate is not runnable out of the box.
+3. **No visual regression.** No pixel comparison against the reference. "Does it look like it" still needs a human.
+4. **`vendor/` commits 2.4 MB of binaries** in exchange for zero-network, zero-build offline use. That's a trade, not a free lunch.
+5. **The skill body is in Chinese.** English readers rely on this file and the code structure.
+6. **D3 ships a scaffold and a trap list**, assuming you know React.
+7. **The playground's teeth are box approximations**, not involute profiles. Tooth counts, pitch circles, centre distance and ratio are real; the tooth flank is not.
+
+---
 
 ## Repository layout
 
 ```
-SKILL.md            contract, gates, six stages, algorithm index (host-skill entry)
-references/         13 stage-scoped references
-assets/vendor/      three 0.187.0 trimmed to 18 files, hashed manifest
-assets/scaffold/    D0 / D2 / D3 scaffolds
-scripts/            four tools, standard library only
-examples/           runnable example (planetary gearbox)
-docs/               architecture, design notes, validation log
-tests/              26 contract tests
+visual-3d-forge/
+├── SKILL.md              contract, five gates, six phases, algorithm index (skill entry)
+├── references/           13 phase-scoped references (3033 lines: geometry / materials / algorithms / R3F / API verification)
+├── assets/
+│   ├── vendor/           pruned three r187 set, 18 files (2.4 MB, hashed manifest)
+│   └── scaffold/         D0 / D2 / D3 scaffolds
+├── scripts/              four tools, stdlib only
+├── playground/           live parametric playground (gear solving + live rebuild)
+├── examples/             runnable example (planetary gearbox)
+├── docs/                 architecture, design notes, validation record, banner, pipeline diagram
+├── tests/                68 contract tests, including negative cases
+└── THIRD-PARTY-NOTICES.md
 ```
 
-## Verification
-
-```bash
-python3 -m pytest tests/ -q      # 26 passed
-```
-
-The tests turn the skill's promises into falsifiable assertions: document/frontmatter consistency,
-bidirectional index integrity, per-file sha256 of the vendor manifest, stdlib-only scripts,
-D0/D2 → bundle → D1 → 19 checks → zero remote refs → size sanity, plus a **negative test**
-(delete the importmap: lenient warns, `--strict` must fail).
-
-## Ten red lines (any hit = fail)
-
-Precision lie · hallucinated API · material split · metalness as a gloss slider · decorative physics ·
-default camera · perpetual drift · uniform spin as motion · particles hiding bad geometry · inconsistent
-multi-view or no sense of scale.
-
-## Honest limits
-
-1. Static checks cannot judge aesthetics. 19/19 ≠ beautiful.
-2. `api_lookup.py` needs three.js **source** (`npm pack three@0.187.0`); this package ships build artifacts only.
-3. No visual regression: no pixel comparison against the reference.
-4. `vendor/` commits 2.4 MB of binaries — the price of zero-network, zero-build delivery.
-5. The skill body is Chinese; English readers get this README plus the code structure.
-6. D3 ships a scaffold and a trap list, not a full R3F architecture.
+---
 
 ## Docs
 
-- [Architecture: why this is a compiler](docs/ARCHITECTURE.md)
+- [Architecture: why this is a compiler, not a prompt](docs/ARCHITECTURE.md)
 - [Design notes: eleven decisions and their counterexamples](docs/DESIGN-NOTES.md)
-- [Validation log](docs/VALIDATION.md)
+- [Validation record: what each of the 68 assertions guards against](docs/VALIDATION.md)
+- [中文 README](README.md)
+
+## License
+
+MIT — see [LICENSE](LICENSE). Bundled three.js is MIT; see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 380" width="1200" height="380" role="img" aria-label="Visual 3D Forge 编译管线：需求与参考 → 意图卡 → IR → 几何策略与代码 → 19 项契约校验 → 交付">
+  <title>编译管线</title>
+  <style>
+    .bg    { fill: #0e0d0c; }
+    .box   { fill: #16151300; stroke: #ffffff; stroke-opacity: .16; }
+    .boxh  { fill: #c8a06a; fill-opacity: .06; stroke: #c8a06a; stroke-opacity: .55; }
+    .ink   { fill: #ece7df; }
+    .dim   { fill: #8a8378; }
+    .accent{ fill: #c8a06a; }
+    .arrow { stroke: #c8a06a; stroke-opacity: .55; }
+    .rule  { stroke: #ffffff; stroke-opacity: .10; }
+    .mono  { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; }
+    .sans  { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Noto Sans SC", sans-serif; }
+    @media (prefers-color-scheme: light) {
+      .bg    { fill: #f7f5f1; }
+      .box   { stroke: #000000; stroke-opacity: .22; }
+      .boxh  { fill: #8a6224; fill-opacity: .06; stroke: #8a6224; stroke-opacity: .55; }
+      .ink   { fill: #1c1a17; }
+      .dim   { fill: #6b6459; }
+      .accent{ fill: #8a6224; }
+      .arrow { stroke: #8a6224; stroke-opacity: .55; }
+      .rule  { stroke: #000000; stroke-opacity: .12; }
+    }
+  </style>
+
+  <rect width="1200" height="380" class="bg"/>
+
+  <text class="mono dim" x="40" y="42" font-size="11" letter-spacing="3.4">COMPILE PIPELINE</text>
+  <text class="sans ink" x="40" y="70" font-size="21" font-weight="600">先建模型，再写代码 —— 中间那层 IR 是全部理由</text>
+
+  <!-- 节点 -->
+  <g>
+    <rect class="box" x="40"   y="108" width="176" height="112" rx="8"/>
+    <rect class="box" x="248"  y="108" width="176" height="112" rx="8"/>
+    <rect class="boxh" x="456" y="108" width="196" height="112" rx="8"/>
+    <rect class="box" x="684"  y="108" width="176" height="112" rx="8"/>
+    <rect class="box" x="892"  y="108" width="268" height="112" rx="8"/>
+    <rect class="box" x="1100" y="108" width="60"  height="112" rx="8" visibility="hidden"/>
+  </g>
+
+  <g class="mono" font-size="10" letter-spacing="1.6">
+    <text class="accent" x="60"  y="134">01 · INPUT</text>
+    <text class="accent" x="268" y="134">02 · INTENT</text>
+    <text class="accent" x="476" y="134">03 · IR</text>
+    <text class="accent" x="704" y="134">04 · CODEGEN</text>
+    <text class="accent" x="912" y="134">05 · CONTRACT</text>
+  </g>
+
+  <g class="sans ink" font-size="15" font-weight="600">
+    <text x="60"  y="163">需求 + 参考图</text>
+    <text x="268" y="163">意图卡</text>
+    <text x="476" y="163">中间表示</text>
+    <text x="704" y="163">几何策略 → 代码</text>
+    <text x="912" y="163">19 项静态校验</text>
+  </g>
+
+  <g class="sans dim" font-size="11.5">
+    <text x="60"  y="186">参考分 R1–R5，决定</text>
+    <text x="60"  y="203">能声称的精度上限</text>
+    <text x="268" y="186">对象/目的/受众/尺度</text>
+    <text x="268" y="203">必须有/可舍弃/形态</text>
+    <text x="476" y="186">构件树 · 尺度表</text>
+    <text x="476" y="203">材质假设 · 面数预算</text>
+    <text x="704" y="186">参数化几何 · Instanced</text>
+    <text x="704" y="203">D0 / D1 / D2 / D3</text>
+    <text x="912" y="186">零远程引用 · API 真实存在</text>
+    <text x="912" y="203">体积 · 材质一致 · 单文件 .html</text>
+  </g>
+
+  <!-- 箭头 -->
+  <g class="arrow" stroke-width="1.2" fill="none">
+    <path d="M216 164h26" marker-end="url(#a)"/>
+    <path d="M424 164h26" marker-end="url(#a)"/>
+    <path d="M632 164h46" marker-end="url(#a)"/>
+    <path d="M860 164h26" marker-end="url(#a)"/>
+  </g>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#c8a06a" opacity=".7"/>
+    </marker>
+  </defs>
+
+
+  <!-- 闸门 -->
+  <path class="rule" d="M40 258h1120"/>
+  <text class="mono accent" x="40" y="288" font-size="11" letter-spacing="2.6">FIVE GATES</text>
+  <g class="mono" font-size="11">
+    <text class="dim" x="40"  y="314">G0 载体</text>
+    <text class="dim" x="150" y="316">G1 意图</text>
+    <text class="dim" x="260" y="316">G2 参考</text>
+    <text class="dim" x="370" y="316">G3 预算</text>
+    <text class="dim" x="480" y="316">G4 依赖</text>
+  </g>
+  <g class="sans dim" font-size="11.5">
+    <text x="40"  y="337">真的需要第三维吗</text>
+    <text x="150" y="338">七字段齐了吗</text>
+    <text x="260" y="338">参考属于哪一级</text>
+    <text x="370" y="338">面数与调用定档</text>
+    <text x="480" y="338">要跑在哪里</text>
+  </g>
+
+  <g transform="translate(660 282)">
+    <rect x="0" y="0" width="500" height="52" rx="6" fill="none" stroke="#c2604f" stroke-opacity=".35"/>
+    <text class="sans" x="14" y="20" font-size="11.5" fill="#c2604f" opacity=".92">任一闸门都可以否决整个任务</text>
+    <text class="sans dim" x="14" y="39" font-size="10.5">G0 的出口是「不要开 WebGL」——只会说 yes 的流程不是流程，是模板。</text>
+  </g>
+</svg>
