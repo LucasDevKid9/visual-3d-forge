@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Forge Lab · 行星齿轮参数化实验台</title>
+<meta name="description" content="在浏览器里实时求解行星齿轮配齿：同心、装配、邻接三条件即时校验，几何随之重建。零安装，零构建。">
+<meta name="theme-color" content="#121110">
+<meta property="og:title" content="Forge Lab · 行星齿轮参数化实验台">
+<meta property="og:description" content="改一个齿数，看三个条件同时变红或变绿。visual-3d-forge 的在线实验台。">
+<meta property="og:type" content="website">
+<style>
+  :root{
+    --bg:#121110; --bg2:#1a1816; --ink:#ece7df; --dim:#8f887e; --line:#2e2a26;
+    --accent:#c8a06a; --ok:#7fa86b; --bad:#c2604f;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,"JetBrains Mono",Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--sans)}
+  #stage{position:fixed;inset:0;touch-action:none;
+    background:radial-gradient(circle at 46% 42%,#1e1c19 0%,#141312 55%,#0b0b0a 100%)}
+  #stage canvas{display:block}
+
+  /* ---------- 左：标识 ---------- */
+  .brand{position:fixed;left:clamp(16px,2.4vw,30px);top:clamp(16px,2.4vw,28px);
+    pointer-events:none;max-width:min(46vw,420px)}
+  .kicker{font-family:var(--mono);font-size:10px;letter-spacing:.26em;color:var(--accent);text-transform:uppercase}
+  h1{margin:.6em 0 .38em;font-size:clamp(20px,2.6vw,30px);font-weight:600;letter-spacing:-.02em;line-height:1.2}
+  .lede{margin:0;font-size:clamp(11px,1.2vw,13px);line-height:1.75;color:var(--dim);max-width:33em}
+  .lede b{color:#c4bbae;font-weight:500}
+  .back{display:inline-block;margin-top:14px;font-family:var(--mono);font-size:11px;
+    color:var(--dim);text-decoration:none;border-bottom:1px solid var(--line);padding-bottom:2px;pointer-events:auto}
+  .back:hover{color:var(--accent);border-color:var(--accent)}
+
+  /* ---------- 右：求解面板 ---------- */
+  #panel{position:fixed;right:clamp(12px,2vw,26px);top:clamp(12px,2vw,26px);
+    width:min(292px,calc(100vw - 24px));max-height:calc(100vh - 52px);overflow-y:auto;
+    background:rgba(20,19,17,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border:1px solid var(--line);border-radius:12px;padding:16px 16px 14px;z-index:5;
+    box-shadow:0 18px 50px -20px rgba(0,0,0,.9)}
+  .ph{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
+  .ph h2{margin:0;font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--dim);text-transform:uppercase;font-weight:500}
+  .ph .live{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.1em}
+  .dot{width:5px;height:5px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok)}
+  #panel[data-err] .dot{background:var(--bad);box-shadow:0 0 6px var(--bad)}
+
+  .row{margin-bottom:13px}
+  .row .lab{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;color:var(--dim);margin-bottom:6px}
+  .row .lab .v{font-family:var(--mono);font-size:12px;color:var(--ink);letter-spacing:.02em}
+  .row .lab .v i{font-style:normal;color:var(--dim);font-size:10px;margin-left:2px}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:18px;background:transparent;outline:none;margin:0;display:block}
+  input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--line);border-radius:1px}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;
+    background:var(--accent);margin-top:-5px;cursor:grab;box-shadow:0 0 0 3px rgba(200,160,106,.12)}
+  input[type=range]:active::-webkit-slider-thumb{cursor:grabbing;box-shadow:0 0 0 5px rgba(200,160,106,.18)}
+  input[type=range]::-moz-range-track{height:2px;background:var(--line)}
+  input[type=range]::-moz-range-thumb{width:12px;height:12px;border:none;border-radius:50%;background:var(--accent)}
+
+  /* 约束三灯 */
+  .checks{margin:2px 0 14px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 0}
+  .chk{display:flex;align-items:flex-start;gap:8px;font-size:10.5px;line-height:1.5;padding:3px 0;color:var(--dim);
+    transition:color .18s}
+  .chk .m{font-family:var(--mono);font-size:10px;width:11px;flex:none;color:var(--ok);transition:color .18s}
+  .chk .t{flex:1}
+  .chk .t em{font-style:normal;font-family:var(--mono);color:#b3aa9d;font-size:10px}
+  .chk[data-bad] .m{color:var(--bad)}
+  .chk[data-bad]{color:#c98d80}
+  .chk[data-bad] .t em{color:var(--bad)}
+
+  /* 派生量 */
+  .out{display:grid;grid-template-columns:1fr 1fr;gap:9px 12px}
+  .kv{display:flex;flex-direction:column;gap:2px}
+  .kv .k{font-size:9px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;font-family:var(--mono)}
+  .kv .n{font-family:var(--mono);font-size:15px;color:var(--ink);letter-spacing:-.01em}
+  .kv .n small{font-size:9px;color:var(--dim);margin-left:2px;letter-spacing:.04em}
+  .kv.hi .n{color:var(--accent)}
+
+  /* 预设 */
+  .presets{display:flex;gap:6px;margin-top:14px}
+  .presets button{flex:1;padding:7px 0;font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;
+    background:transparent;border:1px solid var(--line);color:var(--dim);border-radius:6px;cursor:pointer;
+    transition:.15s;line-height:1.3}
+  .presets button:hover{border-color:var(--accent);color:var(--accent)}
+  .presets button[data-on]{border-color:var(--accent);color:var(--accent);background:rgba(200,160,106,.07)}
+
+  /* 错误条 */
+  #err{margin-top:12px;padding:9px 10px;border-radius:7px;border:1px solid rgba(194,96,79,.4);
+    background:rgba(194,96,79,.08);font-size:10.5px;line-height:1.6;color:#d39283;display:none}
+  #err[data-on]{display:block}
+  #err b{color:#e8b3a6;font-weight:600}
+  #fix{margin-top:8px;width:100%;padding:6px 0;font-family:var(--mono);font-size:10px;letter-spacing:.08em;
+    background:rgba(194,96,79,.12);border:1px solid rgba(194,96,79,.45);color:#e8b3a6;
+    border-radius:5px;cursor:pointer;transition:.15s}
+  #fix:hover{background:rgba(194,96,79,.22);border-color:#c2604f;color:#fff}
+
+  /* ---------- 底部：视图控制 ---------- */
+  .foot{position:fixed;left:clamp(16px,2.4vw,30px);bottom:clamp(14px,2vw,24px);
+    display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap;z-index:4;max-width:calc(100vw - 340px)}
+  .legend{display:flex;gap:13px;flex-wrap:wrap;font-size:10.5px;color:var(--dim)}
+  .legend i{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:5px;vertical-align:0}
+  .ctl{display:flex;align-items:center;gap:9px;font-size:10.5px;color:var(--dim);font-family:var(--mono);letter-spacing:.06em}
+  .ctl input{width:118px}
+  .ctl .v{min-width:34px}
+
+  /* 零件卡 */
+  #card{position:fixed;left:50%;bottom:clamp(14px,2vw,24px);transform:translate(-50%,8px);
+    width:min(340px,86vw);padding:12px 14px;border:1px solid var(--line);border-radius:10px;
+    background:rgba(20,19,17,.9);backdrop-filter:blur(10px);opacity:0;pointer-events:none;
+    transition:opacity .2s,transform .2s;z-index:6}
+  #card[data-on]{opacity:1;transform:translate(-50%,0)}
+  #card h3{margin:0 0 5px;font-size:12.5px;font-weight:600}
+  #card p{margin:0;font-size:11px;line-height:1.65;color:var(--dim)}
+  #card .tag{display:inline-block;margin-top:7px;font-family:var(--mono);font-size:9px;letter-spacing:.12em;
+    color:var(--accent);text-transform:uppercase}
+
+  /* 无 WebGL */
+  #fallback{position:fixed;inset:0;display:none;place-items:center;padding:8vw;text-align:center;background:var(--bg)}
+  #fallback[data-on]{display:grid}
+
+  body.bare .brand,body.bare #panel,body.bare .foot,body.bare #card{display:none!important}
+
+  @media (max-width:860px){
+    .brand{max-width:calc(100vw - 32px)}
+    .lede{display:none}
+    #panel{top:auto;bottom:0;right:0;left:0;width:100%;max-height:56vh;border-radius:14px 14px 0 0;
+      border-left:none;border-right:none;border-bottom:none}
+    .foot{display:none}
+    #card{bottom:calc(56vh + 10px)}
+  }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+
+<div class="brand">
+  <div class="kicker">Visual 3D Forge · Lab</div>
+  <h1>行星齿轮参数化实验台</h1>
+  <p class="lede">拖动三个参数，几何<b>真的重建</b>，不是缩放。三条件同时成立才允许出图——
+    这是引擎里「先建模型、再写代码」那条纪律的现场版。</p>
+  <a class="back" href="https://github.com/LucasDevKid9/visual-3d-forge">← 返回仓库</a>
+</div>
+
+<aside id="panel">
+  <div class="ph">
+    <h2>配齿求解</h2>
+    <span class="live"><i class="dot"></i><span id="liveTxt">SOLVED</span></span>
+  </div>
+
+  <div class="row">
+    <div class="lab"><span>模数 <em style="font-style:normal;opacity:.6">m</em></span><span class="v"><span id="vM">2.00</span><i>mm</i></span></div>
+    <input id="sM" type="range" min="0.8" max="5" step="0.2" value="2">
+  </div>
+  <div class="row">
+    <div class="lab"><span>太阳轮齿数 <em style="font-style:normal;opacity:.6">z₁</em></span><span class="v" id="vZs">18</span></div>
+    <input id="sZs" type="range" min="8" max="36" step="1" value="18">
+  </div>
+  <div class="row">
+    <div class="lab"><span>内齿圈齿数 <em style="font-style:normal;opacity:.6">z₃</em></span><span class="v" id="vZr">60</span></div>
+    <input id="sZr" type="range" min="30" max="120" step="2" value="60">
+  </div>
+
+  <div class="checks" id="checks">
+    <div class="chk" id="c1"><span class="m">·</span><span class="t">同心 · 行星轮齿数为整数<em id="e1"></em></span></div>
+    <div class="chk" id="c2"><span class="m">·</span><span class="t">装配 · 三行星轮均布<em id="e2"></em></span></div>
+    <div class="chk" id="c3"><span class="m">·</span><span class="t">邻接 · 行星轮互不干涉<em id="e3"></em></span></div>
+  </div>
+
+  <div class="out">
+    <div class="kv hi"><span class="k">传动比 i</span><span class="n" id="oI">4.33</span></div>
+    <div class="kv"><span class="k">行星轮 z₂</span><span class="n" id="oZp">21</span></div>
+    <div class="kv"><span class="k">中心距 a</span><span class="n" id="oA">39.0<small>mm</small></span></div>
+    <div class="kv"><span class="k">重合度 εα</span><span class="n" id="oE">1.62</span></div>
+  </div>
+
+  <div class="presets">
+    <button data-p="2,18,60" data-on>基准</button>
+    <button data-p="1.5,12,72">高速比</button>
+    <button data-p="3,24,72">大扭矩</button>
+  </div>
+
+  <div id="err"></div>
+</aside>
+
+<div class="foot">
+  <div class="legend">
+    <span><i style="background:#c2c7cb"></i>20CrMnTi 渗碳钢</span>
+    <span><i style="background:#5b6167"></i>阳极氧化铝</span>
+    <span><i style="background:#c08a45"></i>铜衬套</span>
+  </div>
+  <div class="ctl"><span>爆炸</span><input id="explode" type="range" min="0" max="100" value="44" aria-label="爆炸视图"><span class="v" id="explodeV">44%</span></div>
+</div>
+
+<div id="card"><h3 id="cardT"></h3><p id="cardB"></p><span class="tag" id="cardG"></span></div>
+
+<div id="fallback"><div>
+  <h2 style="margin:0 0 12px;font-size:18px">当前设备不支持 WebGL</h2>
+  <p class="lede" style="margin:0 auto;display:block">本实验台需要 WebGL2。几何与求解逻辑仍可离线阅读：
+    见仓库 <a href="https://github.com/LucasDevKid9/visual-3d-forge" style="color:var(--accent)">examples/planetary-gear-3d</a>。</p>
+</div></div>
+
+<script type="importmap">
+{"imports":{
+  "three":"../assets/vendor/three.module.js",
+  "three/addons/":"../assets/vendor/addons/"
+}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const $ = (id) => document.getElementById(id);
+const Q = new URLSearchParams(location.search);
+const DEMO = Q.has('demo');
+const STILL = Q.has('still');
+if (Q.has('bare')) document.body.classList.add('bare');
+const isMobile = matchMedia('(max-width: 860px)').matches;
+const ALPHA = 20 * Math.PI / 180;   // 标准压力角
+
+/* =========================================================================
+   0. 求解器 —— 与渲染完全解耦的纯函数
+   行星轮系的三条约束不是"建议"，是能不能装起来的硬条件。
+   ========================================================================= */
+function solve(m, z1, z3) {
+  const dz = z3 - z1;
+  const z2 = dz / 2;
+  const c1 = Number.isInteger(z2) && z2 > 0;
+  const c2 = (z1 + z3) % 3 === 0;
+  // 邻接：相邻两行星轮中心距 (z1+z2)·m·sin60° 必须大于行星轮齿顶圆直径 (z2+2)·m
+  const c3 = c1 && (z1 + z2) * Math.sin(Math.PI / 3) > z2 + 2;
+
+  const i = 1 + z3 / z1;
+  const a = m * (z1 + (c1 ? z2 : 0)) / 2;
+
+  // 端面重合度（外啮合，太阳轮–行星轮），齿顶高系数 1.0
+  let eps = NaN;
+  if (c1 && z2 > 0) {
+    const r1 = m * z1 / 2, r2 = m * z2 / 2;
+    const ra1 = r1 + m, ra2 = r2 + m;
+    const rb1 = r1 * Math.cos(ALPHA), rb2 = r2 * Math.cos(ALPHA);
+    eps = (Math.sqrt(ra1 * ra1 - rb1 * rb1) + Math.sqrt(ra2 * ra2 - rb2 * rb2)
+           - a * Math.sin(ALPHA)) / (Math.PI * m * Math.cos(ALPHA));
+  }
+  const errs = [];
+  if (!c1) errs.push(['同心条件', `z₃ − z₁ 必须为偶数，当前 ${z1} / ${z3} 得 z₂ = ${(dz / 2).toFixed(1)}`]);
+  if (!c2) errs.push(['装配条件', `(z₁ + z₃) 必须被 3 整除，当前 ${z1 + z3} ÷ 3 余 ${(z1 + z3) % 3}`]);
+  if (c1 && !c3) errs.push(['邻接条件', `行星轮过大：需 z₂ < ${((z1 + z2) * Math.sin(Math.PI / 3) - 2).toFixed(1)}`]);
+
+  return { m, z1, z3, z2, ok: c1 && c2 && c3, c1, c2, c3, i, a, eps, errs };
+}
+
+/* 给非法参数找一条最近的出路：先调 z₃（内齿圈最便宜，不动传动比结构） */
+function nearestLegal(m, z1, z3) {
+  for (let d = 1; d <= 14; d++) {
+    for (const c of [z3 + d, z3 - d]) {
+      if (c >= z1 + 6 && c <= 120 && solve(m, z1, c).ok) return { z1, z3: c };
+    }
+  }
+  for (let d = 1; d <= 12; d++) {
+    for (const c of [z1 + d, z1 - d]) {
+      if (c >= 8 && c <= 36) {
+        const t = nearestLegal(m, c, z3);
+        if (t) return t;
+      }
+    }
+  }
+  return null;
+}
+
+/* =========================================================================
+   1. 场景一次装配，几何按 spec 重建
+   ========================================================================= */
+const stage = $('stage');
+let renderer, scene, camera, controls, root, parts = [], planets = [], sunGroup = null, carrier = null;
+let spec = solve(2, 18, 60);
+let explode = 0.44;
+let clock = 0;
+
+const steelMat = new THREE.MeshStandardMaterial({ color: 0x9aa2a9, metalness: 1, roughness: 0.52, envMapIntensity: 1.0,
+  roughnessMap: brushed(0.30) });
+const aluMat   = new THREE.MeshStandardMaterial({ color: 0x555c64, metalness: 1, roughness: 0.56, envMapIntensity: 0.9,
+  roughnessMap: brushed(0.22) });
+const bronzeMat= new THREE.MeshStandardMaterial({ color: 0x8f6326, metalness: 1, roughness: 0.42, envMapIntensity: 0.9 });
+
+function brushed(contrast) {
+  const n = 128, cv = document.createElement('canvas');
+  cv.width = cv.height = n;
+  const ctx = cv.getContext('2d');
+  const img = ctx.createImageData(n, n);
+  for (let y = 0; y < n; y++) {
+    const v = 255 * (1 - contrast * (0.5 + 0.5 * Math.sin(y * 0.85)));
+    for (let x = 0; x < n; x++) {
+      const k = (y * n + x) * 4;
+      img.data[k] = img.data[k + 1] = img.data[k + 2] = v;
+      img.data[k + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(cv);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(4, 1);
+  t.colorSpace = THREE.NoColorSpace;
+  return t;
+}
+
+function hasWebGL() {
+  try { const c = document.createElement('canvas');
+    return !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl'))); }
+  catch (e) { return false; }
+}
+
+/* 齿环：一次 InstancedMesh 画完所有齿。齿形用长方体近似，
+   但切向宽 1.6m、径向高 2.0m 是按模数派生的，不是写死的。 */
+function toothRing(count, r, m, h, mat, dir) {
+  const tw = 1.55 * m, td = 2.0 * m;
+  const g = new THREE.BoxGeometry(tw, h * 0.94, td);
+  const mesh = new THREE.InstancedMesh(g, mat, count);
+  const mtx = new THREE.Matrix4(), q = new THREE.Quaternion(),
+        p = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1);
+  const axis = new THREE.Vector3(0, 1, 0);
+  for (let k = 0; k < count; k++) {
+    const ang = (k / count) * Math.PI * 2;
+    p.set(Math.cos(ang) * (r - dir * td / 2), 0, Math.sin(ang) * (r - dir * td / 2));
+    q.setFromAxisAngle(axis, -ang);
+    mtx.compose(p, q, one);
+    mesh.setMatrixAt(k, mtx);
+  }
+  mesh.instanceMatrix.needsUpdate = true;
+  mesh.castShadow = mesh.receiveShadow = true;
+  return mesh;
+}
+
+function disposeTree(obj) {
+  obj.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+}
+
+function build(s) {
+  const m = s.m * 0.001;               // 求解用毫米，几何用米：世界单位必须是米，否则相机裁剪面全错
+  const z1 = s.z1, z3 = s.z3, z2 = s.z2;
+  const rSun = m * z1 / 2, rPlan = m * z2 / 2, rRing = m * z3 / 2;
+  const h = 10 * m;                    // 齿宽 b = 10m
+  const ringOut = rRing + 4.4 * m;
+  const plateT = 3.2 * m, pinR = 2.3 * m;
+  const shaftInR = 3.2 * m, shaftOutR = 4.0 * m;
+  const centerR = rSun + rPlan;        // 实际中心距
+
+  const G = new THREE.Group();
+  parts = []; planets = [];
+
+  /* 内齿圈（固定） */
+  const ring = new THREE.Mesh(new THREE.LatheGeometry([
+    new THREE.Vector2(rRing, -h / 2),
+    new THREE.Vector2(ringOut - 0.4 * m, -h / 2),
+    new THREE.Vector2(ringOut, -h / 2 + 0.4 * m),
+    new THREE.Vector2(ringOut, h / 2 - 0.4 * m),
+    new THREE.Vector2(ringOut - 0.4 * m, h / 2),
+    new THREE.Vector2(rRing, h / 2),
+    new THREE.Vector2(rRing, -h / 2)
+  ], 96), aluMat);
+  ring.castShadow = ring.receiveShadow = true;
+  ring.add(toothRing(z3, rRing, m, h, steelMat, 1));
+  G.add(ring);
+  parts.push({ obj: ring, name: '内齿圈', body: `${z3} 齿，固定于壳体。承担全部反扭矩，是传动比的基准。`, tag: '固定件 · 阳极氧化铝', lift: 0.0 });
+
+  /* 太阳轮（输入） */
+  sunGroup = new THREE.Group();
+  const sun = new THREE.Mesh(new THREE.CylinderGeometry(rSun, rSun, h, 48), steelMat);
+  sun.castShadow = sun.receiveShadow = true;
+  sunGroup.add(sun, toothRing(z1, rSun, m, h, steelMat, -1));
+  const sin = new THREE.Mesh(new THREE.CylinderGeometry(shaftInR, shaftInR, h * 2.2, 28), steelMat);
+  sin.position.y = -h * 0.9; sin.castShadow = true;
+  sunGroup.add(sin);
+  G.add(sunGroup);
+  parts.push({ obj: sunGroup, name: '太阳轮 + 输入轴', body: `${z1} 齿，电机驱动。载荷经 ${3} 处啮合点分流，单齿受力降到 1/3。`, tag: '输入 · 20CrMnTi', lift: 2.7 });
+
+  /* 行星轮 ×3 */
+  for (let k = 0; k < 3; k++) {
+    const ang = k * Math.PI * 2 / 3;
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(rPlan, rPlan, h, 40), steelMat);
+    body.castShadow = body.receiveShadow = true;
+    g.add(body, toothRing(z2, rPlan, m, h, steelMat, -1));
+    const bush = new THREE.Mesh(new THREE.TorusGeometry(pinR * 1.42, pinR * 0.3, 10, 30), bronzeMat);
+    bush.rotation.x = Math.PI / 2;
+    bush.position.y = h * 0.5;
+    bush.castShadow = true;
+    g.add(bush);
+    g.position.set(Math.cos(ang) * centerR, 0, Math.sin(ang) * centerR);
+    G.add(g); planets.push(g);
+    parts.push({ obj: g, name: `行星轮 ${k + 1}`, body: `${z2} 齿。一侧与太阳轮外啮合，一侧与齿圈内啮合，自转的同时绕轴公转。`, tag: '行星轮 · 20CrMnTi', lift: 0.9 });
+  }
+
+  /* 行星架（输出）：三辐条 + 销轴 */
+  carrier = new THREE.Group();
+  const armGeo = new THREE.BoxGeometry(centerR + rPlan * 0.7, plateT, 3.4 * m);
+  for (let k = 0; k < 3; k++) {
+    const ang = k * Math.PI * 2 / 3;
+    const arm = new THREE.Mesh(armGeo, aluMat);
+    arm.rotation.y = ang;
+    arm.position.set(Math.cos(ang) * centerR / 2, h / 2 + plateT / 2, Math.sin(ang) * centerR / 2);
+    arm.castShadow = arm.receiveShadow = true;
+    carrier.add(arm);
+  }
+  for (let k = 0; k < 3; k++) {
+    const ang = k * Math.PI * 2 / 3;
+    const pin = new THREE.Mesh(new THREE.CylinderGeometry(pinR, pinR, h + plateT * 3.4, 18), steelMat);
+    pin.position.set(Math.cos(ang) * centerR, -plateT * 0.9, Math.sin(ang) * centerR);
+    pin.castShadow = true;
+    carrier.add(pin);
+  }
+  const hub = new THREE.Mesh(new THREE.CylinderGeometry(3.4 * m, 3.4 * m, h + plateT * 1.4, 32), aluMat);
+  hub.castShadow = true; carrier.add(hub);
+  const sout = new THREE.Mesh(new THREE.CylinderGeometry(shaftOutR, shaftOutR, h * 2.4, 28), steelMat);
+  sout.position.y = h * 1.15; sout.castShadow = true; carrier.add(sout);
+  G.add(carrier);
+  parts.push({ obj: carrier, name: '行星架 + 输出轴', body: `把三个行星轮的公转汇成一路输出，转速降为输入的 1/${s.i.toFixed(2)}，扭矩同比放大。`, tag: '输出 · 阳极氧化铝', lift: 4.6 });
+
+  root = G;
+  scene.add(G);
+  return { h, ringOut, centerR, m, rPlan, rRing };
+}
+
+/* 爆炸：只沿轴向分离。径向不动——齿圈壁在 5m 内，
+   径向让位必然穿模；轴向拉开 3 倍齿宽才是真实装配视角。 */
+function applyExplode() {
+  const g = build._geo;
+  if (!g || !parts.length) return;
+  for (const p of parts) p.obj.position.y = p.lift * explode * g.h * 1.42;
+  if (floor) floor.position.y = -(g.h / 2) - g.h * 0.5 - 7 * g.m * (1 + explode * 2.2);
+}
+
+/* =========================================================================
+   2. 初始化
+   ========================================================================= */
+let key, floor = null;
+
+function init() {
+  if (!hasWebGL()) { $('fallback').setAttribute('data-on', ''); return; }
+
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, isMobile ? 1.5 : 2));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.setClearColor(0x000000, 0);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.95;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  stage.appendChild(renderer.domElement);
+
+  scene = new THREE.Scene();
+  scene.background = null;
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.06).texture;
+  scene.environmentIntensity = 0.58;
+
+  camera = new THREE.PerspectiveCamera(34, innerWidth / innerHeight, 0.01, 20);
+
+  const geo = build(spec);
+  build._geo = geo;
+
+  floor = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), new THREE.ShadowMaterial({ color: 0, opacity: 0.44 }));
+  floor.rotation.x = -Math.PI / 2;
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  key = new THREE.DirectionalLight(0xfff1d8, 2.9);
+  key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048);
+  key.shadow.bias = -0.0006;
+  key.shadow.normalBias = 0.002;
+  scene.add(key);
+
+  const fill = new THREE.DirectionalLight(0xb9cdf5, 0.55);
+  fill.position.set(-1, 0.5, 0.7); scene.add(fill);
+  const rim = new THREE.DirectionalLight(0xdfe9ff, 1.4);
+  rim.position.set(-0.4, 1, -1.4); scene.add(rim);
+  const bounce = new THREE.DirectionalLight(0x9fb4d0, 0.42);   // 台面反射：兜住下半部
+  bounce.position.set(0.3, -1, 0.5); scene.add(bounce);
+  scene.add(new THREE.HemisphereLight(0x7f8ea8, 0x141312, 0.12));
+
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.06;
+  controls.enablePan = false;
+  controls.minPolarAngle = 0.22;
+  controls.maxPolarAngle = 1.44;
+  controls.autoRotate = DEMO;      // 展厅模式：缓慢绕轴展示
+  controls.autoRotateSpeed = 0.5;
+
+  applyExplode();
+  fitCamera(true);
+
+  bindUI();
+  addEventListener('resize', resize);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) clock = performance.now(); });
+  requestAnimationFrame(loop);
+}
+
+let camTarget = null;
+function fitCamera(instant) {
+  if (!root) return;
+  const save = explode;
+  explode = 0; applyExplode();
+  const b0 = new THREE.Box3().setFromObject(root);
+  explode = 0.36; applyExplode();
+  const b1 = new THREE.Box3().setFromObject(root);
+  explode = save; applyExplode();
+  // 取「闭合态 ∪ 展开态」的联合包围盒：动画全程都不出框
+  const bbox = b0.clone().union(b1);
+  const sph = bbox.getBoundingSphere(new THREE.Sphere());
+  const dist = sph.radius / Math.sin((camera.fov * Math.PI / 180) / 2) * (isMobile ? 1.02 : 0.72);
+  if (Q.has('dbg')) console.log('FIT', JSON.stringify({r:+sph.radius.toFixed(4), dist:+dist.toFixed(4),
+    min:bbox.min.toArray().map(v=>+v.toFixed(3)), max:bbox.max.toArray().map(v=>+v.toFixed(3)), ex:explode}));
+  const c0 = sph.center;
+  const dir = camera.position.clone().sub(controls.target).normalize();
+  if (!isFinite(dir.x) || dir.length() < 0.5) dir.set(0.46, 0.50, 0.74).normalize();
+  const target = c0.clone().add(dir.multiplyScalar(dist));
+
+  key.position.copy(c0).add(new THREE.Vector3(0.9, 1.4, 0.85).multiplyScalar(sph.radius * 3));
+  const sc = key.shadow.camera;
+  sc.left = -sph.radius * 2.2; sc.right = sph.radius * 2.2;
+  sc.top = sph.radius * 2.2; sc.bottom = -sph.radius * 2.2;
+  sc.near = 0.01; sc.far = sph.radius * 12;
+  sc.updateProjectionMatrix();
+
+  controls.minDistance = sph.radius * 1.2;
+  controls.maxDistance = sph.radius * 5.5;
+  controls.target.copy(c0);
+  if (instant) camera.position.copy(target);
+  else camTarget = { pos: target, look: c0 };
+}
+
+/* =========================================================================
+   3. 重建：只换几何，不动渲染器
+   ========================================================================= */
+function rebuild(s) {
+  if (!root) return;
+  const keep = camera.position.clone().sub(controls.target);
+  disposeTree(root);
+  scene.remove(root);
+  spec = s;
+  const geo = build(s);
+  build._geo = geo;
+  // 保持视角方向
+  controls.target.set(0, 0, 0);
+  camera.position.copy(keep);
+  applyExplode();
+  fitCamera(false);
+}
+
+/* =========================================================================
+   4. 运动学：威利斯方程，不是各转各的
+   固定内齿圈时：ωc = ωs·z₁/(z₁+z₃)
+   行星轮自转（绝对）＝ ωc − (z₁/z₂)(ωs − ωc)
+   ========================================================================= */
+function setPose(t) {
+  if (!sunGroup || !spec.z2) return;
+  const s = spec;
+  const w = 0.9;                                   // 太阳轮 rad/s
+  const ws = -t * w;
+  const wc = -t * w * s.z1 / (s.z1 + s.z3);        // 威利斯：ωc = ωs·z₁/(z₁+z₃)
+  sunGroup.rotation.y = ws;
+  carrier.rotation.y = wc;
+  // 行星轮绝对自转 = ωc − (z₁/z₂)(ωs − ωc)，这样两侧啮合点线速度都严格相等
+  const wp = wc - (s.z1 / s.z2) * (ws - wc);
+  const rad = build._geo ? build._geo.centerR : 1;
+  planets.forEach((pl, idx) => {
+    pl.rotation.y = wp;
+    const base = pl.userData.baseAng ?? idx * Math.PI * 2 / 3;
+    const ang = base + wc;
+    pl.position.set(Math.cos(ang) * rad, pl.position.y, Math.sin(ang) * rad);
+  });
+}
+
+/* =========================================================================
+   5. 交互
+   ========================================================================= */
+function bindUI() {
+  const sM = $('sM'), sZs = $('sZs'), sZr = $('sZr');
+
+  function refresh(fromSlider) {
+    const m = parseFloat(sM.value), z1 = +sZs.value, z3 = +sZr.value;
+    const s = solve(m, z1, z3);
+    paint(s);
+    if (s.ok) {
+      if (fromSlider) rebuild(s);
+      lastGood = s;
+    }
+  }
+
+  let lastGood = spec;
+  [sM, sZs, sZr].forEach(el => el.addEventListener('input', () => refresh(true)));
+
+  document.querySelectorAll('.presets button').forEach(b => {
+    b.addEventListener('click', () => {
+      const [m, z1, z3] = b.dataset.p.split(',').map(Number);
+      sM.value = m; sZs.value = z1; sZr.value = z3;
+      document.querySelectorAll('.presets button').forEach(x => x.removeAttribute('data-on'));
+      b.setAttribute('data-on', '');
+      refresh(true);
+    });
+  });
+
+  $('explode').addEventListener('input', (e) => {
+    explode = e.target.value / 100;
+    $('explodeV').textContent = e.target.value + '%';
+  });
+
+  const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
+  renderer.domElement.addEventListener('pointerdown', (ev) => {
+    const r = renderer.domElement.getBoundingClientRect();
+    ptr.x = ((ev.clientX - r.left) / r.width) * 2 - 1;
+    ptr.y = -((ev.clientY - r.top) / r.height) * 2 + 1;
+    ray.setFromCamera(ptr, camera);
+    const hits = ray.intersectObject(root, true);
+    const card = $('card');
+    if (!hits.length) { card.removeAttribute('data-on'); return; }
+    let o = hits[0].object;
+    while (o && !parts.some(p => p.obj === o)) o = o.parent;
+    const p = parts.find(x => x.obj === o);
+    if (!p) { card.removeAttribute('data-on'); return; }
+    $('cardT').textContent = p.name;
+    $('cardB').textContent = p.body;
+    $('cardG').textContent = p.tag;
+    card.setAttribute('data-on', '');
+  });
+
+  paint(spec);
+}
+
+const fmt = (n, d = 2) => Number(n).toFixed(d);
+
+function paint(s) {
+  $('vM').textContent = fmt(s.m, 2);
+  $('vZs').textContent = s.z1;
+  $('vZr').textContent = s.z3;
+  $('oI').textContent = isFinite(s.i) ? fmt(s.i, 2) : '—';
+  $('oZp').textContent = s.c1 ? s.z2 : '—';
+  $('oA').innerHTML = isFinite(s.a) && s.a > 0 ? `${fmt(s.a, 1)}<small>mm</small>` : '—';
+  $('oE').textContent = isFinite(s.eps) ? fmt(s.eps, 2) : '—';
+
+  $('e1').textContent = s.c1 ? '' : `  z₂=${((s.z3 - s.z1) / 2).toFixed(1)}`;
+  $('e2').textContent = s.c2 ? '' : `  ${s.z1 + s.z3}%3=${(s.z1 + s.z3) % 3}`;
+  $('e3').textContent = s.c3 || !s.c1 ? '' : '  干涉';
+  ['c1', 'c2', 'c3'].forEach((id, k) => {
+    const el = $(id);
+    if (s[['c1', 'c2', 'c3'][k]]) el.removeAttribute('data-bad');
+    else el.setAttribute('data-bad', '');
+  });
+
+  const panel = $('panel'), err = $('err');
+  if (s.ok) {
+    panel.removeAttribute('data-err');
+    $('liveTxt').textContent = 'SOLVED';
+    err.removeAttribute('data-on');
+  } else {
+    panel.setAttribute('data-err', '');
+    $('liveTxt').textContent = 'BLOCKED';
+    const fix = nearestLegal(s.m, s.z1, s.z3);
+    err.innerHTML = s.errs.map(e => `<b>${e[0]}</b>　${e[1]}`).join('<br>')
+      + '<br><span style="opacity:.6">几何停在上一组合法状态，不重建。</span>'
+      + (fix ? `<button id="fix">按约束修正 → z₃ = ${fix.z3}</button>` : '');
+    err.setAttribute('data-on', '');
+    const fb = $('fix');
+    if (fb) fb.addEventListener('click', () => {
+      sZs.value = fix.z1; sZr.value = fix.z3;
+      document.querySelectorAll('.presets button').forEach(x => x.removeAttribute('data-on'));
+      const ns = solve(parseFloat(sM.value), fix.z1, fix.z3);
+      paint(ns); rebuild(ns);
+    });
+  }
+}
+
+/* =========================================================================
+   6. 循环
+   ========================================================================= */
+let last = performance.now();
+function loop(now) {
+  requestAnimationFrame(loop);
+  if (STILL) return;               // 逐帧模式：渲染由 __seek 驱动
+  let dt = (now - last) / 1000; last = now;
+  dt = Math.min(dt, 0.05);
+  clock += dt;
+  if (DEMO) {
+    const k = 0.5 - 0.5 * Math.cos(clock * 0.95);
+    explode = 0.05 + 0.31 * k;
+    const ev = $('explodeV'); if (ev) ev.textContent = Math.round(explode * 100) + '%';
+  }
+  applyExplode();
+  setPose(clock);
+  if (camTarget) {
+    camera.position.lerp(camTarget.pos, 0.1);
+    controls.target.lerp(camTarget.look, 0.12);
+    if (camera.position.distanceTo(camTarget.pos) < 0.0004) camTarget = null;
+  }
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+/* 逐帧定位：仅 ?still 时暴露。录制动图用它，保证每帧时间均匀。 */
+if (STILL) {
+  let baseSph = null;
+  window.__seek = (t) => {
+    if (!baseSph) {
+      baseSph = new THREE.Spherical().setFromVector3(camera.position.clone().sub(controls.target));
+    }
+    const sph = baseSph.clone();
+    sph.theta = baseSph.theta + t * 0.22;         // 缓慢绕轴，展示环形结构
+    camera.position.setFromSpherical(sph).add(controls.target);
+    camera.lookAt(controls.target);
+    clock = t;
+    explode = 0.05 + 0.31 * (0.5 - 0.5 * Math.cos(t * 0.95));
+    applyExplode();
+    setPose(t);
+    renderer.render(scene, camera);
+    return { d: camera.position.distanceTo(controls.target), fov: camera.fov, aspect: camera.aspect };
+  };
+  window.__ready = true;
+}
+
+function resize() {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setPixelRatio(Math.min(devicePixelRatio, isMobile ? 1.5 : 2));
+  renderer.setSize(innerWidth, innerHeight);
+}
+
+init();
+</script>
+</body>
+</html>
