@@ -1,0 +1,17 @@
+# 统一换行，避免 Windows 贡献者的 CRLF 触发校验器
+* text=auto eol=lf
+
+# vendor 是第三方构建产物：不计入语言统计，也不在 diff 里展开
+assets/vendor/** linguist-vendored
+assets/vendor/** -diff
+assets/vendor/** linguist-generated
+
+# 二进制资产
+*.gif binary
+*.png binary
+*.jpg binary
+
+# HTML 示例按源码统计（默认会被当成文档排除）
+examples/**/*.html linguist-detectable=true
+assets/scaffold/**/*.html linguist-detectable=true
+playground/*.html linguist-detectable=true

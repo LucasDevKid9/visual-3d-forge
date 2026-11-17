@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 在线实验台
+    url: https://lucasdevkid9.github.io/visual-3d-forge/
+    about: 先玩一下，很多「是不是 bug」的问题在那里就有答案。
+  - name: 安全漏洞
+    url: https://github.com/LucasDevKid9/visual-3d-forge/security/advisories/new
+    about: 请用私密渠道，不要开公开 issue。

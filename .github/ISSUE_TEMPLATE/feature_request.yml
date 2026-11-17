@@ -1,0 +1,43 @@
+name: 新的校验规则 / 新示例 / 新参考
+description: 给契约加一条判据，或补一个能证明某条策略的示例
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: 你要加什么
+      options:
+        - 一条校验规则（validate_scene.py）
+        - 一个示例（examples/）
+        - 一篇 reference
+        - playground 的功能
+    validations:
+      required: true
+
+  - type: textarea
+    id: claim
+    attributes:
+      label: 它能证明什么
+      description: |
+        这个仓库只收「可证伪」的东西。请写清楚：加了它之后，什么错误的产物会被拦下 / 什么能力被证明了。
+      placeholder: |
+        能拦下「D1 里混入了一个相对 import」的产物。这是错的，因为单文件交付必须完全自包含。
+    validations:
+      required: true
+
+  - type: textarea
+    id: counter
+    attributes:
+      label: 反例长什么样
+      description: 一段会被它判定为失败的输入。没有反例的规则，测的是实现不是价值。
+      placeholder: 在 offline.html 的某个内联模块里加一行 `import './x.js'`。
+    validations:
+      required: true
+
+  - type: textarea
+    id: cost
+    attributes:
+      label: 代价
+      description: 会不会拖慢 CI、会不会误伤合法产物、维护成本多少。
+    validations:
+      required: false

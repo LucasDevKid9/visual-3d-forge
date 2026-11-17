@@ -1,0 +1,68 @@
+name: Bug 报告
+description: 交付物白屏、校验误报、脚本报错
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请先跑一次 `python3 -m pytest tests/ -q`。如果基线不是全绿，问题在仓库不在你的环境。
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: 挂在哪一层
+      options:
+        - 交付物渲染（白屏 / 全黑 / 穿模 / 比例不对）
+        - validate_scene.py（误报或漏报）
+        - bundle.py（打包后模块解析失败）
+        - vendor.py（依赖闭包不全）
+        - api_lookup.py（符号表错误）
+        - playground 实验台
+        - 文档与实现不符
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: 发生了什么
+      description: 一句话说清现象，不要只贴报错。
+      placeholder: 打包成 D1 后打开是纯白，控制台报 Failed to resolve module specifier "vf-int-2"。
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: 复现步骤
+      description: 从 clone 开始写，包含完整命令。
+      placeholder: |
+        git clone ...
+        cp assets/scaffold/forged-scene.html ./t.html
+        python3 scripts/bundle.py --src ./t.html --out ./o.html --vendor ./assets/vendor
+        双击打开 o.html
+    validations:
+      required: true
+
+  - type: textarea
+    id: expect
+    attributes:
+      label: 你预期应该发生什么
+    validations:
+      required: true
+
+  - type: input
+    id: env
+    attributes:
+      label: 环境
+      placeholder: Ubuntu 22.04 / Python 3.11 / Chrome 131 / 本地 file:// 打开
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: 其他
+      description: 截图、控制台全文、相关文件片段。
+    validations:
+      required: false
