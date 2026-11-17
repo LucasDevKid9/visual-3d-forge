@@ -188,7 +188,7 @@
     <span><i style="background:#5b6167"></i>阳极氧化铝</span>
     <span><i style="background:#c08a45"></i>铜衬套</span>
   </div>
-  <div class="ctl"><span>爆炸</span><input id="explode" type="range" min="0" max="100" value="44" aria-label="爆炸视图"><span class="v" id="explodeV">44%</span></div>
+  <div class="ctl"><span>爆炸</span><input id="explode" type="range" min="0" max="100" value="32" aria-label="爆炸视图"><span class="v" id="explodeV">32%</span></div>
 </div>
 
 <div id="card"><h3 id="cardT"></h3><p id="cardB"></p><span class="tag" id="cardG"></span></div>
@@ -275,7 +275,7 @@ function nearestLegal(m, z1, z3) {
 const stage = $('stage');
 let renderer, scene, camera, controls, root, parts = [], planets = [], sunGroup = null, carrier = null;
 let spec = solve(2, 18, 60);
-let explode = 0.44;
+let explode = 0.32;
 let clock = 0;
 
 const steelMat = new THREE.MeshStandardMaterial({ color: 0x9aa2a9, metalness: 1, roughness: 0.52, envMapIntensity: 1.0,
@@ -511,7 +511,7 @@ function fitCamera(instant) {
   // 取「闭合态 ∪ 展开态」的联合包围盒：动画全程都不出框
   const bbox = b0.clone().union(b1);
   const sph = bbox.getBoundingSphere(new THREE.Sphere());
-  const dist = sph.radius / Math.sin((camera.fov * Math.PI / 180) / 2) * (isMobile ? 1.02 : 0.72);
+  const dist = sph.radius / Math.sin((camera.fov * Math.PI / 180) / 2) * (isMobile ? 1.10 : 0.78);
   if (Q.has('dbg')) console.log('FIT', JSON.stringify({r:+sph.radius.toFixed(4), dist:+dist.toFixed(4),
     min:bbox.min.toArray().map(v=>+v.toFixed(3)), max:bbox.max.toArray().map(v=>+v.toFixed(3)), ex:explode}));
   const c0 = sph.center;
