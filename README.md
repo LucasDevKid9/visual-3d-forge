@@ -13,15 +13,17 @@
 </p>
 
 <p align="center">
-  <a href="https://lucasdevkid9.github.io/visual-3d-forge/"><b>▶ 在线实验台 —— 不用装任何东西，打开就能拖</b></a>
+  <a href="https://lucasdevkid9.github.io/visual-3d-forge/"><b>▶ 在线体验 · NOVA X-01 —— 五场景虚拟试验台，打开就能开</b></a>
 </p>
 
 <p align="center">
-  <img src="docs/assets/demo.gif" alt="行星齿轮减速器：爆炸视图与啮合动画" width="760">
+  <a href="https://lucasdevkid9.github.io/visual-3d-forge/">
+    <img src="docs/assets/nova-grid.jpg" alt="NOVA X-01：展台 / 环形测试道 / 城市夜街 / 山地弯道 / 冰雪试验场 / 直线加速道" width="88%">
+  </a>
 </p>
 
 <p align="center">
-  <sub>行星齿轮减速器 · 模数 2 mm · 18 / 21 / 60 齿 · 传动比 4.33 · 全部程序化生成，无一张外部贴图</sub>
+  <sub>NOVA X-01 · 单文件 673 KB · 双击即开，不用服务器、不用联网 · 5 场景 / 4 时段 / 3 天气 / 四档交付</sub>
 </p>
 
 ---
@@ -59,9 +61,44 @@
 
 ---
 
+## 旗舰示例：NOVA X-01
+
+上面那张图不是渲染图，是一个 **673 KB 的 HTML 文件**的截图。
+
+打开它，你会看到：一辆程序化生成的概念车、五张可切换的场景、四个时段、三种天气、一套拆解视图和一套规格控制台。全程 60 fps，无外部贴图、无模型文件、无构建步骤。
+
+**为什么它值得单独做一个示例：**
+
+| 常规 demo | 这个示例 |
+|---|---|
+| 一个模型，转一圈 | 五个场景，每个都有自己的光照与大气 |
+| 展示"能生成" | 展示"换场景不换质量" |
+| 源码和产物混在一起 | **只发产物，不发源码**——它是编译器吐出来的东西，不是一个可以抄的模板 |
+
+产物在 [`demo/index.html`](demo/index.html)，673 KB 单文件。源码不随仓库分发，这是刻意的：**交付物是产物，不是源码。**
+
+场景构成：
+
+| # | 场景 | 在验证什么 |
+|---|---|---|
+| 1 | 展台（SHOWROOM） | 无缝影棚、五档曝光、部件矩阵、爆炸视图 |
+| 2 | 环形测试道 | 弯道跟随、低角度追尾、连续光照 |
+| 3 | 城市夜街 | 楼群遮挡、湿地面反射、夜间泛光 |
+| 4 | 山地弯道 | 地形起伏、远景层次、雨雾衰减 |
+| 5 | 冰雪试验场 | 低附着路面、桩桶阵、高反照率地面 |
+| 6 | 直线加速道 | 速度感、长焦压缩、制动距离 |
+
+按 `N` 换地图，`C` 换视角，`T` 换时段，`F` 换天气，`Space` 拆解。或者在网址后面加 `?tour=1`，它会把五个场景自己串成一条片子。
+
+---
+
 ## 在线实验台：改参数，看约束怎么咬人
 
-[**lucasdevkid9.github.io/visual-3d-forge**](https://lucasdevkid9.github.io/visual-3d-forge/)
+[**lucasdevkid9.github.io/visual-3d-forge/playground/**](https://lucasdevkid9.github.io/visual-3d-forge/playground/)
+
+<p align="center">
+  <img src="docs/assets/demo.gif" alt="行星齿轮减速器：爆炸视图与啮合动画" width="700">
+</p>
 
 不是录屏，是真的在跑：
 
@@ -175,6 +212,7 @@ visual-3d-forge/
 │   ├── vendor/           three r187 的 18 文件裁剪集（2.4 MB，带哈希清单）
 │   └── scaffold/         D0 / D2 / D3 三套骨架
 ├── scripts/              四个工具，纯标准库
+├── demo/                 旗舰示例 NOVA X-01（构建产物，673 KB 单文件，源码不随仓库分发）
 ├── playground/           在线实验台（参数化配齿 + 实时重建）
 ├── examples/             可运行示例（行星齿轮减速器）
 ├── docs/                 架构、设计笔记、验证记录、Banner 与管线图

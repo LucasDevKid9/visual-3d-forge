@@ -13,15 +13,17 @@
 </p>
 
 <p align="center">
-  <a href="https://lucasdevkid9.github.io/visual-3d-forge/"><b>▶ Live playground — nothing to install, just drag a slider</b></a>
+  <a href="https://lucasdevkid9.github.io/visual-3d-forge/"><b>▶ Live · NOVA X-01 — a five-scene virtual testbed, drive it in the browser</b></a>
 </p>
 
 <p align="center">
-  <img src="docs/assets/demo.gif" alt="Planetary gearbox: exploded view and meshing animation" width="760">
+  <a href="https://lucasdevkid9.github.io/visual-3d-forge/">
+    <img src="docs/assets/nova-grid.jpg" alt="NOVA X-01: showroom / ring track / city at night / mountain pass / snow field / drag strip" width="88%">
+  </a>
 </p>
 
 <p align="center">
-  <sub>Planetary gearbox · module 2 mm · 18 / 21 / 60 teeth · ratio 4.33 · fully procedural, zero external textures</sub>
+  <sub>NOVA X-01 · 673 KB single file · double-click to open, no server, no network · 5 scenes / 4 times of day / 3 weathers</sub>
 </p>
 
 ---
@@ -59,9 +61,42 @@ That last row matters: a pipeline that only ever says yes isn't a pipeline, it's
 
 ---
 
+## Flagship demo: NOVA X-01
+
+That image is not a render. It is a screenshot of a **673 KB HTML file**.
+
+Open it and you get a procedurally generated concept car, five switchable scenes, four times of day, three weathers, an exploded-part view and a spec console. 60 fps. No textures, no model files, no build step.
+
+**Why it deserves its own demo:**
+
+| Typical demo | This one |
+|---|---|
+| One model, rotating | Five scenes, each with its own lighting and atmosphere |
+| Proves "it can generate" | Proves "quality holds when the scene changes" |
+| Source and output mixed together | **Output only, no source** — it is what the compiler emits, not a template to copy |
+
+The artifact lives at [`demo/index.html`](demo/index.html). Source is not distributed, and that is deliberate: **the deliverable is the artifact, not the source.**
+
+| # | Scene | What it validates |
+|---|---|---|
+| 1 | Showroom | Seamless cyclorama, exposure ladder, part matrix, exploded view |
+| 2 | Ring track | Corner following, low chase cam, continuous lighting |
+| 3 | City at night | Block occlusion, wet reflections, night bloom |
+| 4 | Mountain pass | Terrain relief, distant layering, rain fog falloff |
+| 5 | Snow field | Low-grip surface, cone slalom, high-albedo ground |
+| 6 | Drag strip | Speed feel, telephoto compression, braking distance |
+
+Press `N` for map, `C` for camera, `T` for time, `F` for weather, `Space` to explode. Or append `?tour=1` to the URL and it cuts all five scenes into one reel.
+
+---
+
 ## Live playground: change a number, watch the constraints bite
 
-[**lucasdevkid9.github.io/visual-3d-forge**](https://lucasdevkid9.github.io/visual-3d-forge/)
+[**lucasdevkid9.github.io/visual-3d-forge/playground/**](https://lucasdevkid9.github.io/visual-3d-forge/playground/)
+
+<p align="center">
+  <img src="docs/assets/demo.gif" alt="Planetary gearbox: exploded view and meshing animation" width="700">
+</p>
 
 Not a screen recording — the real thing:
 
@@ -175,6 +210,7 @@ visual-3d-forge/
 │   ├── vendor/           pruned three r187 set, 18 files (2.4 MB, hashed manifest)
 │   └── scaffold/         D0 / D2 / D3 scaffolds
 ├── scripts/              four tools, stdlib only
+├── demo/                 flagship NOVA X-01 (build artifact, 673 KB single file; source not distributed)
 ├── playground/           live parametric playground (gear solving + live rebuild)
 ├── examples/             runnable example (planetary gearbox)
 ├── docs/                 architecture, design notes, validation record, banner, pipeline diagram

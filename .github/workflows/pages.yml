@@ -1,12 +1,13 @@
 name: pages
 
-# 在线实验台。构建过程刻意只有三步：复制 vendor、改写相对路径、上传。
-# 不做打包、不装 npm —— 实验台本身就是零构建的产物，部署不该引入它不需要的环节。
+# 站点结构：根 = 旗舰示例（NOVA X-01），/playground/ = 参数化实验台。
+# 构建只做搬运：两个页面都是零构建产物，部署不该引入它们不需要的环节。
 
 on:
   push:
     branches: [main]
     paths:
+      - "demo/**"
       - "playground/**"
       - "assets/vendor/**"
       - "docs/assets/**"
@@ -34,39 +35,46 @@ jobs:
       - name: 组装站点
         run: |
           set -eu
-          mkdir -p site/assets
-          # 本地是 /playground/index.html，引用 ../assets/vendor/
-          # 线上把 index.html 提到根，因此去掉一层 ../
-          # 本地是 ../assets/，线上把 index.html 提到根：../ 会跳出站点根，改成 ./
-          # 注意不能写成 "assets/..."：import map 的地址必须是 URL-like
-          # （以 ./ ../ / 或绝对 URL 开头），缺 ./ 会被解析成 null，模块直接不加载。
-          sed 's|\.\./assets/|./assets/|g' playground/index.html > site/index.html
+          mkdir -p site/playground site/assets
+
+          # 旗舰示例：单文件产物，直接放根目录
+          cp demo/index.html site/index.html
+
+          # 参数化实验台：挂在 /playground/ 下，相对路径 ../assets/ 正好指向站点根
+          cp playground/index.html site/playground/index.html
           cp -r assets/vendor site/assets/vendor
 
-          # 三条硬检查：替换干净、依赖齐、没有残留外链
-          if grep -q '\.\./assets' site/index.html; then
-            echo "::error::站点根仍有 .. 相对路径，会跳出 /<repo>/ 前缀"; exit 1
-          fi
-
           python3 - <<'PY'
-          import json, re, sys
-          html = open("site/index.html", encoding="utf-8").read()
-          m = re.search(r'<script type="importmap">(.*?)</script>', html, re.S)
+          import json, re, sys, pathlib
+
+          # 1) 旗舰示例必须自包含：不许有 importmap，不许有远程脚本
+          demo = pathlib.Path("site/index.html").read_text(encoding="utf-8")
+          if '<script type="importmap">' in demo:
+              sys.exit("demo 不应再有 importmap —— 依赖已内联")
+          for pat in ("cdn.jsdelivr", "unpkg.com", "cdnjs.cloudflare"):
+              if pat in demo:
+                  sys.exit(f"demo 仍在引用远程资源：{pat}")
+          if "<script src=" in demo:
+              sys.exit("demo 必须是单文件，不允许外部脚本")
+          print(f"demo ok: {len(demo.encode())//1024} KB, 单文件自包含")
+
+          # 2) 实验台的 importmap 地址必须是 URL-like
+          pg = pathlib.Path("site/playground/index.html").read_text(encoding="utf-8")
+          m = re.search(r'<script type="importmap">(.*?)</script>', pg, re.S)
           if not m:
-              sys.exit("站点缺少 importmap")
+              sys.exit("实验台缺少 importmap")
           imports = json.loads(m.group(1))["imports"]
           bad = [v for v in imports.values()
                  if not v.startswith(("./", "../", "/", "http://", "https://"))]
           if bad:
               sys.exit(f"import map 地址必须是 URL-like，否则会被解析成 null：{bad}")
+          if 'cdn.jsdelivr' in pg or 'unpkg.com' in pg:
+              sys.exit("实验台不应依赖 CDN")
           print("importmap ok:", imports)
           PY
+
           test -f site/assets/vendor/three.module.js
           test -f site/assets/vendor/addons/controls/OrbitControls.js
-          test -f site/assets/vendor/addons/environments/RoomEnvironment.js
-          if grep -Eq 'cdn\.jsdelivr|unpkg\.com' site/index.html; then
-            echo "::error::实验台不应依赖 CDN"; exit 1
-          fi
           echo "site 组装完成：$(du -sh site | cut -f1)"
 
       - uses: actions/configure-pages@v5
