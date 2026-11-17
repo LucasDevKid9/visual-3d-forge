@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-3d3d3d"></a>
-  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-68-4c8a5a">
+  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-69-4c8a5a">
   <img alt="deps" src="https://img.shields.io/badge/runtime%20deps-0-4c8a5a">
   <img alt="three" src="https://img.shields.io/badge/three.js-r187-000">
 </p>
@@ -126,7 +126,7 @@ The `bundle.py` row isn't hypothetical. v2.0 died exactly there: `three.module.j
 ## Contracts, not documentation
 
 ```bash
-python3 -m pytest tests/ -q     # 68 passed
+python3 -m pytest tests/ -q     # 69 passed
 ```
 
 Every number in this README has an assertion that can falsify it in under ten seconds:
@@ -178,7 +178,7 @@ visual-3d-forge/
 ├── playground/           live parametric playground (gear solving + live rebuild)
 ├── examples/             runnable example (planetary gearbox)
 ├── docs/                 architecture, design notes, validation record, banner, pipeline diagram
-├── tests/                68 contract tests, including negative cases
+├── tests/                69 contract tests, including negative cases
 └── THIRD-PARTY-NOTICES.md
 ```
 
@@ -188,7 +188,7 @@ visual-3d-forge/
 
 - [Architecture: why this is a compiler, not a prompt](docs/ARCHITECTURE.md)
 - [Design notes: eleven decisions and their counterexamples](docs/DESIGN-NOTES.md)
-- [Validation record: what each of the 68 assertions guards against](docs/VALIDATION.md)
+- [Validation record: what each of the 69 assertions guards against](docs/VALIDATION.md)
 - [中文 README](README.md)
 
 ## License

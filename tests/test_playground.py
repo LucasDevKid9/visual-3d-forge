@@ -51,6 +51,23 @@ class Test可运行性:
     def test_importmap_引用的文件真实存在(self, rel: str) -> None:
         assert (VENDOR / rel).is_file(), f"vendor 缺文件：{rel}"
 
+    def test_importmap_地址都是_url_like(self, html: str) -> None:
+        """import map 的地址必须以 ./ ../ / 或绝对 URL 开头。
+
+        写成 "assets/vendor/x.js" 语法上像路径，但不符合 import map 的
+        URL-like 要求，Chromium 会把该条目解析成 null，模块一个都不加载。
+        症状是控制台报 `blocked by a null value`，而网络面板一片空白——
+        很难从现象反推到语法，所以在这里钉死。
+        """
+        import json
+
+        m = re.search(r'<script type="importmap">(.*?)</script>', html, re.S)
+        assert m
+        imports = json.loads(m.group(1))["imports"]
+        bad = [v for v in imports.values()
+               if not v.startswith(("./", "../", "/", "http://", "https://"))]
+        assert not bad, f"import map 地址不是 URL-like：{bad}"
+
     def test_不依赖远程_cdn(self, html: str) -> None:
         body = re.sub(r"<!--.*?-->", "", html, flags=re.S)
         remote = re.findall(r'from\s+[\'"](https?://[^\'"]+)', body)

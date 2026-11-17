@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-3d3d3d"></a>
-  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-68-4c8a5a">
+  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-69-4c8a5a">
   <img alt="deps" src="https://img.shields.io/badge/runtime%20deps-0-4c8a5a">
   <img alt="three" src="https://img.shields.io/badge/three.js-r187-000">
 </p>
@@ -126,7 +126,7 @@ python3 scripts/validate_scene.py ./offline.html --strict
 ## 契约不是文档，是测试
 
 ```bash
-python3 -m pytest tests/ -q     # 68 passed
+python3 -m pytest tests/ -q     # 69 passed
 ```
 
 每个数字都有一条断言能在 10 秒内证伪它：
@@ -178,7 +178,7 @@ visual-3d-forge/
 ├── playground/           在线实验台（参数化配齿 + 实时重建）
 ├── examples/             可运行示例（行星齿轮减速器）
 ├── docs/                 架构、设计笔记、验证记录、Banner 与管线图
-├── tests/                68 项契约测试（含反向用例）
+├── tests/                69 项契约测试（含反向用例）
 └── THIRD-PARTY-NOTICES.md
 ```
 
@@ -188,7 +188,7 @@ visual-3d-forge/
 
 - [架构：为什么它是编译器，而不是提示词](docs/ARCHITECTURE.md)
 - [设计笔记：十一个决定与它们各自的反例](docs/DESIGN-NOTES.md)
-- [验证记录：68 项断言分别在防什么](docs/VALIDATION.md)
+- [验证记录：69 项断言分别在防什么](docs/VALIDATION.md)
 - [English README](README_EN.md)
 
 ## 许可

@@ -10,7 +10,7 @@
 
 ```bash
 $ python3 -m pytest tests/ -q
-68 passed in 0.95s
+69 passed in 0.95s
 ```
 
 三个文件，各守一段承诺：
@@ -18,7 +18,7 @@ $ python3 -m pytest tests/ -q
 | 文件 | 用例 | 守的是什么 |
 |---|---:|---|
 | `test_contract.py` | 26 | 文档 ↔ 文件一致、vendor 哈希、四个脚本行为、D0/D2→D1 端到端、反向用例 |
-| `test_playground.py` | 21 | 实验台的 importmap 逐条落地、求解器三条判据在场、SVG 无脚本、GIF 真是动图 |
+| `test_playground.py` | 22 | 实验台的 importmap 逐条落地、求解器三条判据在场、SVG 无脚本、GIF 真是动图 |
 | `test_links.py` | 21 | 每篇文档的相对链接、workflow 可解析且引用的脚本存在、门面文件齐全 |
 
 ### 反向用例清单（最重要的部分）
@@ -153,7 +153,33 @@ $ ffmpeg -framerate 15 -i /tmp/frames/f%03d.png \
 | 任一爆炸度都会出框 | 相机只按当前 bbox 拟合 | 取「闭合态 ∪ 展开态」联合包围盒定框 |
 | `PCFSoftShadowMap` 警告 | three r187 已移除该类型 | 改用 `PCFShadowMap` |
 
-### 5.4 齿形是近似，这点必须说清楚
+### 5.4 线上部署踩到的第一个坑：import map 的 URL-like 规则
+
+**现象**：本地 `http://localhost/playground/` 一切正常，部署到 Pages 后整页只剩 UI，
+控制台只有一句：
+
+```
+Failed to resolve module specifier "three".
+Import Map: "three" matches with "three" but is blocked by a null value
+```
+
+网络面板里**一个 vendor 请求都没有**——不是 404，是根本没发起。
+
+**根因**：Pages 部署时把 `index.html` 提到站点根，于是 `../assets/` 需要改写。
+第一次改写成了 `assets/vendor/three.module.js`。这在文件系统语义下完全正确，
+但 import map 的地址必须是 **URL-like**：只能以 `./`、`../`、`/` 或绝对 URL 开头。
+`assets/...` 不满足，Chromium 判定该条目解析失败并置为 `null`，
+于是整个映射表里 `three` 指向空，所有 import 都被拒绝。
+
+**修法**：改写成 `./assets/vendor/three.module.js`。一个字，`./`。
+
+**为什么没有更早发现**：本地的 importmap 用的是 `../assets/`（合法），
+线上才变成裸相对路径——两边不同构，本地怎么测都测不出来。
+
+**现在的防线**：`pages.yml` 在组装后用 Python 读一遍 import map，
+逐条断言地址是 URL-like；`tests/test_playground.py` 里也钉了同一条断言。
+
+### 5.5 齿形是近似，这点必须说清楚
 
 轮齿用 `BoxGeometry` 实例化摆放（切向 1.55m、径向 2.0m，按模数派生），**不是渐开线**。
 真值部分：齿数、分度圆、节圆相切、中心距、传动比、行星轮角速度关系。
