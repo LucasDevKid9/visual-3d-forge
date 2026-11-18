@@ -45,6 +45,10 @@ NOVA 回答「这套管线能做出什么」；Spec Compiler 回答「**规格�
 Blender 放大人的手艺；这里要消灭的是「翻译」这个动作。人只做**指认**——这是什么件、几个数、装在哪——位置由装配链求解，几何由五个基元（回转 / 拉伸 / 齿形 / 阵列 / 孔）生成。
 
 <p align="center">
+  <a href="https://lucasdevkid9.github.io/visual-3d-forge/spec/out/nema23-actuator.html"><b>▶ 在线打开这份确认件 —— 能转、能剖、能炸开</b></a>
+</p>
+
+<p align="center">
   <img src="docs/assets/spec-hero.jpg" alt="NEMA23 行星减速执行器 · 装配确认件：电机 + 前端法兰 + 减速头 + 输出法兰 + 输出轴 + 安装底板" width="92%">
 </p>
 

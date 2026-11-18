@@ -76,6 +76,10 @@ concept -> spec -> [confirm] -> model -> render -> deliver
 Blender amplifies a person's craft. What this deletes is the *translation* step. A human only **identifies** — what part is this, which numbers, where it mounts. Placement is solved from the assembly chain; geometry comes from five primitives (revolve / extrude / gear / pattern / hole).
 
 <p align="center">
+  <a href="https://lucasdevkid9.github.io/visual-3d-forge/spec/out/nema23-actuator.html"><b>▶ Open this confirmation page live — spin it, section it, explode it</b></a>
+</p>
+
+<p align="center">
   <img src="docs/assets/spec-hero.jpg" alt="NEMA23 planetary actuator: motor, front flange, gearhead, output flange, output shaft, base plate" width="92%">
 </p>
 
