@@ -2,3 +2,6 @@
 pytest>=8
 Pillow>=10
 PyYAML>=6
+# guide/ 的示例要真的过一遍 schema —— 没有它，那条最关键的测试会静默跳过，
+# 而「静默跳过」和「通过」在 CI 里长得一模一样。
+jsonschema>=4

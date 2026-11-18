@@ -100,13 +100,21 @@ def yaml_blocks(path: Path) -> list[str]:
     return re.findall(r"```yaml\n(.*?)```", path.read_text(encoding="utf-8"), re.S)
 
 
-@pytest.mark.skipif(yaml is None or jsonschema is None, reason="需要 pyyaml 与 jsonschema")
 def test_spec_example_passes_schema():
     """03-SPEC.md 里那份「最小可编译」的示例，必须真的能被 schema 接受。
 
     这一条存在的理由：手册承诺「复制这份，改掉内容就能跑」。
     如果示例本身不合法，这个承诺就是假的，而读者会在第一次尝试时就撞墙。
+
+    依赖缺失时**直接失败，不跳过**：在 CI 里，跳过和通过长得一模一样，
+    而这条恰恰是唯一能证明「手册里写的东西真的能跑」的用例。
     """
+    if yaml is None or jsonschema is None:
+        pytest.fail(
+            "缺 pyyaml 或 jsonschema。装一下：pip install -r tests/requirements.txt\n"
+            "这条测试不能静默跳过 —— 跳过与通过在这里长得一样。"
+        )
+
     blocks = yaml_blocks(GUIDE / "03-SPEC.md")
     full = [b for b in blocks if "spec_version" in b and "parts:" in b]
     assert full, "03-SPEC.md 里找不到完整的 SpecSheet 示例"
@@ -119,13 +127,14 @@ def test_spec_example_passes_schema():
             pytest.fail(f"第 {i + 1} 个 YAML 示例不合法：{e.message}\n路径：{list(e.absolute_path)}")
 
 
-@pytest.mark.skipif(yaml is None, reason="需要 pyyaml")
 def test_walkthrough_yaml_is_parseable():
     """WALKTHROUGH 里的 intent 片段至少要是合法 YAML。
 
     它不完整（只有 intent），所以不校验 schema，但语法必须对——
     读者会复制它。
     """
+    if yaml is None:
+        pytest.fail("缺 pyyaml，装一下：pip install -r tests/requirements.txt")
     for block in yaml_blocks(GUIDE / "WALKTHROUGH.md"):
         yaml.safe_load(block)
 
