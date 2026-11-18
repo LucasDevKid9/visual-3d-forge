@@ -656,7 +656,8 @@ function boot(IR) {
   function seg(points, color, opacity) {
     const g = new THREE.BufferGeometry().setFromPoints(points);
     const m = new THREE.LineBasicMaterial({ color, transparent: true, opacity, depthWrite: false });
-    m.userData.base = opacity;   // 记住基准，亮度切换时按比例缩放而不是覆盖
+    m.userData.base = opacity;        // 记住基准，亮度切换时按比例缩放而不是覆盖
+    m.userData.baseColor = color;     // 选中时要换色，同样得记住原色
     return new THREE.Line(g, m);
   }
 
@@ -759,7 +760,11 @@ function boot(IR) {
       else k = 0.52;
       const f = k === 1 ? 2.4 : (k < 0.2 ? 0.14 : 0.62);
       d.group.traverse((o) => {
-        if (o.isLine) o.material.opacity = Math.min(1, (o.material.userData.base || 0.42) * f);
+        if (!o.isLine) return;
+        o.material.opacity = Math.min(1, (o.material.userData.base || 0.42) * f);
+        // 选中时整条线转暖白：1px 的细线在深色底上，只调不透明度是不够的，
+        // 必须换色才「跳」出来 —— 这是截图里才看得出来的一件事。
+        o.material.color.setHex(k === 1 ? 0xffe4b8 : (o.material.userData.baseColor || 0x999999));
       });
       d.tag.material.opacity = k === 1 ? 1 : (k < 0.2 ? 0.08 : 0.5);
       const sc = k === 1 ? 1.18 : 1;
