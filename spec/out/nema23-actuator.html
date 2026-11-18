@@ -524,8 +524,33 @@ function buildShell(IR) {
 
 /* ─────────────────────────── 主程序 ─────────────────────────── */
 
+function supportsWebGL() {
+  try {
+    const c = document.createElement('canvas');
+    return !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl')));
+  } catch (e) {
+    return false;
+  }
+}
+
 function boot(IR) {
   const ui = buildShell(IR);
+
+  // 无 WebGL 就明说，别留一块黑屏让人以为加载失败
+  if (!supportsWebGL()) {
+    const box = document.createElement('div');
+    box.setAttribute('style', [
+      'position:fixed', 'inset:0', 'display:flex', 'flex-direction:column',
+      'align-items:center', 'justify-content:center', 'gap:10px',
+      'font:14px/1.7 system-ui,sans-serif', 'color:#d8cdb8', 'background:#121110',
+      'text-align:center', 'padding:24px', 'z-index:99',
+    ].join(';'));
+    box.innerHTML = '<strong style="font-size:16px">当前环境不支持 WebGL</strong>'
+      + '<span>确认件需要 WebGL 才能转动。请在支持 WebGL 的浏览器打开，'
+      + '或把 spec/out/' + IR.id + '.report.html 发给对方看静态报告。</span>';
+    document.body.appendChild(box);
+    return;
+  }
 
   // ── 动效常量：全站同源 ────────────────────────────────────────────
   // 时长不再散落在各处当魔数。取 120 BPM 的整数拍，相机与转场自然合拍；
@@ -888,6 +913,9 @@ function boot(IR) {
   controls.dampingFactor = 0.075;
   controls.minDistance = maxDim * 0.45;
   controls.maxDistance = maxDim * 6;
+  // 极角限位：确认件只需看侧面与俯视，允许转到正下方会钻进底板内部
+  controls.minPolarAngle = Math.PI * 0.12;
+  controls.maxPolarAngle = Math.PI * 0.48;
   controls.enablePan = false;
   controls.autoRotate = true;
   controls.autoRotateSpeed = 0.55;
@@ -1145,13 +1173,17 @@ function boot(IR) {
   let paused = document.hidden;
   document.addEventListener('visibilitychange', () => { paused = document.hidden; });
 
-  function tick() {
+  let lastFrame = performance.now();
+  function tick(now) {
     requestAnimationFrame(tick);
     if (paused) return;
-    controls.update();
+    // dt 钳制：切回标签页的第一帧 delta 可能是几秒，不钳会让缓动整段跳完
+    const dt = Math.min(((now ?? performance.now()) - lastFrame) / 1000, 0.05);
+    lastFrame = now ?? performance.now();
+    controls.update(dt);
     renderer.render(scene, camera);
   }
-  tick();
+  requestAnimationFrame(tick);
 
   // 首屏：先摆好，再轻轻转，3 秒后停 —— 让人先看清，再给一点动感。
   // 开了「减少动态效果」就不转：这类设置背后常是前庭敏感，旋转会直接引起不适。
