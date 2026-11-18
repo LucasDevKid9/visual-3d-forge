@@ -21,7 +21,7 @@
     "utils/SkeletonUtils.js"
   ],
   "file_count": 18,
-  "total_bytes": 2448397,
+  "total_bytes": 2447491,
   "files": [
     {
       "path": "addons/controls/MapControls.js",
@@ -95,8 +95,8 @@
     },
     {
       "path": "addons/utils/BufferGeometryUtils.js",
-      "bytes": 40059,
-      "sha256_12": "bf5f7738a2ba"
+      "bytes": 39153,
+      "sha256_12": "7bda2a8ba836"
     },
     {
       "path": "addons/utils/SkeletonUtils.js",
