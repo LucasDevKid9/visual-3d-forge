@@ -4206,7 +4206,7 @@
       },
       "explode": [
         0,
-        -0.6,
+        0,
         0
       ],
       "internal": false,

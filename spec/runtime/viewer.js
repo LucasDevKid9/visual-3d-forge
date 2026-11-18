@@ -13,12 +13,18 @@ const CLIP_AXIS = new THREE.Vector3(0, -1, 0);
 /* ─────────────────────────── 材质 ─────────────────────────── */
 
 const MATERIALS = {
-  cast_iron:      { color: 0x4b4f55, metalness: 0.35, roughness: 0.74 },
-  steel:          { color: 0xbabfc7, metalness: 0.96, roughness: 0.24 },
-  aluminum:       { color: 0xc9cdd3, metalness: 0.88, roughness: 0.38 },
-  brass:          { color: 0xb08d57, metalness: 0.92, roughness: 0.32 },
-  anodized_black: { color: 0x343941, metalness: 0.62, roughness: 0.36 },
-  rubber:         { color: 0x1a1c1e, metalness: 0.05, roughness: 0.90 },
+  // 每个材质给四项：底色、金属度、粗糙度、环境强度。
+  // 第四项容易被漏掉：它才是「这块金属有多亮」的开关。
+  // 只调 metalness 不调 envMapIntensity，暗色阳极件会一直是死黑一片。
+  cast_iron:      { color: 0x4d5157, metalness: 0.34, roughness: 0.70, envIntensity: 0.95 },
+  steel:          { color: 0xb5bbc3, metalness: 0.98, roughness: 0.18, envIntensity: 1.30 },
+  stainless:      { color: 0xc3c8ce, metalness: 0.98, roughness: 0.28, envIntensity: 1.18 },
+  aluminum:       { color: 0xc6cad0, metalness: 0.94, roughness: 0.32, envIntensity: 1.15 },
+  anodized_black: { color: 0x343a42, metalness: 0.74, roughness: 0.40, envIntensity: 1.55 },
+  brass:          { color: 0xb08d57, metalness: 0.96, roughness: 0.26, envIntensity: 1.20 },
+  copper:         { color: 0xa5603c, metalness: 0.96, roughness: 0.30, envIntensity: 1.15 },
+  rubber:         { color: 0x16181a, metalness: 0.02, roughness: 0.94, envIntensity: 0.55 },
+  pom_white:      { color: 0xd6d4cc, metalness: 0.00, roughness: 0.52, envIntensity: 0.85 },
 };
 
 const EVIDENCE_COLOR = {
@@ -145,8 +151,12 @@ function buildPart(part, group) {
     meshes.push(new THREE.Mesh(buildOne(part), null));
   }
 
+  const preset = MATERIALS[part.material] || MATERIALS.steel;
   const mat = new THREE.MeshStandardMaterial({
-    ...MATERIALS[part.material] || MATERIALS.steel,
+    color: preset.color,
+    metalness: preset.metalness,
+    roughness: preset.roughness,
+    envMapIntensity: preset.envIntensity ?? 1,
     side: THREE.DoubleSide,
     clippingPlanes: [],
     clipShadows: true,
@@ -163,7 +173,7 @@ function buildPart(part, group) {
   const holder = new THREE.Group();
   meshes.forEach((m) => {
     m.material = mat;
-    m.castShadow = true;
+    m.castShadow = false;
     m.receiveShadow = false;
     m.userData.partUid = part.uid;
     holder.add(m);
@@ -191,6 +201,166 @@ function worstGrade(evidence) {
   if (grades.includes('inferred')) return 'inferred';
   if (grades.includes('measured')) return 'measured';
   return 'standard';
+}
+
+/* ─────────────────── 舞台地面：底板 + 接触阴影（contact shadow） ───────────────────
+ * 做法照 threejs.org/examples/webgl_shadow_contact：
+ *   ① 俯视正交相机把零件的归一化深度渲进一张 RT（清成 1.0 = 远平面 = 空）
+ *   ② 地面用这张图做黄金角螺旋抖动采样，得到贴着物体的一团柔和暗影
+ *
+ * 两处与示例不同，都是被真实渲染逼出来的：
+ *
+ * 【一】地面必须是可见的底板，不能是只显示影子的 ShadowMaterial。
+ * 第一版照搬 ShadowMaterial，结果影子渲对了、却完全看不见——
+ * 黑影子叠在近黑背景上，没有可压暗的余地。#121110 乘 0.38 还是黑。
+ * 「落地感」的前提是地面存在；地面不存在，影子就无处安放。
+ *
+ * 【二】正交相机 far 必须留 1.4 倍余量。取满 height 时物体底面恰好落在
+ * 远平面上，归一化后与「空」同为 1.0，深度图里分不开，影子整片消失。
+ *
+ * 为什么不用方向光的 shadowMap：确认件是「产品照」，不是「室外照」。
+ * 斜射主光会在台面上拖出一条有硬边、有方向的长影——观众第一眼读到的是
+ * 「几点钟的太阳」，而不是「这个件多大」。产品照里唯一的阴影，
+ * 是物件正下方那一团。
+ *
+ * 用 layers 而不是临时改 visible：深度通道只认 layer 1，
+ * 地面/网格/尺寸线不进这条路，渲染完不用还原任何状态。
+ */
+const CS_LAYER = 1;
+const CS_SIZE = 1024;
+
+function makeStage(world, bbox, renderer, opts = {}) {
+  const size = new THREE.Vector3();
+  bbox.getSize(size);
+  const maxDim = Math.max(size.x, size.y, size.z);
+  // 余量要覆盖到「最大爆炸状态」，不只是初始装配态。
+  // 按初始包围盒开窗口，爆炸后零件会跑出深度图，影子被硬切一刀。
+  const pad = maxDim * (0.55 + 0.36 * 1.35);
+  const span = Math.max(size.x, size.z) + pad * 2;
+  const radius = maxDim * 2.1;
+  const cx = (bbox.min.x + bbox.max.x) / 2;
+  const cz = (bbox.min.z + bbox.max.z) / 2;
+  const top = bbox.max.y + Math.max(maxDim * 0.5, 0.02);
+  const bottom = bbox.min.y;
+  const height = top - bottom;
+
+  const rt = new THREE.WebGLRenderTarget(CS_SIZE, CS_SIZE, {
+    minFilter: THREE.LinearFilter,
+    magFilter: THREE.LinearFilter,
+    format: THREE.RGBAFormat,
+    type: THREE.HalfFloatType,
+    depthBuffer: true,
+    stencilBuffer: false,
+  });
+
+  const camFar = height * 1.4;
+  const cam = new THREE.OrthographicCamera(-span / 2, span / 2, span / 2, -span / 2, 0, camFar);
+  cam.position.set(cx, top, cz);
+  cam.up.set(0, 0, -1);
+  cam.lookAt(cx, bottom, cz);
+  cam.layers.set(CS_LAYER);
+
+  const depthMat = new THREE.ShaderMaterial({
+    side: THREE.DoubleSide,
+    vertexShader: `
+      varying float vZ;
+      void main() {
+        vec4 c = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        vZ = c.z * 0.5 + 0.5;
+        gl_Position = c;
+      }`,
+    fragmentShader: `
+      varying float vZ;
+      void main() { gl_FragColor = vec4(vZ, 0.0, 0.0, 1.0); }`,
+  });
+
+  const mat = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    uniforms: {
+      tD: { value: rt.texture },
+      uC: { value: new THREE.Vector2(cx, cz) },
+      uSpan: { value: span },
+      uBlur: { value: Math.max(maxDim * (opts.blur ?? 0.062), 0.002) },
+      uBias: { value: opts.bias ?? 0.90 },
+      uR: { value: radius },
+      uBase: { value: new THREE.Color(opts.base ?? 0x1b1815) },
+      uShadow: { value: opts.shadow ?? 0.86 },
+      uFade: { value: opts.fade ?? 0.94 },
+    },
+    vertexShader: `
+      varying vec3 vW;
+      void main() {
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vW = wp.xyz;
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }`,
+    fragmentShader: `
+      varying vec3 vW;
+      uniform sampler2D tD;
+      uniform vec2 uC;
+      uniform float uSpan, uBlur, uBias, uR, uShadow, uFade;
+      uniform vec3 uBase;
+
+      void main() {
+        // 底板径向淡出：边缘融进背景，读起来是「无限地面」而不是一个圆饼
+        float d2 = length(vW.xz - uC);
+        float edge = 1.0 - smoothstep(uR * 0.40, uR, d2);
+        if (edge < 0.004) discard;
+
+        vec2 uv = vec2((vW.x - uC.x) / uSpan + 0.5, (uC.y - vW.z) / uSpan + 0.5);
+
+        float hit = 0.0;
+        if (uv.x > 0.0 && uv.x < 1.0 && uv.y > 0.0 && uv.y < 1.0) {
+          // 逐像素旋转采样：固定螺旋在稀疏采样下会显出等距环纹，
+          // 看着像「地上有水波」。抖动把环纹换成噪点，噪点会被人眼当成颗粒。
+          float jitter = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+          for (int i = 0; i < 24; i++) {
+            float fi = float(i);
+            float a = fi * 2.39996323 + jitter * 6.2831853;
+            float r = sqrt((fi + 0.5) / 24.0) * uBlur;
+            float d = texture2D(tD, uv + vec2(cos(a), sin(a)) * r / uSpan).x;
+            hit += 1.0 - smoothstep(uBias, 1.0, d);
+          }
+          hit /= 24.0;
+        }
+
+        // 命中率 0.5 以上给满：物体正下方必满，边缘自然渐隐
+        float shade = smoothstep(0.0, 0.50, hit);
+        vec3 col = uBase * (1.0 - shade * uShadow);
+        gl_FragColor = vec4(col, edge * uFade);
+      }`,
+  });
+
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(radius * 2, radius * 2), mat);
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.position.set(cx, bottom + 0.0002, cz);
+  mesh.renderOrder = 1;
+
+  world.traverse((o) => { if (o.isMesh) o.layers.enable(CS_LAYER); });
+
+  let dirty = true;
+  function render() {
+    const prevTarget = renderer.getRenderTarget();
+    const prevClear = renderer.getClearColor(new THREE.Color());
+    const prevAlpha = renderer.getClearAlpha();
+    renderer.setRenderTarget(rt);
+    renderer.setClearColor(0xffffff, 1);
+    renderer.render(world, cam);
+    renderer.setRenderTarget(prevTarget);
+    renderer.setClearColor(prevClear, prevAlpha);
+    dirty = false;
+  }
+
+  return {
+    mesh,
+    material: mat,
+    rt,
+    markDirty() { dirty = true; },
+    update() { if (dirty) render(); },
+    render,
+  };
 }
 
 /* ─────────────────────────── UI ─────────────────────────── */
@@ -275,33 +445,8 @@ function buildShell(IR) {
 
 /* ─────────────────────────── 主程序 ─────────────────────────── */
 
-function supportsWebGL() {
-  try {
-    const c = document.createElement('canvas');
-    return !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl')));
-  } catch (e) {
-    return false;
-  }
-}
-
 function boot(IR) {
   const ui = buildShell(IR);
-
-  // 无 WebGL 就明说，别留一块黑屏让人以为加载失败
-  if (!supportsWebGL()) {
-    const box = document.createElement('div');
-    box.setAttribute('style', [
-      'position:fixed', 'inset:0', 'display:flex', 'flex-direction:column',
-      'align-items:center', 'justify-content:center', 'gap:10px',
-      'font:14px/1.7 system-ui,sans-serif', 'color:#d8cdb8', 'background:#121110',
-      'text-align:center', 'padding:24px', 'z-index:99',
-    ].join(';'));
-    box.innerHTML = '<strong style="font-size:16px">当前环境不支持 WebGL</strong>'
-      + '<span>确认件需要 WebGL 才能转动。请在支持 WebGL 的浏览器打开，'
-      + '或把 spec/out/' + IR.id + '.report.html 发给对方看静态报告。</span>';
-    document.body.appendChild(box);
-    return;
-  }
 
   // ── 动效常量：全站同源 ────────────────────────────────────────────
   // 时长不再散落在各处当魔数。取 120 BPM 的整数拍，相机与转场自然合拍；
@@ -323,10 +468,11 @@ function boot(IR) {
 
   const renderer = new THREE.WebGLRenderer({ canvas: ui.canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFShadowMap;
+  // 阴影贴图关掉：地面改成接触阴影那一张 shader 之后，场景里没有一个
+  // receiveShadow 的对象，2048² 的 shadow map 每帧白渲。省下的是真实的帧时间。
+  renderer.shadowMap.enabled = false;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = 1.12;
   renderer.localClippingEnabled = true;
 
   const scene = new THREE.Scene();
@@ -334,51 +480,52 @@ function boot(IR) {
 
   const camera = new THREE.PerspectiveCamera(36, 1, 0.01, 60);
 
-  // 环境反射：用一个小「柔光棚」而不是一张渐变图。
-  // 渐变图在横向只有十几个像素，高粗糙度材质采样最低 mip 时会被放大成大色块——
-  // 表现为曲面上莫名其妙的马赛克。这是必须用真实几何做环境的原因。
+  // ── 环境：一间柔光棚 ──
+  // 金属之所以「像金属」，不是因为 metalness=1，是因为它反射的东西有结构。
+  // 一张均匀的 HDRI 只能把金属变成灰塑料；真正起作用的是**窄而亮的光带**——
+  // 它们会在曲面上被拉成一条条高光，人眼靠这组高光读「这是金属，而且是磨过的」。
+  //
+  // 第一版只有 4 块面板，且都接近正方形：曲面上的高光糊成一团，读起来是塑料。
+  // 这一版换成「宽顶棚 + 两条窄灯带 + 地面反光板」，并让左右色温不同——
+  // 冷侧暖侧的差异会在圆柱侧壁上形成一道明暗过渡，体积感是这么来的。
   const pmrem = new THREE.PMREMGenerator(renderer);
   const envScene = new THREE.Scene();
-  const roomGeo = new THREE.BoxGeometry(10, 6, 10);
-  const roomMat = new THREE.MeshBasicMaterial({ color: 0x14171b, side: THREE.BackSide });
-  envScene.add(new THREE.Mesh(roomGeo, roomMat));
+  envScene.add(new THREE.Mesh(
+    new THREE.BoxGeometry(10, 7, 10),
+    new THREE.MeshBasicMaterial({ color: 0x0b0d10, side: THREE.BackSide }),
+  ));
 
-  const soft = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  // [w, h, d, [x,y,z], intensity, hex]
   const panels = [
-    [3.2, 0.012, 3.2, [0, 2.9, 0], 1.5],       // 顶灯
-    [0.012, 2.0, 3.0, [-4.8, 0.4, 0], 1.1],    // 左侧条光
-    [0.012, 1.6, 2.4, [4.8, 0.2, 1.2], 0.85],  // 右侧条光
-    [2.4, 1.2, 0.012, [0, 0.3, -4.8], 0.5],    // 背后轮廓
+    [4.6, 0.02, 4.6, [0, 3.35, 0], 1.95, 0xfff6ea],      // 顶部主柔光
+    [0.035, 3.0, 3.4, [-4.9, 0.5, 0.5], 3.2, 0xffe6c4],  // 左侧暖灯带
+    [0.035, 2.4, 3.0, [4.9, 0.3, -0.9], 1.9, 0xc2d6ff],  // 右侧冷灯带
+    [3.2, 0.02, 0.05, [0, 1.35, -4.9], 1.3, 0xd6e2ff],   // 背后水平轮廓条
+    [4.2, 0.02, 4.2, [0, -3.4, 0], 0.42, 0x3a2b1c],      // 地面暖反光
+    // 两条「光管」：沿 X 延伸的细长灯。它们被圆柱面反射成一条水平亮线，
+    // 而人眼判「这是金属」靠的就是这条线。面积小、亮度高，总能量并不大，
+    // 所以不会过曝；换成大面积高亮只会把圆柱打成一团白。
+    [3.6, 0.055, 0.055, [0, 1.98, 4.55], 7.0, 0xfff3e0],
+    [3.2, 0.05, 0.05, [0, 2.45, -4.45], 3.4, 0xd9e6ff],
   ];
-  panels.forEach(([w, h, d, pos, k]) => {
+  panels.forEach(([w, h, d, pos, k, hex]) => {
     const m = new THREE.Mesh(
       new THREE.BoxGeometry(w, h, d),
-      new THREE.MeshBasicMaterial({ color: new THREE.Color(k, k, k * 1.06) }),
+      new THREE.MeshBasicMaterial({ color: new THREE.Color(hex).multiplyScalar(k) }),
     );
     m.position.set(...pos);
     envScene.add(m);
   });
 
-  const envRT = pmrem.fromScene(envScene, 0.04);
-  const env = envRT.texture;
-  scene.environment = env;
-  scene.environmentIntensity = 0.95;
+  const envRT = pmrem.fromScene(envScene, 0.035);
+  scene.environment = envRT.texture;
+  scene.environmentIntensity = 1.05;
 
   // 三光：主光有阴影，补光冷，轮廓光从背后切边
   scene.add(new THREE.HemisphereLight(0x9fb0c8, 0x231d18, 0.72));
 
   const key = new THREE.DirectionalLight(0xfff2e0, 1.95);
   key.position.set(1.8, 2.4, 1.5);
-  key.castShadow = true;
-  key.shadow.mapSize.set(2048, 2048);
-  key.shadow.camera.near = 0.1;
-  key.shadow.camera.far = 8;
-  key.shadow.camera.left = -1.2;
-  key.shadow.camera.right = 1.2;
-  key.shadow.camera.top = 1.2;
-  key.shadow.camera.bottom = -1.2;
-  key.shadow.bias = -0.0004;
-  key.shadow.normalBias = 0.04;
   scene.add(key);
 
   const fill = new THREE.DirectionalLight(0x9aabc4, 0.48);
@@ -388,6 +535,12 @@ function boot(IR) {
   const rim = new THREE.DirectionalLight(0xffd9a8, 0.85);
   rim.position.set(-0.6, 0.3, -2.2);
   scene.add(rim);
+
+  // 正面补光：位置跟着相机走。没有它，朝向观众的那一面永远是死黑——
+  // 而那一面恰好是观众唯一在看的面。强度必须低（0.35），
+  // 高了就把体积压平，变成一张贴图。
+  const front = new THREE.DirectionalLight(0xcfd8e6, 0.35);
+  scene.add(front);
 
   // ── 构件 ──
   const world = new THREE.Group();
@@ -412,14 +565,13 @@ function boot(IR) {
   const center = bbox.getCenter(new THREE.Vector3());
   const maxDim = Math.max(size.x, size.y, size.z);
 
-  const ground = new THREE.Mesh(
-    new THREE.CircleGeometry(maxDim * 2.4, 64),
-    new THREE.ShadowMaterial({ opacity: 0.42 }),
-  );
-  ground.rotation.x = -Math.PI / 2;
-  ground.position.y = bbox.min.y - 0.001;
-  ground.receiveShadow = true;
+  // 地面就是接触阴影那张平面本身：底板 + 影子一次画完。
+  // 分开画（地面一份、影子一份）要处理透明排序，而两片共面的透明面
+  // 排序一错，影子就会时有时无——合并成一个 shader 是这个问题的唯一解。
+  const contact = makeStage(world, bbox, renderer, { blur: 0.062, shadow: 0.86 });
+  const ground = contact.mesh;
   scene.add(ground);
+  contact.render();
 
   const gridR = maxDim * 1.35;
   const grid = new THREE.PolarGridHelper(gridR, 8, 5, 64, 0x2a2622, 0x201d1a);
@@ -493,7 +645,6 @@ function boot(IR) {
 
     IR.parts.forEach((p) => {
       const pbb = new THREE.Box3().setFromObject(built.get(p.uid).holder);
-      const ph = pbb.getSize(new THREE.Vector3()).multiplyScalar(0.5);
       Object.entries(p.evidence || {}).forEach(([key, ev]) => {
         const an = ev.anchor;
         if (!an) return;
@@ -507,13 +658,32 @@ function boot(IR) {
         if (dir.lengthSq() < 1e-10) return;
         dir.normalize();
 
-        // 偏移方向：与尺寸方向垂直、且尽量朝上
+        // 偏移方向：与尺寸方向垂直、且尽量朝上。
+        // 竖直尺寸（直径、厚度）不能往竖直方向再推，改用**侧向**——
+        // 而且必须往零件所在的那一侧推。第一版推到 +Z（朝观众），
+        // 透视下投影正好糊在模型身上，26 条标注变成一片压在零件上的数字。
         const up = new THREE.Vector3(0, 1, 0);
-        if (Math.abs(dir.dot(up)) > 0.85) up.set(0, 0, 1);
+        if (Math.abs(dir.dot(up)) > 0.85) {
+          const px = pbb.getCenter(new THREE.Vector3()).x;
+          const ax = bbox.getCenter(new THREE.Vector3()).x;
+          up.set(px >= ax ? 1 : -1, 0, 0);
+        }
         const off = up.clone().addScaledVector(dir, -up.dot(dir)).normalize();
 
-        // 越过这个零件在该方向上的轮廓，否则标注压在模型上
-        const reach = Math.abs(ph.x * off.x) + Math.abs(ph.y * off.y) + Math.abs(ph.z * off.z);
+        // 外推距离必须算到**整个装配体**之外，不是到零件之外。
+        // 用零件包围盒算的第一版，凡是跨零件的尺寸（总长、中心距）全部压在模型上——
+        // 因为「底座自己很扁」不等于「这条从底座量到电机尾部的尺寸很扁」。
+        const edgeDist = (pt) => {
+          let t = Infinity;
+          ['x', 'y', 'z'].forEach((ax) => {
+            const o = off[ax];
+            if (Math.abs(o) < 1e-6) return;
+            const bound = o > 0 ? bbox.max[ax] : bbox.min[ax];
+            t = Math.min(t, (bound - pt[ax]) / o);
+          });
+          return Number.isFinite(t) ? Math.max(t, 0) : 0;
+        };
+        const reach = Math.max(edgeDist(a), edgeDist(b));
         specs.push({ p, key, ev, a, b, dir, off, reach });
       });
     });
@@ -526,10 +696,28 @@ function boot(IR) {
       buckets.get(k).push(sp);
     });
 
+    const UP = new THREE.Vector3(0, 1, 0);
     buckets.forEach((arr) => {
       const maxReach = Math.max(...arr.map((sp) => sp.reach));
+
+      // 层号必须按**沿桶切向的位置**分配，不能按遍历顺序。
+      // 按顺序分层的后果：左边那条被推到最外层、右边那条留在内层，
+      // 引出线互相穿越，读起来是一团乱麻。排序之后层次沿切向单调，
+      // 「同一排的东西排成一道斜阶梯」——这正是工程图的读法。
+      const tangent = new THREE.Vector3().crossVectors(UP, arr[0].off);
+      if (tangent.lengthSq() < 1e-8) tangent.set(1, 0, 0);
+      tangent.normalize();
+      arr.sort((s1, s2) => {
+        const m1 = s1.a.clone().add(s1.b).multiplyScalar(0.5).dot(tangent);
+        const m2 = s2.a.clone().add(s2.b).multiplyScalar(0.5).dot(tangent);
+        return m1 - m2 || s1.ev.value - s2.ev.value;
+      });
+
+      // 层距自适应：条数多时收窄，否则最外一条会被推到画面之外。
+      // 0.038 是「一眼能分开」的最小值，不再往下压。
+      const step = Math.max(0.024, Math.min(0.040, 0.26 / Math.max(arr.length, 1)));
       arr.forEach((sp, i) => {
-        drawDim(sp, maxReach + maxDim * (0.028 + 0.038 * i));
+        drawDim(sp, maxReach + maxDim * (0.028 + step * i));
       });
     });
 
@@ -631,7 +819,7 @@ function boot(IR) {
     }
     // 1.06 而不是 1.0：尺寸线画在零件外侧，取景若只按模型算，
     // 最外圈的数字必然被切掉一半。留白是给标注的，不是给模型的。
-    return need * 1.06;
+    return need * 1.20;
   }
 
   // 右侧明细面板会吃掉 340px。正确做法不是平移取景框（那会把左边推出画面），
@@ -664,9 +852,6 @@ function boot(IR) {
   controls.dampingFactor = 0.075;
   controls.minDistance = maxDim * 0.45;
   controls.maxDistance = maxDim * 6;
-  // 极角限位：确认件只需看侧面与俯视，允许转到正下方会钻进底板内部
-  controls.minPolarAngle = Math.PI * 0.12;
-  controls.maxPolarAngle = Math.PI * 0.48;
   controls.enablePan = false;
   controls.autoRotate = true;
   controls.autoRotateSpeed = 0.55;
@@ -717,6 +902,7 @@ function boot(IR) {
     });
     updateDimVisibility();
     tip.classList.remove('on');
+    contact.markDirty();
     // 零件散开后整体变宽，相机跟着退一点；不退的话两端一定出画。
     const dir = camera.position.clone().sub(controls.target);
     const want = (dollyBase || dist) * (1 + 0.55 * v);
@@ -742,6 +928,9 @@ function boot(IR) {
       rec.holder.visible = on || !rec.part.internal;
     });
     ground.visible = !on;
+    // 剖切时地面整体让位，接触阴影跟着走。深度通道是 ShaderMaterial，
+    // 不吃 clippingPlanes——留着它会在剖开后给出一团「完整外形」的假影。
+    contact.mesh.visible = !on;
     grid.visible = !on;
     axisLine.visible = !on;
     updateDimVisibility();
@@ -816,8 +1005,10 @@ function boot(IR) {
       const on = id === uid;
       rec.edgeMat.opacity = on ? 0.95 : 0.18;
       rec.edgeMat.color.setHex(on ? 0xe8c48a : EVIDENCE_COLOR[worstGrade(rec.part.evidence)]);
-      rec.mat.emissiveIntensity = on ? 0.22 : 0;
-      rec.mat.emissive.setHex(on ? 0x3a2f1e : 0x000000);
+      // 自发光强度要跟着环境亮度走：环境一调亮，0.22 的自发光就被淹没了，
+      // 表现为「点了列表，看不出选中了哪个件」。选中必须比环境高一个档才读得出来。
+      rec.mat.emissiveIntensity = on ? 0.55 : 0;
+      rec.mat.emissive.setHex(on ? 0x6b4f28 : 0x000000);
     });
     document.querySelectorAll('.sv-row').forEach((r) => {
       r.classList.toggle('on', r.dataset.uid === uid);
@@ -924,17 +1115,15 @@ function boot(IR) {
   let paused = document.hidden;
   document.addEventListener('visibilitychange', () => { paused = document.hidden; });
 
-  let lastFrame = performance.now();
-  function tick(now) {
+  function tick() {
     requestAnimationFrame(tick);
     if (paused) return;
-    // dt 钳制：切回标签页的第一帧 delta 可能是几秒，不钳会让缓动整段跳完
-    const dt = Math.min(((now ?? performance.now()) - lastFrame) / 1000, 0.05);
-    lastFrame = now ?? performance.now();
-    controls.update(dt);
+    contact.update();          // 只在脏了之后重渲深度，静态时零开销
+    controls.update();
+    front.position.copy(camera.position);   // 补光始终站在观众这一侧
     renderer.render(scene, camera);
   }
-  requestAnimationFrame(tick);
+  tick();
 
   // 首屏：先摆好，再轻轻转，3 秒后停 —— 让人先看清，再给一点动感。
   // 开了「减少动态效果」就不转：这类设置背后常是前庭敏感，旋转会直接引起不适。

@@ -158,7 +158,7 @@ parts:
       板宽: { value: 80.0, src: "图注 A5", grade: measured }
       板厚: { value: 8.0, src: "推断：常见钢底板", grade: inferred }
       安装孔径: { value: 9.0, src: "推断：M8 通孔", grade: inferred }
-    explode: [0, -0.6, 0]
+    explode: [0, 0, 0]
 
   # ── 内部轮系（默认隐藏，剖切时显现）──────────────────────────────
   - uid: motor_shaft
