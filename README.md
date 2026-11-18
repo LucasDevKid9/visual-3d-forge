@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-3d3d3d"></a>
-  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-86-4c8a5a">
+  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-111-4c8a5a">
   <img alt="deps" src="https://img.shields.io/badge/runtime%20deps-0-4c8a5a">
   <img alt="three" src="https://img.shields.io/badge/three.js-r187-000">
 </p>
@@ -68,6 +68,27 @@ Blender 放大人的手艺；这里要消灭的是「翻译」这个动作。人
   <img src="docs/assets/spec-section.jpg" alt="剖切视图：行星轮系、太阳轮、齿圈与电机轴" width="92%">
 </p>
 
+### 每个数字都钉在它量过的那一段上
+
+<p align="center">
+  <img src="docs/assets/spec-dims.jpg" alt="尺寸线：每个数字引出到它真正量过的那一段，按成色着色" width="92%">
+</p>
+
+「有依据」如果只是一句话，它就没法被检验。所以编译器会把每个尺寸**钉回几何**：人去量包围盒、量轮廓段、量孔心距，钉不上的一律报「未定位」。
+
+```
+  机身长    56.0  →  motor_body 的 X 跨度 56.00  ✓
+  机身直径  57.15 →  motor_body 的径向直径 57.15 ✓
+  扁位直径  10.0  →  轮廓里 r=5.0 那一段的 2r     ✓
+  安装孔径  5.5   →  motor_flange 的四个 ⌀5.5 孔 ✓
+  孔分布圆  62.0  →  六个孔心两两距离 62.00      ✓
+  齿数      16    →  无量纲，不参与定位（分母扣除）
+```
+
+页面里这些落点变成真正的尺寸线：引出线、箭头、数值、按成色着色。鼠标停在某个件上，这个件的尺寸全部亮起；在右侧点一条明细，相机飞过去、对应的那段亮到全屏只剩它。
+
+> 这条链能抓自己的错。第一版它报出了「壳体长填 45、几何是 46」——两个数字都不假，只是不一致。**这种错，人眼在渲染图里看不出来。**
+
 ### 一条命令，三个产物
 
 ```bash
@@ -82,6 +103,7 @@ python3 tools/spec_compile.py spec/examples/nema23-actuator.yaml --out spec/out/
   [PASS] C3  孔位在轮廓内   所有孔洞均落在轮廓内，无越界
   [PASS] C4  包围盒干涉    无未声明干涉（贴合对与内部件已排除）
   [PASS] C5  证据覆盖率    可信 67%（实测 11 + 标准 9）/ 共 30 项
+  [PASS] C6  证据定位率    26/26 项尺寸已在几何上定位（容差 0.8 mm / 2%）
   ──────────────────────────────────────────────────────────────
 ```
 
@@ -96,6 +118,8 @@ python3 tools/spec_compile.py spec/examples/nema23-actuator.yaml --out spec/out/
 - 输入契约：[`spec/schema/specsheet.schema.json`](spec/schema/specsheet.schema.json)
 - 示例规格表：[`spec/examples/nema23-actuator.yaml`](spec/examples/nema23-actuator.yaml)
 - 路线与边界：[`docs/ROADMAP.md`](docs/ROADMAP.md) —— 26 周，四个阶段，每阶段一个可证伪判据
+- 交付标准：[`docs/PRINCIPLES.md`](docs/PRINCIPLES.md) —— 十条工程原则 + 反面清单，可逐条否证
+- 文档地图：[`docs/README.md`](docs/README.md) —— 中英对照索引与阅读顺序
 
 ---
 
@@ -234,7 +258,7 @@ python3 scripts/validate_scene.py ./offline.html --strict
 ## 契约不是文档，是测试
 
 ```bash
-python3 -m pytest tests/ -q     # 69 passed
+python3 -m pytest tests/ -q     # 111 passed
 ```
 
 每个数字都有一条断言能在 10 秒内证伪它：
@@ -287,7 +311,7 @@ visual-3d-forge/
 ├── playground/           在线实验台（参数化配齿 + 实时重建）
 ├── examples/             可运行示例（行星齿轮减速器）
 ├── docs/                 架构、设计笔记、验证记录、Banner 与管线图
-├── tests/                69 项契约测试（含反向用例）
+├── tests/                111 项契约测试（含反向用例）
 └── THIRD-PARTY-NOTICES.md
 ```
 
@@ -295,9 +319,13 @@ visual-3d-forge/
 
 ## 文档
 
+- [工程原则：十条准则与反面清单](docs/PRINCIPLES.md) —— [English](docs/PRINCIPLES_EN.md)
+- [路线：26 周四个阶段，每阶段一个可证伪判据](docs/ROADMAP.md) —— [English](docs/ROADMAP_EN.md)
+- [战略：护城河、算法排序、商业顺序](docs/STRATEGY-2026.md) —— [English](docs/STRATEGY-2026_EN.md)
+- [文档地图与阅读顺序](docs/README.md)
 - [架构：为什么它是编译器，而不是提示词](docs/ARCHITECTURE.md)
 - [设计笔记：十一个决定与它们各自的反例](docs/DESIGN-NOTES.md)
-- [验证记录：69 项断言分别在防什么](docs/VALIDATION.md)
+- [验证记录：111 项断言分别在防什么](docs/VALIDATION.md)
 - [English README](README_EN.md)
 
 ## 许可

@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-3d3d3d"></a>
-  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-69-4c8a5a">
+  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-111-4c8a5a">
   <img alt="deps" src="https://img.shields.io/badge/runtime%20deps-0-4c8a5a">
   <img alt="three" src="https://img.shields.io/badge/three.js-r187-000">
 </p>
@@ -97,6 +97,27 @@ No modelling tool tells you "I guessed this number", because that is bad for sel
   <img src="docs/assets/spec-section.jpg" alt="Section view: planet set, sun gear, ring gear and motor shaft" width="92%">
 </p>
 
+### Every number is pinned to the segment it measured
+
+<p align="center">
+  <img src="docs/assets/spec-dims.jpg" alt="Dimension lines: each number leads back to the segment it actually measured, coloured by grade" width="92%">
+</p>
+
+"Has a basis" is unfalsifiable if it stays a sentence. So the compiler **nails each dimension back onto geometry**: it measures the bounding box, the profile segments, the hole spacing — and anything it cannot nail down is reported as unlocated.
+
+```
+  body length   56.0  →  motor_body X span 56.00              ✓
+  body diameter 57.15 →  motor_body radial diameter 57.15     ✓
+  flat diameter 10.0  →  2r of the r=5.0 segment in profile   ✓
+  hole diameter 5.5   →  the four ⌀5.5 holes in motor_flange  ✓
+  hole circle   62.0  →  centre-to-centre of six holes 62.00  ✓
+  tooth count   16    →  dimensionless, excluded from the denominator
+```
+
+On the page these anchors become real dimension lines: extension lines, arrowheads, values, coloured by grade. Hover a part and its dimensions light up; click a row in the side panel and the camera flies in until that one segment is all that is left.
+
+> The chain catches its own mistakes. Its first run reported "shell length says 45, geometry says 46" — two numbers, both plausible, one inconsistent. **That class of error is invisible in a render.**
+
 ```bash
 python3 tools/spec_compile.py spec/examples/nema23-actuator.yaml --out spec/out/
 ```
@@ -108,6 +129,8 @@ Compile the same SpecSheet twice and the fingerprint must match — that asserti
 - Input contract: [`spec/schema/specsheet.schema.json`](spec/schema/specsheet.schema.json)
 - Example: [`spec/examples/nema23-actuator.yaml`](spec/examples/nema23-actuator.yaml)
 - Roadmap: [`docs/ROADMAP.md`](docs/ROADMAP.md) — 26 weeks, four stages, one falsifiable gate each
+- Delivery standard: [`docs/PRINCIPLES_EN.md`](docs/PRINCIPLES_EN.md) — ten principles plus a red-line checklist you can fail
+- Document map: [`docs/README.md`](docs/README.md) — bilingual index and reading order
 
 ---
 
@@ -211,7 +234,7 @@ The `bundle.py` row isn't hypothetical. v2.0 died exactly there: `three.module.j
 ## Contracts, not documentation
 
 ```bash
-python3 -m pytest tests/ -q     # 69 passed
+python3 -m pytest tests/ -q     # 111 passed
 ```
 
 Every number in this README has an assertion that can falsify it in under ten seconds:
@@ -264,7 +287,7 @@ visual-3d-forge/
 ├── playground/           live parametric playground (gear solving + live rebuild)
 ├── examples/             runnable example (planetary gearbox)
 ├── docs/                 architecture, design notes, validation record, banner, pipeline diagram
-├── tests/                69 contract tests, including negative cases
+├── tests/                111 contract tests, including negative cases
 └── THIRD-PARTY-NOTICES.md
 ```
 
@@ -272,9 +295,13 @@ visual-3d-forge/
 
 ## Docs
 
+- [Principles: ten rules and a red-line checklist](docs/PRINCIPLES_EN.md) — [中文](docs/PRINCIPLES.md)
+- [Roadmap: 26 weeks, four stages, one falsifiable gate each](docs/ROADMAP_EN.md) — [中文](docs/ROADMAP.md)
+- [Strategy: moats, algorithm order, market order](docs/STRATEGY-2026_EN.md) — [中文](docs/STRATEGY-2026.md)
+- [Document map and reading order](docs/README.md)
 - [Architecture: why this is a compiler, not a prompt](docs/ARCHITECTURE.md)
 - [Design notes: eleven decisions and their counterexamples](docs/DESIGN-NOTES.md)
-- [Validation record: what each of the 69 assertions guards against](docs/VALIDATION.md)
+- [Validation record: what each of the 111 assertions guards against](docs/VALIDATION.md)
 - [中文 README](README.md)
 
 ## License

@@ -2,7 +2,7 @@
 
 **把「一张带标注的图 + 一句需求」编译成「一个能转、能剖、能量的三维确认页」**
 
-> 版本 1.0 · 2026-11-18
+> 版本 1.0 · 2026-11-18 · English: [`ROADMAP_EN.md`](./ROADMAP_EN.md)
 > 上一份 [`STRATEGY-2026.md`](./STRATEGY-2026.md) 回答"往哪走"，这一份回答"站在哪、怎么走、每步交付什么"。
 > 两者的关系：护城河与算法排序沿用上一份；**产品位置与节奏以本文为准**。
 
@@ -143,7 +143,7 @@ Blender 的价值 = 人的时间 × 人的水平。它没法替你决定"这个�
 source:                    # 图从哪来，可信到什么程度
   image: drawing.png
   grade: R1                # 复用 R1–R5 分级
-  unit: mm
+  note: 三视图带标注
 
 intent:                    # 复用意图卡七字段，一个不少
   object: 单级齿轮减速器 R40
@@ -155,19 +155,23 @@ intent:                    # 复用意图卡七字段，一个不少
   delivery: D1
 
 parts:                     # 构件表：人只写"这是什么 + 几个数"
-  - id: housing
+  - uid: housing
+    label: 箱体
     kind: revolve          # 五个基元之一
-    profile: [[0,0],[80,0],[80,120],[0,120]]
-    dims: {外径: 160, 长: 120}
-    evidence: {外径: A2, 长: A3}     # 这个数图上的哪个标注
+    axis: z
+    params:
+      profile: [[0,0],[80,0],[80,120],[0,120]]
+    evidence:              # 每个数都写清：值、出处、成色
+      外径: { value: 160, src: "图注 A2", grade: measured }
+      长:   { value: 120, src: "图注 A3", grade: measured }
 
 assembly:                  # 装配意图：用约束说，不用坐标说
-  - {type: coax, a: shaft_in, b: gear_1}
-  - {type: mate, a: bearing_in, b: housing, face: inner}
+  - { type: mate,  a: shaft_in, b: housing }
+  - { type: mount, a: bearing_in, to: housing, at: 0.0 }
 
 views:                     # 要看哪几个角度、要不要剖
-  - {id: hero, kind: iso}
-  - {id: cut,  kind: section, axis: z, at: 0}
+  - { kind: iso, label: 等轴 }
+  - { kind: front, label: 正视 }
 ```
 
 **关键设计**：人不写坐标，只写关系。坐标由编译器解。
