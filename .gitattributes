@@ -15,3 +15,9 @@ assets/vendor/** linguist-generated
 examples/**/*.html linguist-detectable=true
 assets/scaffold/**/*.html linguist-detectable=true
 playground/*.html linguist-detectable=true
+
+# MHTML 存档是二进制容器：RFC 2557 要求分段头用 CRLF，
+# text=auto 会把 CRLF 转成 LF，破坏分段边界与 binary 载荷。
+tests/fixtures/*.mht -text -diff
+*.mht -text
+*.mhtml -text
