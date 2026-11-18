@@ -77,7 +77,6 @@ jobs:
           if 'cdn.jsdelivr' in pg or 'unpkg.com' in pg:
               sys.exit("实验台不应依赖 CDN")
           print("importmap ok:", imports)
-          PY
 
           # 3) 确认件同样不许有远程依赖（importmap 只能指向本地 vendor）
           sp = pathlib.Path("site/spec/out/nema23-actuator.html")
@@ -93,6 +92,7 @@ jobs:
               if any(v.startswith("http") for v in imp.values()):
                   sys.exit(f"确认件的 importmap 不许指向远程：{imp}")
               print("spec importmap ok:", imp)
+          PY
 
           test -f site/assets/vendor/three.module.js
           test -f site/assets/vendor/addons/controls/OrbitControls.js

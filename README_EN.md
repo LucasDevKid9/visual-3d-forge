@@ -61,6 +61,52 @@ That last row matters: a pipeline that only ever says yes isn't a pipeline, it's
 
 ---
 
+## Spec Compiler: a dimensioned drawing in, a spinnable confirmation out
+
+NOVA answers "what can this pipeline make". Spec Compiler answers "how does a **spec** become something you can spin".
+
+It does not model — it **confirms**. The gap it fills sits before modelling starts, and today it has no tool:
+
+```
+concept -> spec -> [confirm] -> model -> render -> deliver
+                      ^
+                 nothing here
+```
+
+Blender amplifies a person's craft. What this deletes is the *translation* step. A human only **identifies** — what part is this, which numbers, where it mounts. Placement is solved from the assembly chain; geometry comes from five primitives (revolve / extrude / gear / pattern / hole).
+
+<p align="center">
+  <img src="docs/assets/spec-hero.jpg" alt="NEMA23 planetary actuator: motor, front flange, gearhead, output flange, output shaft, base plate" width="92%">
+</p>
+
+Every number carries provenance, and the viewport says so:
+
+| Grade | Meaning | On screen |
+|---|---|---|
+| **measured** | dimensioned on the drawing | green edge, hover shows the callout id |
+| **standard** | NEMA / GB / ISO | grey edge, shows the standard |
+| **inferred** | derived from proportion, symmetry or priors — **not on the drawing** | amber edge, hover shows the basis |
+
+No modelling tool tells you "I guessed this number", because that is bad for selling software. The person signing off cares about exactly that sentence.
+
+<p align="center">
+  <img src="docs/assets/spec-section.jpg" alt="Section view: planet set, sun gear, ring gear and motor shaft" width="92%">
+</p>
+
+```bash
+python3 tools/spec_compile.py spec/examples/nema23-actuator.yaml --out spec/out/
+```
+
+Three artefacts: a **confirmation page** (single HTML, opens offline), a **conformance report** (IR + printable page), and the **IR itself** (for glTF export later).
+
+Compile the same SpecSheet twice and the fingerprint must match — that assertion lives in `tests/test_spec.py`: change one number and the hash changes; change nothing and it never does.
+
+- Input contract: [`spec/schema/specsheet.schema.json`](spec/schema/specsheet.schema.json)
+- Example: [`spec/examples/nema23-actuator.yaml`](spec/examples/nema23-actuator.yaml)
+- Roadmap: [`docs/ROADMAP.md`](docs/ROADMAP.md) — 26 weeks, four stages, one falsifiable gate each
+
+---
+
 ## Flagship demo: NOVA X-01
 
 That image is not a render. It is a screenshot of a **673 KB HTML file**.
