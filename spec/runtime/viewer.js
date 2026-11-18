@@ -229,7 +229,7 @@ function worstGrade(evidence) {
 const CS_LAYER = 1;
 const CS_SIZE = 1024;
 
-function makeStage(world, bbox, renderer, opts = {}) {
+function makeContactShadow(world, bbox, renderer, opts = {}) {
   const size = new THREE.Vector3();
   bbox.getSize(size);
   const maxDim = Math.max(size.x, size.y, size.z);
@@ -445,7 +445,39 @@ function buildShell(IR) {
 
 /* ─────────────────────────── 主程序 ─────────────────────────── */
 
+function hasWebGL() {
+  try {
+    const c = document.createElement('canvas');
+    return !!(window.WebGLRenderingContext
+      && (c.getContext('webgl2') || c.getContext('webgl') || c.getContext('experimental-webgl')));
+  } catch (e) {
+    return false;
+  }
+}
+
+/** 没有 WebGL 时给一句人话，而不是一片白。 */
+function renderNoWebGL(IR) {
+  document.body.innerHTML = `
+    <div class="sv-nowebgl">
+      <div class="sv-kicker">装配确认件 · 未渲染</div>
+      <h1>${IR.title}</h1>
+      <p>这个浏览器没有可用的 WebGL，三维视图无法启动。</p>
+      <p class="sv-nowebgl-why">常见原因：浏览器的硬件加速被关闭、显卡驱动过旧，
+         或者这台设备本身不支持 WebGL。这不是文件损坏——换一个浏览器，
+         或在设置里打开「使用硬件加速」，再打开本文件即可。</p>
+      <p class="sv-nowebgl-note">尺寸与结论不受影响：所有数值、成色与检查项都在
+         <b>${IR.id}.report.html</b> 里，那是一份纯 HTML 报告，不需要 WebGL。</p>
+    </div>`;
+}
+
 function boot(IR) {
+  // 先探再建。WebGLRenderer 构造失败会抛异常，页面白屏且没有任何解释——
+  // 用户看到的是「你们的东西打不开」，而不是「你的浏览器没开硬件加速」。
+  if (!hasWebGL()) {
+    renderNoWebGL(IR);
+    return;
+  }
+
   const ui = buildShell(IR);
 
   // ── 动效常量：全站同源 ────────────────────────────────────────────
@@ -568,7 +600,7 @@ function boot(IR) {
   // 地面就是接触阴影那张平面本身：底板 + 影子一次画完。
   // 分开画（地面一份、影子一份）要处理透明排序，而两片共面的透明面
   // 排序一错，影子就会时有时无——合并成一个 shader 是这个问题的唯一解。
-  const contact = makeStage(world, bbox, renderer, { blur: 0.062, shadow: 0.86 });
+  const contact = makeContactShadow(world, bbox, renderer, { blur: 0.062, shadow: 0.86 });
   const ground = contact.mesh;
   scene.add(ground);
   contact.render();
@@ -852,6 +884,10 @@ function boot(IR) {
   controls.dampingFactor = 0.075;
   controls.minDistance = maxDim * 0.45;
   controls.maxDistance = maxDim * 6;
+  // 极角限位：没有它，用户能把相机转到地面以下，看见的是一个空壳，
+  // 而且转过去之后很难自己转回来。上限略小于 π/2，永远停在水平线之上。
+  controls.minPolarAngle = 0.16;
+  controls.maxPolarAngle = Math.PI * 0.492;
   controls.enablePan = false;
   controls.autoRotate = true;
   controls.autoRotateSpeed = 0.55;
@@ -1115,8 +1151,27 @@ function boot(IR) {
   let paused = document.hidden;
   document.addEventListener('visibilitychange', () => { paused = document.hidden; });
 
+  // 帧间隔必须钳制：标签页切回来时，第一帧的 dt 可能是几十秒，
+  // 所有按 dt 积分的动画会在那一帧直接跳到终点。0.05 s 是 20 fps 的下限。
+  let lastFrame = performance.now();
+  let slowFrames = 0;
+  let downgraded = false;
   function tick() {
     requestAnimationFrame(tick);
+    const now = performance.now();
+    let dt = (now - lastFrame) / 1000;
+    dt = Math.min(dt, 0.05);          // 钳制：切回标签页时第一帧可能是几十秒
+    lastFrame = now;
+
+    // 连续两秒跑不到 25 fps，就把像素比降一档。只降一次——
+    // 降级是为了能用，不是为了好看；反复降会把画面越擦越糊。
+    if (!downgraded) {
+      slowFrames = dt > 0.04 ? slowFrames + 1 : 0;
+      if (slowFrames > 120) {
+        renderer.setPixelRatio(Math.min(devicePixelRatio, 1.25));
+        downgraded = true;
+      }
+    }
     if (paused) return;
     contact.update();          // 只在脏了之后重渲深度，静态时零开销
     controls.update();

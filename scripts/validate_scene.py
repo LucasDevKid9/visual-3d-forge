@@ -92,10 +92,10 @@ def _num(s: str) -> float | None:
 def detect_mode(html: str) -> str:
     if "data:text/javascript;base64" in html:
         return "D1 单文件内嵌（零外部依赖）"
-    # 允许任意层级：./vendor/ 与 ../assets/vendor/ 都是 D2。
-    # 旧写法只认 `<.>/vendor/` 紧跟 vendor，playground（../assets/vendor/）
-    # 和 spec/out（../../assets/vendor/）会被误判成 D0，进而触发 E03 假失败。
-    if re.search(r"""["'](?:\.{1,2}/)+[^"']*\bvendor/""", html):
+    # 允许中间目录：`../../assets/vendor/xxx` 与 `./vendor/xxx` 都是本地 vendor。
+    # 原正则只认「相对路径后紧跟 vendor/」，把 `spec/out/` 下这种多退一级的
+    # 合法写法判成了 D0，进而误报「版本未锁定」。这是漏判，不是宽松。
+    if re.search(r"""["']\.{1,2}/(?:[^"']*/)?vendor/""", html):
         return "D2 本地 vendor 目录"
     if "jsdelivr" in html.lower() and "importmap" in html:
         return "D0 单文件 CDN"
@@ -104,27 +104,6 @@ def detect_mode(html: str) -> str:
     if "importmap" in html:
         return "D0 单文件 CDN（非 jsDelivr）"
     return "未识别（可能未用模块化引入）"
-
-
-def is_bundled(html: str) -> tuple[bool, str]:
-    """判断这是不是「第三方库已被压进同一个文件」的产物。
-
-    压缩产物的特征：three 的源码和业务代码被揉在一起、变量名被改成 i/e/t 这种单字母、
-    库内部的临时赋值（PMREM 保存/恢复 toneMapping、缓存 outputColorSpace）也一并留在
-    文件里。对这类文件做「toneMapping 赋值几次」这类计数必然误报——数出来的大部分
-    是库自己的代码，不是应用写的。
-
-    返回 (是否压缩产物, 判据说明)。
-    """
-    lib_markers = ["three.js r", "THREE.WebGLRenderer:", "three/build/three.module.js",
-                   "Copyright 2010-", "SPDX-License-Identifier: MIT"]
-    hits = sum(1 for m in lib_markers if m in html)
-    if hits < 2:
-        return False, ""
-    longest = max((len(ln) for ln in html.splitlines()), default=0)
-    if longest < 40_000:
-        return False, ""
-    return True, f"three 库已内联（{hits} 个标记）且存在 {longest // 1024} KB 的单行"
 
 
 def estimate_tris(html: str) -> tuple[int, list[str]]:
@@ -241,9 +220,6 @@ def main() -> int:
     r.meta["体积"] = f"{path.stat().st_size / 1024:.0f} KB"
     mode = detect_mode(html)
     r.meta["交付形态"] = mode
-    bundled, bundle_why = is_bundled(html)
-    if bundled:
-        r.meta["产物类型"] = f"压缩单文件（{bundle_why}）"
 
     # 1 单文件自包含
     local_js = re.findall(r'(?:src|href)\s*=\s*["\']((?!https?:|data:|#)[^"\']+\.(?:js|css))["\']', html, re.I)
@@ -257,9 +233,7 @@ def main() -> int:
     # 2 ES module + importmap
     has_module = bool(re.search(r"""type\s*=\s*['"]module['"]""", html))
     has_dynamic = bool(re.search(r"""\bimport\s*\(\s*['"]""", html))
-    if bundled:
-        r.ok("压缩产物：模块已由打包器内联，不要求 <script type=\"module\">")
-    elif has_module:
+    if has_module:
         r.ok("存在 <script type=\"module\">")
     elif has_dynamic and "importmap" in html:
         r.ok("使用 importmap + 动态 import()（classic script 模式，合法）")
@@ -286,8 +260,6 @@ def main() -> int:
             r.ok(f"three.js 版本已锁定 {REQUIRED_VER}")
         else:
             r.err("E03", f"importmap 未锁定 {REQUIRED_VER}（版本漂移会让页面随时坏掉）")
-    elif bundled:
-        r.ok("压缩产物：IIFE 打包不需要 importmap")
     else:
         r.warn("W01", "没有 importmap：确认引入方式是否需要服务端模式")
 
@@ -309,18 +281,14 @@ def main() -> int:
 
     # 5 色彩管理唯一性
     tm = len(re.findall(r"\.toneMapping\s*=", html))
-    if bundled:
-        r.ok("压缩产物：色彩管理计数不适用（库内临时赋值已计入，跳过）")
-    elif tm == 0:
+    if tm == 0:
         r.warn("W03", "未设置 toneMapping，高光可能过曝死白")
     elif tm > 1:
         r.err("E06", f"toneMapping 被赋值 {tm} 次，可能造成双重色彩转换（画面发灰）")
     else:
         r.ok("toneMapping 只设置一次")
     cs = len(re.findall(r"\.outputColorSpace\s*=", html))
-    if bundled:
-        pass
-    elif cs > 1:
+    if cs > 1:
         r.err("E07", f"outputColorSpace 被赋值 {cs} 次，色彩转换重复")
 
     # 6 resize
@@ -374,15 +342,7 @@ def main() -> int:
     # 11 渲染循环
     if "setAnimationLoop" in html or "requestAnimationFrame" in html:
         r.ok("存在渲染循环")
-        # 原正则用 [^)]* 匹配，遇到嵌套括号就断：Math.min(((now-last)/1000), 0.05)
-        # 一个括号都过不去。改成逐行扫描：同一行里既有 Math.min 又有小数上限，就算钳制。
-        lines = html.splitlines()
-        clamped = (
-            any("Math.min" in ln and re.search(r"\b0?\.0?\d+\b", ln) for ln in lines)
-            or re.search(r"\b(?:dt|delta)\s*>\s*0?\.\d", html)
-            or any(re.search(r"\bclamp\w*\s*\(", ln, re.I) for ln in lines)
-        )
-        if clamped:
+        if re.search(r"Math\.min\s*\([^)]*(?:getDelta|dt)", html) or re.search(r"dt\s*>\s*0?\.\d", html):
             r.ok("帧间隔已钳制（切回标签页不会大跳）")
         else:
             r.warn("W07", "未钳制 dt，切回标签页时可能出现画面跳变")
@@ -398,9 +358,7 @@ def main() -> int:
     used = {k: v for k, v in lights.items() if v}
     total_lights = sum(used.values())
     if total_lights == 0:
-        if bundled:
-            r.ok("压缩产物：光源以压缩别名创建，静态正则不可见，跳过该项")
-        elif "D3" in mode:
+        if "D3" in mode:
             r.warn("W11", "未发现显式光源（R3F 可能在组件内声明，确认是否有环境光）")
         else:
             r.warn("W11", "未发现任何光源，场景会全黑（除非纯自发光材质）")

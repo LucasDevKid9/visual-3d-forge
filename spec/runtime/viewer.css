@@ -231,3 +231,29 @@ html, body {
   box-shadow: inset 2px 0 0 var(--accent);
 }
 .sv-actions .sv-ghost.on { color: var(--accent); border-color: rgba(232,196,138,.45); }
+
+/* ── 无 WebGL 的兜底页 ──
+   这一页存在的理由：弱设备白屏时，用户唯一的结论是「文件坏了」。
+   一句人话能把「你们的东西打不开」变成「你的浏览器没开硬件加速」，
+   后者是用户自己能解决的。 */
+.sv-nowebgl {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 12vh clamp(20px, 5vw, 48px) 0;
+  color: var(--ink);
+  line-height: 1.75;
+}
+.sv-nowebgl h1 {
+  font-size: clamp(26px, 4vw, 38px);
+  font-weight: 300;
+  letter-spacing: .01em;
+  margin: 14px 0 22px;
+}
+.sv-nowebgl p { margin: 0 0 14px; color: #b8b2a8; font-size: 14.5px; }
+.sv-nowebgl b { color: var(--accent); font-weight: 500; }
+.sv-nowebgl-why {
+  padding-left: 14px;
+  border-left: 2px solid rgba(200, 160, 106, .45);
+  color: #9c968c;
+}
+.sv-nowebgl-note { margin-top: 26px; font-size: 13px; color: #8b857c; }
