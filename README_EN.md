@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-3d3d3d"></a>
-  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-179-4c8a5a">
+  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-191-4c8a5a">
   <img alt="deps" src="https://img.shields.io/badge/runtime%20deps-0-4c8a5a">
   <img alt="three" src="https://img.shields.io/badge/three.js-r187-000">
 </p>
@@ -218,7 +218,7 @@ All three must be green before you ship. Measured: 13.3 KB source → 2851.5 KB 
 
 ---
 
-## Four tools, zero third-party dependencies
+## Ten tools, zero third-party dependencies
 
 | Script | What it does | The part that's actually hard |
 |---|---|---|
@@ -234,7 +234,7 @@ The `bundle.py` row isn't hypothetical. v2.0 died exactly there: `three.module.j
 ## Contracts, not documentation
 
 ```bash
-python3 -m pytest tests/ -q     # 179 passed
+python3 -m pytest tests/ -q     # 191 passed
 ```
 
 Every number in this README has an assertion that can falsify it in under ten seconds:
@@ -282,7 +282,7 @@ visual-3d-forge/
 ├── assets/
 │   ├── vendor/           pruned three r187 set, 18 files (2.4 MB, hashed manifest)
 │   └── scaffold/         D0 / D2 / D3 scaffolds
-├── scripts/              four tools, stdlib only
+├── scripts/              ten tools, stdlib only
 ├── demo/                 flagship NOVA X-01 (build artifact, 673 KB single file; source not distributed)
 ├── playground/           live parametric playground (gear solving + live rebuild)
 ├── examples/             runnable example (planetary gearbox)
@@ -290,7 +290,7 @@ visual-3d-forge/
 ├── tools/                spec_compile.py: YAML → IR → single-file deliverable
 ├── guide/                the human-facing layer: five fillable templates, one worked example
 ├── docs/                 architecture, design notes, validation record, banner, pipeline diagram
-├── tests/                179 contract tests, including negative cases
+├── tests/                191 contract tests, including negative cases
 └── THIRD-PARTY-NOTICES.md
 ```
 

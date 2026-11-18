@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-3d3d3d"></a>
-  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-179-4c8a5a">
+  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-191-4c8a5a">
   <img alt="deps" src="https://img.shields.io/badge/runtime%20deps-0-4c8a5a">
   <img alt="three" src="https://img.shields.io/badge/three.js-r187-000">
 </p>
@@ -242,14 +242,20 @@ python3 scripts/validate_scene.py ./offline.html --strict
 
 ---
 
-## 四个工具，零第三方依赖
+## 十个工具，零第三方依赖
 
 | 脚本 | 作用 | 真正的难点 |
 |---|---|---|
 | `vendor.py` | 从 three 源码裁剪依赖闭包 | 递归解析 addon 相对 import，输出带 sha256 的清单 |
 | `bundle.py` | 把 vendor 内联成单文件 | **同一依赖被 import 与 re-export 各一次时必须复用 specifier**，否则 white screen |
 | `api_lookup.py` | 查 API 是否真实存在 | 488 项符号表，对产物做差集并给出最接近的正确名 |
-| `validate_scene.py` | 交付前静态自检 | 19 项（D1）/ 18 项（D0、D2）；`--strict` 时告警即失败 |
+| `validate_scene.py` | 交付前静态自检 | 19 项；压缩产物按产物类型跳过计数类检查 |
+| `validate_experience.py` | 体验完整性自检 | 23 项：状态机、幕结构、引导、声音、反馈、无障碍 |
+| `timeline_check.py` | 提示表数据层自检 | 13 条：主时钟唯一、cue 不越界/不重号、降级降结构 |
+| `export_mht.py` | 产物封成 `.mht` 归档 | 写明「MHTML 是容器不是运行时」的边界 |
+| `mht_unpack.py` | 拆开别人发来的 `.mht` | 与上一个方向相反：取件而非交付；推断存盘时漏掉的资源 |
+| `experience_plan.py` | 需求 → 体验蓝图 | 六段式填表、幕表、张力曲线、时间栅格 |
+| `forge_init.py` | 从骨架初始化工程 | — |
 
 `bundle.py` 那条不是理论：v2.0 就死在这里——`three.module.js` 同时 `import` 与 `export from './three.core.js'`，第二次自增出一个从未注册的 `vf-int-2`，浏览器直接白屏。现在有专门的回归样本盯着它。
 
@@ -258,7 +264,7 @@ python3 scripts/validate_scene.py ./offline.html --strict
 ## 契约不是文档，是测试
 
 ```bash
-python3 -m pytest tests/ -q     # 179 passed
+python3 -m pytest tests/ -q     # 191 passed
 ```
 
 每个数字都有一条断言能在 10 秒内证伪它：
@@ -306,7 +312,7 @@ visual-3d-forge/
 ├── assets/
 │   ├── vendor/           three r187 的 18 文件裁剪集（2.4 MB，带哈希清单）
 │   └── scaffold/         D0 / D2 / D3 三套骨架
-├── scripts/              四个工具，纯标准库
+├── scripts/              十个工具，纯标准库
 ├── demo/                 旗舰示例 NOVA X-01（构建产物，673 KB 单文件，源码不随仓库分发）
 ├── playground/           在线实验台（参数化配齿 + 实时重建）
 ├── examples/             可运行示例（行星齿轮减速器）
@@ -318,7 +324,7 @@ visual-3d-forge/
 ├── tools/                spec_compile.py：YAML → IR → 单文件确认件
 ├── guide/                给人用的引导层：六份可填模板 + 一条走通的记录
 ├── docs/                 架构、设计笔记、验证记录、Banner 与管线图
-├── tests/                179 项契约测试（含反向用例）
+├── tests/                191 项契约测试（含反向用例）
 └── THIRD-PARTY-NOTICES.md
 ```
 
@@ -334,7 +340,7 @@ visual-3d-forge/
 - [文档地图与阅读顺序](docs/README.md)
 - [架构：为什么它是编译器，而不是提示词](docs/ARCHITECTURE.md)
 - [设计笔记：十一个决定与它们各自的反例](docs/DESIGN-NOTES.md)
-- [验证记录：179 项断言分别在防什么](docs/VALIDATION.md)
+- [验证记录：191 项断言分别在防什么](docs/VALIDATION.md)
 - [English README](README_EN.md)
 
 ## 许可

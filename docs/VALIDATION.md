@@ -10,7 +10,7 @@
 
 ```bash
 $ python3 -m pytest tests/ -q
-179 passed in 2.60s
+191 passed in ~16s
 ```
 
 七个文件，各守一段承诺：
