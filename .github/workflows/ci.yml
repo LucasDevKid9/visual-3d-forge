@@ -50,6 +50,25 @@ jobs:
             python scripts/validate_scene.py "$f" --strict
           done
 
+      # 会上线的产物此前从没进过 CI：demo / playground / spec 各自带着
+      # 真缺陷（无后台暂停、无 WebGL 兜底、无相机限位）躺在 main 上。
+      - name: 站点产物校验（strict）
+        run: |
+          set -eu
+          python scripts/validate_scene.py playground/index.html --strict
+          python scripts/validate_scene.py spec/out/nema23-actuator.html --strict
+          python scripts/validate_scene.py assets/scaffold/experience-shell.html --strict
+          # demo 是压缩单文件：validate_scene 会识别产物类型并跳过计数类检查
+          python scripts/validate_scene.py demo/index.html --strict
+          python scripts/check_demo.py
+
+      - name: 体验契约与提示表
+        run: |
+          set -eu
+          python scripts/validate_experience.py assets/scaffold/experience-shell.html
+          python scripts/timeline_check.py examples/timeline-122s/timeline.json --strict
+          python scripts/mht_unpack.py tests/fixtures/sample.mht --report
+
       - name: 打包链路（D2 → D1 → 零外链）
         run: |
           python scripts/bundle.py --self-test
