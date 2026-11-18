@@ -10,10 +10,10 @@
 
 ```bash
 $ python3 -m pytest tests/ -q
-111 passed in 2.37s
+149 passed in 2.91s
 ```
 
-五个文件，各守一段承诺：
+六个文件，各守一段承诺：
 
 | 文件 | 用例 | 守的是什么 |
 |---|---:|---|
@@ -22,6 +22,7 @@ $ python3 -m pytest tests/ -q
 | `test_links.py` | 28 | 每篇文档的相对链接、workflow 可解析且引用的脚本存在、门面文件齐全 |
 | `test_spec.py` | 23 | 编译链契约：指纹确定性、离线、反向用例、成色诚实、**证据落点** |
 | `test_docs_bilingual.py` | 12 | 中英双语文档成对存在、一级标题数量对齐、语言切换链接可达、反面清单可数 |
+| `test_guide.py` | 38 | 引导层不脱节：文件齐、链接可达、**示例过 schema**、枚举与 schema 同源 |
 
 ### 反向用例清单（最重要的部分）
 
@@ -195,7 +196,7 @@ Import Map: "three" matches with "three" but is blocked by a null value
 
 ## 六、证据定位（P1）的实测
 
-### 7.1 定位率
+### 6.1 定位率
 
 ```bash
 $ python3 tools/spec_compile.py spec/examples/nema23-actuator.yaml --out spec/out/
@@ -215,13 +216,13 @@ $ python3 tools/spec_compile.py spec/examples/nema23-actuator.yaml --out spec/ou
 
 **分母要扣掉无量纲量**：齿数、模数、减速比是生成几何的**输入**，不是能从几何上量出来的**结果**。把它们算进分母，定位率永远虚低，还会掩盖真正量错的尺寸。
 
-### 7.2 它抓到的第一件事
+### 6.2 它抓到的第一件事
 
 首次跑通时报告 `gearhead_body·壳体长` 未定位：表里写 45，几何是 46。
 
 两个数字都不假，只是不一致——而**这种错在渲染图里完全看不出来**。这正是「证据定位」值得做的原因：它把「看起来对」换成了「量得出来」。
 
-### 7.3 三个只在真实渲染里才暴露的问题
+### 6.3 三个只在真实渲染里才暴露的问题
 
 | 现象 | 根因 | 修法 |
 |---|---|---|
@@ -233,7 +234,33 @@ $ python3 tools/spec_compile.py spec/examples/nema23-actuator.yaml --out spec/ou
 
 ---
 
-## 七、未验证的部分（不粉饰）
+## 七、引导层（guide）的验证
+
+`guide/` 是给人看的手册，它最典型的失效方式不是错别字，是**和实现脱节**：schema 改了，手册还在讲老规矩，读者照着填，编译报错，然后手册就没人信了。
+
+`tests/test_guide.py` 的 38 项里，有一条是这套测试里唯一能证明「手册写的东西真的能跑」的：
+
+```python
+# 03-SPEC.md 里那份「最小可编译」的示例，必须真的能被 schema 接受
+jsonschema.validate(yaml.safe_load(block), schema())
+```
+
+手册承诺「复制这份，改掉内容就能跑」。如果示例本身不合法，这个承诺就是假的，而读者会在第一次尝试时就撞墙。
+
+另外三条守的是**同源**——手册里出现的枚举必须来自 schema，不能各写一套：
+
+| 测试 | 抓的是 |
+|---|---|
+| `test_audience_enum_matches_schema` | 受众三档。写错过一次：初稿写「无基础 / 同行」，schema 是「外行 / 专业」 |
+| `test_part_kind_matches_schema` | 五种基元。并要求文中明确「孔不是独立基元」 |
+| `test_evidence_grade_matches_schema` | 三档成色，一个都不能多 |
+
+> 这三条在写手册的同一次提交里就抓到了一处不一致（交付档 `D0–D3` 漏了反引号，与表格其余项格式不符）。
+> 小，但正是这种小不一致，会让后面所有格式上的承诺失效。
+
+---
+
+## 八、未验证的部分（不粉饰）
 
 | 项 | 状态 | 原因 |
 |---|---|---|

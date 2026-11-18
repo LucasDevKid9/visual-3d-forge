@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-3d3d3d"></a>
-  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-111-4c8a5a">
+  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-149-4c8a5a">
   <img alt="deps" src="https://img.shields.io/badge/runtime%20deps-0-4c8a5a">
   <img alt="three" src="https://img.shields.io/badge/three.js-r187-000">
 </p>
@@ -234,7 +234,7 @@ The `bundle.py` row isn't hypothetical. v2.0 died exactly there: `three.module.j
 ## Contracts, not documentation
 
 ```bash
-python3 -m pytest tests/ -q     # 111 passed
+python3 -m pytest tests/ -q     # 149 passed
 ```
 
 Every number in this README has an assertion that can falsify it in under ten seconds:
@@ -286,8 +286,11 @@ visual-3d-forge/
 ├── demo/                 flagship NOVA X-01 (build artifact, 673 KB single file; source not distributed)
 ├── playground/           live parametric playground (gear solving + live rebuild)
 ├── examples/             runnable example (planetary gearbox)
+├── spec/                 SpecSheet schema, compiler, runtime, examples, build output
+├── tools/                spec_compile.py: YAML → IR → single-file deliverable
+├── guide/                the human-facing layer: five fillable templates, one worked example
 ├── docs/                 architecture, design notes, validation record, banner, pipeline diagram
-├── tests/                111 contract tests, including negative cases
+├── tests/                149 contract tests, including negative cases
 └── THIRD-PARTY-NOTICES.md
 ```
 
@@ -295,13 +298,15 @@ visual-3d-forge/
 
 ## Docs
 
+**Start here if it is your first time**: [Guide: from a drawing to a deliverable](guide/README.md) — a brief, a decoding sheet, a spec template, an acceptance gate, a diagnostic table, and one worked example with its mistakes left in.
+
 - [Principles: ten rules and a red-line checklist](docs/PRINCIPLES_EN.md) — [中文](docs/PRINCIPLES.md)
 - [Roadmap: 26 weeks, four stages, one falsifiable gate each](docs/ROADMAP_EN.md) — [中文](docs/ROADMAP.md)
 - [Strategy: moats, algorithm order, market order](docs/STRATEGY-2026_EN.md) — [中文](docs/STRATEGY-2026.md)
 - [Document map and reading order](docs/README.md)
 - [Architecture: why this is a compiler, not a prompt](docs/ARCHITECTURE.md)
 - [Design notes: eleven decisions and their counterexamples](docs/DESIGN-NOTES.md)
-- [Validation record: what each of the 111 assertions guards against](docs/VALIDATION.md)
+- [Validation record: what each of the 149 assertions guards against](docs/VALIDATION.md)
 - [中文 README](README.md)
 
 ## License

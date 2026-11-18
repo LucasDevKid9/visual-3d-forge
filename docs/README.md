@@ -10,10 +10,33 @@ Every core document exists in both Chinese and English, section for section. Not
 
 | 你想知道 | 中文 | English |
 |---|---|---|
+| **第一次上手，照着做一遍** | [`../guide/README.md`](../guide/README.md) | 同左（引导层为中文，含一个完整实例） |
 | 这东西到底怎么用、凭什么可信 | [`../README.md`](../README.md) | [`../README_EN.md`](../README_EN.md) |
 | 你们按什么标准交付（验收清单） | [`PRINCIPLES.md`](./PRINCIPLES.md) | [`PRINCIPLES_EN.md`](./PRINCIPLES_EN.md) |
 | 和 Blender / C4D 到底差在哪，26 周怎么走 | [`ROADMAP.md`](./ROADMAP.md) | [`ROADMAP_EN.md`](./ROADMAP_EN.md) |
 | 护城河、算法排序、商业顺序 | [`STRATEGY-2026.md`](./STRATEGY-2026.md) | [`STRATEGY-2026_EN.md`](./STRATEGY-2026_EN.md) |
+
+---
+
+## 引导层 / The guide layer
+
+[`guide/`](../guide/) 回答的是另一个问题：**"我知道它能干什么了，现在怎么亲手做一件？"**
+
+五份可填模板加一条走通的记录：
+
+| 文件 | 你什么时候打开它 |
+|---|---|
+| [`guide/01-BRIEF.md`](../guide/01-BRIEF.md) | 有个想法，还不知道怎么开口 |
+| [`guide/02-DECODE.md`](../guide/02-DECODE.md) | 图在手上了，不知道哪些数能用、哪些得猜 |
+| [`guide/03-SPEC.md`](../guide/03-SPEC.md) | 要落成一份能编译的 SpecSheet |
+| [`guide/04-VERIFY.md`](../guide/04-VERIFY.md) | 东西做出来了，不敢交 |
+| [`guide/05-DIAGNOSE.md`](../guide/05-DIAGNOSE.md) | 做着做着不对了，但说不清哪不对 |
+| [`guide/WALKTHROUGH.md`](../guide/WALKTHROUGH.md) | 想看一眼完整的、**带错的那一版** |
+
+它只出中文：读者是要动手改 YAML 的人，翻译一份模板不会让谁更容易上手。
+`tests/test_guide.py` 守着它别和 schema 脱节——手册里的示例必须真能通过校验。
+
+The guide is Chinese-only on purpose: its readers are the ones editing YAML, and a translated template helps nobody. `tests/test_guide.py` keeps it honest against the schema.
 
 ---
 
@@ -34,6 +57,8 @@ These are implementation notes, Chinese only — their audience is whoever touch
 ## 阅读顺序建议 / Suggested order
 
 **如果你要评估这个项目**：`README` → `PRINCIPLES`（看它敢不敢被否证）→ `ROADMAP`（看判据是不是真的可测）。
+
+**如果你要自己上手做一件**：`guide/README` → `guide/01-BRIEF`（填需求表）→ `guide/WALKTHROUGH`（看一遍带错的完整记录）→ 动手。跳过前三步直接读代码，通常会在「为什么这个数要标成色」上卡住。
 
 **如果你要接手代码**：`ARCHITECTURE` → `spec/schema/specsheet.schema.json` → `tools/spec_compile.py` → `tests/`。
 
