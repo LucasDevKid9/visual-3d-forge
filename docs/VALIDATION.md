@@ -10,10 +10,10 @@
 
 ```bash
 $ python3 -m pytest tests/ -q
-149 passed in 2.91s
+179 passed in 2.60s
 ```
 
-六个文件，各守一段承诺：
+七个文件，各守一段承诺：
 
 | 文件 | 用例 | 守的是什么 |
 |---|---:|---|
@@ -22,7 +22,8 @@ $ python3 -m pytest tests/ -q
 | `test_links.py` | 28 | 每篇文档的相对链接、workflow 可解析且引用的脚本存在、门面文件齐全 |
 | `test_spec.py` | 23 | 编译链契约：指纹确定性、离线、反向用例、成色诚实、**证据落点** |
 | `test_docs_bilingual.py` | 12 | 中英双语文档成对存在、一级标题数量对齐、语言切换链接可达、反面清单可数 |
-| `test_guide.py` | 38 | 引导层不脱节：文件齐、链接可达、**示例过 schema**、枚举与 schema 同源 |
+| `test_guide.py` | 42 | 引导层不脱节：文件齐、链接可达、**示例过 schema**、枚举与 schema 同源 |
+| `test_references.py` | 26 | 编号契约：00–21 连续、标题带号、SKILL 索引不漏、**所有 `NN-xxx.md` 引用必须存在** |
 
 ### 反向用例清单（最重要的部分）
 

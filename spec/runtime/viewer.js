@@ -278,6 +278,24 @@ function buildShell(IR) {
 function boot(IR) {
   const ui = buildShell(IR);
 
+  // ── 动效常量：全站同源 ────────────────────────────────────────────
+  // 时长不再散落在各处当魔数。取 120 BPM 的整数拍，相机与转场自然合拍；
+  // 即使确认件没有声音，视觉节奏的底层也是时间量化。
+  const MOTION = (() => {
+    const BPM = 120;
+    const beat = 60 / BPM;                       // 0.5 s
+    const snap = (s, sub = 2) => Math.round(s / (beat / sub)) * (beat / sub);
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    return {
+      bpm: BPM, beat, snap, reduce,
+      fly: 500,                                  // = 1 拍，原来散落写成 620
+      // 减少动态：时长压到 1/4，而不是 0 —— 状态变化仍要看得见，只是不晃。
+      dur: (ms) => (reduce ? Math.max(80, Math.round(ms / 4)) : ms),
+      easeOutCubic: (k) => 1 - Math.pow(1 - k, 3),
+      easeInOutCubic: (k) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2),
+    };
+  })();
+
   const renderer = new THREE.WebGLRenderer({ canvas: ui.canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
@@ -640,11 +658,11 @@ function boot(IR) {
     const from = camera.position.clone();
     const fromT = controls.target.clone();
     const t0 = performance.now();
-    const dur = 620;
+    const dur = MOTION.dur(MOTION.fly);
     controls.autoRotate = false;
     function step() {
       const k = Math.min((performance.now() - t0) / dur, 1);
-      const e = 1 - Math.pow(1 - k, 3);
+      const e = MOTION.easeOutCubic(k);
       camera.position.lerpVectors(from, frame.pos, e);
       controls.target.lerpVectors(fromT, frame.target, e);
       controls.update();
@@ -715,10 +733,11 @@ function boot(IR) {
     const fromT = controls.target.clone();
     const to = pt.clone().addScaledVector(v, d);
     const t0 = performance.now();
+    const dur = MOTION.dur(MOTION.fly);
     controls.autoRotate = false;
     (function step() {
-      const k = Math.min((performance.now() - t0) / 620, 1);
-      const e = 1 - Math.pow(1 - k, 3);
+      const k = Math.min((performance.now() - t0) / dur, 1);
+      const e = MOTION.easeOutCubic(k);
       camera.position.lerpVectors(from, to, e);
       controls.target.lerpVectors(fromT, pt, e);
       controls.update();
@@ -872,15 +891,61 @@ function boot(IR) {
   applyDimAlphas();
 
   // ── 循环 ──
+  // 切到后台就不渲染。rAF 会被浏览器节流，但节流是 1 fps 而不是 0 ——
+  // 一个开着就烧电的确认件，在笔记本上是会被关掉的。
+  let paused = document.hidden;
+  document.addEventListener('visibilitychange', () => { paused = document.hidden; });
+
   function tick() {
+    requestAnimationFrame(tick);
+    if (paused) return;
     controls.update();
     renderer.render(scene, camera);
-    requestAnimationFrame(tick);
   }
   tick();
 
-  // 首屏：先摆好，再轻轻转，3 秒后停 —— 让人先看清，再给一点动感
-  setTimeout(() => { controls.autoRotate = false; }, 3200);
+  // 首屏：先摆好，再轻轻转，3 秒后停 —— 让人先看清，再给一点动感。
+  // 开了「减少动态效果」就不转：这类设置背后常是前庭敏感，旋转会直接引起不适。
+  // 注意是「不转」而不是「转得快一点」——无障碍里把动画调慢是错的，该取消。
+  if (!MOTION.reduce) {
+    setTimeout(() => { controls.autoRotate = false; }, 3200);
+  } else {
+    controls.autoRotate = false;
+  }
+
+  // ── 键盘 ──
+  // 触屏和鼠标都覆盖了，键盘没有。对一个要被人反复核对的页面，
+  // 只能靠鼠标点构件，等于把「核对」这件事限定在有鼠标的场景里。
+  window.addEventListener('keydown', (ev) => {
+    const keys = Array.from(ui.list.querySelectorAll('dd'));
+    const cur = keys.findIndex((d) => d.classList.contains('sel'));
+    if (ev.key === 'Escape') {
+      // Esc 的语义是「回到全局」，不是「什么都不选」——
+      // 所以除了清选中，要把视角也带回去，否则用户会被留在某个零件跟前。
+      highlightDim(-1);
+      ui.list.querySelectorAll('dd').forEach((d) => d.classList.remove('sel'));
+      ui.list.querySelectorAll('.sv-row').forEach((r) => r.classList.remove('on'));
+      setHover(null);
+      updateDimVisibility();
+      tip.classList.remove('on');
+      flyTo('iso');
+      return;
+    }
+    if (ev.key === 'ArrowDown' || ev.key === 'ArrowRight') {
+      if (!keys.length) return;
+      ev.preventDefault();
+      const next = keys[(cur + 1 + keys.length) % keys.length];
+      next.click();
+      next.scrollIntoView({ block: 'nearest' });
+    }
+    if (ev.key === 'ArrowUp' || ev.key === 'ArrowLeft') {
+      if (!keys.length) return;
+      ev.preventDefault();
+      const prev = keys[(cur - 1 + keys.length) % keys.length];
+      prev.click();
+      prev.scrollIntoView({ block: 'nearest' });
+    }
+  });
 
   window.__spec = { scene, camera, renderer, controls, built, applyExplode, applySection, flyTo, bbox, center, size, maxDim, fitDist, THREE, dims, dimGroup, focusEvidence, highlightDim };
 }

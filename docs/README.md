@@ -22,7 +22,7 @@ Every core document exists in both Chinese and English, section for section. Not
 
 [`guide/`](../guide/) 回答的是另一个问题：**"我知道它能干什么了，现在怎么亲手做一件？"**
 
-五份可填模板加一条走通的记录：
+六份可填模板加一条走通的记录：
 
 | 文件 | 你什么时候打开它 |
 |---|---|
@@ -31,6 +31,7 @@ Every core document exists in both Chinese and English, section for section. Not
 | [`guide/03-SPEC.md`](../guide/03-SPEC.md) | 要落成一份能编译的 SpecSheet |
 | [`guide/04-VERIFY.md`](../guide/04-VERIFY.md) | 东西做出来了，不敢交 |
 | [`guide/05-DIAGNOSE.md`](../guide/05-DIAGNOSE.md) | 做着做着不对了，但说不清哪不对 |
+| [`guide/06-EXPERIENCE.md`](../guide/06-EXPERIENCE.md) | 有人提「加点动画/音效」，你需要一个说不的理由，而理由得站得住 |
 | [`guide/WALKTHROUGH.md`](../guide/WALKTHROUGH.md) | 想看一眼完整的、**带错的那一版** |
 
 它只出中文：读者是要动手改 YAML 的人，翻译一份模板不会让谁更容易上手。

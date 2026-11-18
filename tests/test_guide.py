@@ -47,6 +47,7 @@ EXPECTED = [
     "03-SPEC.md",
     "04-VERIFY.md",
     "05-DIAGNOSE.md",
+    "06-EXPERIENCE.md",
     "WALKTHROUGH.md",
 ]
 

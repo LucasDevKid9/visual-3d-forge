@@ -1,7 +1,10 @@
-# 11 · R3F 轨道
+# 16 · R3F 轨道
 
 > React Three Fiber 不是"three.js 的 React 封装"，它是**用 React 的 reconciler 描述 three 对象树**。
 > 理解这一点，很多"为什么这样写不生效"就有答案了。
+>
+> 本文讲**R3F 本体怎么用**，适用 D3 档（工程化交付）。
+> 如果你不要框架、但想借它的工程做法，看 [`17-r3f-patterns.md`](17-r3f-patterns.md)——那里是五个模式的原生复刻。
 
 ---
 

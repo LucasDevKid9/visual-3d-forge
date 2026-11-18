@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>体验骨架 · Experience Shell</title>
+<!-- three.js r0.187.0 -->
+<style>
+  :root{
+    --ink:#0b0c10; --paper:#f2f0eb; --accent:#ff5a1f; --dim:rgba(242,240,235,.55);
+    --ease-out:cubic-bezier(.16,1,.3,1);
+    --ease-in:cubic-bezier(.7,0,.84,0);
+    --ease-inout:cubic-bezier(.65,0,.35,1);
+    --ease-snap:cubic-bezier(.2,0,0,1);
+    --ease-overshoot:cubic-bezier(.34,1.56,.64,1);
+    --hud:clamp(11px,1.1vw,14px);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--ink);color:var(--paper);
+    font-family:ui-sans-serif,system-ui,"Helvetica Neue",Arial,"Noto Sans SC",sans-serif;
+    overflow:hidden;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  #stage{position:fixed;inset:0}
+  canvas{display:block;width:100%;height:100%}
+
+  /* ---------- HUD ---------- */
+  .hud{position:fixed;z-index:20;font-size:var(--hud);letter-spacing:.14em;text-transform:uppercase}
+  .hud-tl{top:calc(18px + env(safe-area-inset-top));left:calc(20px + env(safe-area-inset-left));color:var(--dim)}
+  .hud-tr{top:calc(18px + env(safe-area-inset-top));right:calc(20px + env(safe-area-inset-right));display:flex;gap:10px}
+  .btn{appearance:none;border:1px solid rgba(242,240,235,.28);background:rgba(11,12,16,.45);
+    color:var(--paper);font:inherit;letter-spacing:.14em;text-transform:uppercase;
+    padding:8px 14px;border-radius:999px;cursor:pointer;
+    transition:background .18s var(--ease-snap),border-color .18s var(--ease-snap),transform .12s var(--ease-snap);
+    backdrop-filter:blur(8px)}
+  .btn:active{transform:scale(.96)}
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+  /* 悬停只给有精确指针的设备——触屏没有 hover */
+  @media (hover:hover) and (pointer:fine){
+    .btn:hover{background:rgba(242,240,235,.12);border-color:rgba(242,240,235,.55)}
+  }
+  .btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#0b0c10}
+
+  /* ---------- 进度 ---------- */
+  .rail{position:fixed;left:50%;transform:translateX(-50%);
+    bottom:calc(24px + env(safe-area-inset-bottom));z-index:20;
+    display:flex;gap:8px;align-items:center}
+  .rail i{display:block;width:26px;height:2px;background:rgba(242,240,235,.2);
+    transition:background .4s var(--ease-out),width .4s var(--ease-out)}
+  .rail i.on{background:var(--paper);width:38px}
+  .rail i.done{background:rgba(242,240,235,.55)}
+
+  /* ---------- 引导 ---------- */
+  .hint{position:fixed;left:50%;bottom:calc(64px + env(safe-area-inset-bottom));
+    transform:translateX(-50%) translateY(8px);z-index:20;
+    font-size:calc(var(--hud) * 1.05);letter-spacing:.2em;text-transform:uppercase;
+    color:var(--paper);white-space:nowrap;pointer-events:none;
+    opacity:0;transition:opacity .5s var(--ease-out),transform .5s var(--ease-out)}
+  .hint.on{opacity:.92;transform:translateX(-50%) translateY(0)}
+
+  /* ---------- 门槛 / 结算 ---------- */
+  .gate{position:fixed;inset:0;z-index:40;display:grid;place-items:center;
+    background:radial-gradient(circle at 50% 45%,rgba(11,12,16,.55),rgba(11,12,16,.96));
+    transition:opacity .7s var(--ease-out),visibility .7s}
+  .gate[hidden]{display:grid;opacity:0;visibility:hidden;pointer-events:none}
+  .gate-in{text-align:center;max-width:min(560px,86vw)}
+  .gate h1{font-size:clamp(30px,6vw,64px);font-weight:600;letter-spacing:-.02em;line-height:1.02}
+  .gate p{margin-top:16px;font-size:calc(var(--hud) * 1.05);line-height:1.9;color:var(--dim);letter-spacing:.06em}
+  .gate .cta{margin-top:32px}
+  .gate .cta button{font-size:calc(var(--hud) * 1.05);padding:14px 34px;letter-spacing:.22em}
+  .pulse{animation:pulse 2.4s var(--ease-inout) infinite}
+  @keyframes pulse{0%,100%{opacity:.55}50%{opacity:1}}
+
+  /* ---------- 结算 ---------- */
+  .score{font-variant-numeric:tabular-nums;font-size:clamp(48px,10vw,104px);
+    font-weight:700;letter-spacing:-.03em;line-height:1;margin-top:8px}
+  .rank{margin-top:10px;font-size:calc(var(--hud) * 1.2);letter-spacing:.3em;color:var(--accent)}
+
+  /* ---------- 兜底 ---------- */
+  #nogl{position:fixed;inset:0;z-index:60;display:none;place-items:center;text-align:center;
+    padding:32px;background:var(--ink)}
+  #nogl.on{display:grid}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.01ms!important;transition-duration:.12s!important}
+  }
+  @media (max-height:520px){
+    .rail{bottom:calc(10px + env(safe-area-inset-bottom))}
+    .hint{bottom:calc(38px + env(safe-area-inset-bottom))}
+  }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+
+<div class="hud hud-tl"><span id="chap">01 / 05</span></div>
+<div class="hud hud-tr">
+  <button class="btn" id="sound" aria-pressed="false">Sound Off</button>
+  <button class="btn" id="skip" hidden>Skip</button>
+</div>
+
+<div class="hint" id="hint"></div>
+<div class="rail" id="rail"></div>
+
+<div class="gate" id="gate">
+  <div class="gate-in">
+    <h1 id="gateTitle">HELLO, WORLD.</h1>
+    <p id="gateCopy">一次点击，五个动作，一段 20 秒的旅程。<br>声音默认关闭，可随时开启。</p>
+    <div class="cta"><button class="btn pulse" id="gateBtn">Begin</button></div>
+  </div>
+</div>
+
+<div id="nogl">
+  <div>
+    <h1 style="font-size:26px">当前环境不支持 WebGL</h1>
+    <p style="margin-top:14px;color:#999;line-height:1.9">
+      请使用较新版本的 Chrome / Edge / Safari，<br>或在浏览器设置中开启硬件加速。
+    </p>
+  </div>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.187.0/examples/jsm/"}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+/* =========================================================
+   0 · 环境闸门
+   ========================================================= */
+const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const TS = REDUCE ? 0.25 : 1;          // 时间缩放：reduced-motion 下压缩到 1/4
+
+function hasWebGL() {
+  try {
+    const c = document.createElement('canvas');
+    return !!(window.WebGLRenderingContext &&
+      (c.getContext('webgl2') || c.getContext('webgl')));
+  } catch (e) { return false; }
+}
+if (!hasWebGL()) {
+  document.getElementById('nogl').classList.add('on');
+  document.getElementById('gate').hidden = true;
+  throw new Error('WebGL unavailable');
+}
+
+/* =========================================================
+   1 · 音频总线（纯 Web Audio，无外部文件）
+   ========================================================= */
+const AudioBus = (() => {
+  let ctx = null, master, sfx, amb, ready = false, muted = true;
+
+  function init() {
+    if (ctx) return ctx;
+    try {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) { return null; }
+    master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
+    sfx = ctx.createGain(); sfx.gain.value = 0.9; sfx.connect(master);
+    amb = ctx.createGain(); amb.gain.value = 0.25; amb.connect(master);
+    ready = true;
+    return ctx;
+  }
+
+  async function unlock() {
+    if (!init()) return;
+    if (ctx.state === 'suspended') await ctx.resume();
+    master.gain.cancelScheduledValues(ctx.currentTime);
+    master.gain.linearRampToValueAtTime(muted ? 0 : 0.8, ctx.currentTime + 0.4);
+  }
+
+  function setMuted(m) {
+    muted = m;
+    if (!ready) return;
+    master.gain.cancelScheduledValues(ctx.currentTime);
+    master.gain.linearRampToValueAtTime(m ? 0 : 0.8, ctx.currentTime + 0.2);
+  }
+
+  return {
+    get ctx() { return init(); },
+    get sfx() { init(); return sfx; },
+    get amb() { init(); return amb; },
+    get now() { init(); return ctx ? ctx.currentTime : 0; },
+    get ok() { return ready; },
+    unlock, setMuted,
+    get muted() { return muted; }
+  };
+})();
+
+/* —— 触觉：移动端单次 ≤ 80ms，滥用会让用户关掉振动权限 —— */
+const Haptic = {
+  tap:  () => navigator.vibrate?.(8),
+  ok:   () => navigator.vibrate?.([10, 30, 10]),
+  fail: () => navigator.vibrate?.(60)
+};
+
+/* —— 五个必备音色 —— */
+function click(freq = 1800, dur = 0.03, gain = 0.22) {
+  Haptic.tap();
+  const ctx = AudioBus.ctx; if (!ctx) return;
+  const t = ctx.currentTime;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = 'square';
+  o.frequency.setValueAtTime(freq, t);
+  o.frequency.exponentialRampToValueAtTime(freq * 0.55, t + dur);
+  g.gain.setValueAtTime(gain, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(AudioBus.sfx);
+  o.start(t); o.stop(t + dur + 0.01);
+}
+
+function confirm(base = 523.25) {
+  Haptic.ok();
+  const ctx = AudioBus.ctx; if (!ctx) return;
+  [[base, 0], [base * 1.5, 0.075]].forEach(([f, d]) => {
+    const t = ctx.currentTime + d;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine'; o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.2, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+    o.connect(g).connect(AudioBus.sfx);
+    o.start(t); o.stop(t + 0.35);
+  });
+}
+
+let _noise = null;
+function noiseBuffer(ctx) {
+  if (_noise) return _noise;
+  const len = Math.floor(ctx.sampleRate * 2);
+  const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  return (_noise = buf);
+}
+
+function whoosh(dur = 0.55, from = 200, to = 4000) {
+  const ctx = AudioBus.ctx; if (!ctx) return;
+  const t = ctx.currentTime;
+  const src = ctx.createBufferSource(); src.buffer = noiseBuffer(ctx);
+  const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.2;
+  bp.frequency.setValueAtTime(from, t);
+  bp.frequency.exponentialRampToValueAtTime(to, t + dur);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.28, t + dur * 0.35);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(bp).connect(g).connect(AudioBus.sfx);
+  src.start(t); src.stop(t + dur + 0.02);
+}
+
+function impact(strength = 1) {
+  const ctx = AudioBus.ctx; if (!ctx) return;
+  const t = ctx.currentTime;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(120 * strength, t);
+  o.frequency.exponentialRampToValueAtTime(28, t + 0.5);
+  g.gain.setValueAtTime(0.45 * strength, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+  o.connect(g).connect(AudioBus.sfx);
+  o.start(t); o.stop(t + 0.65);
+  whoosh(0.25, 3000, 300);
+}
+
+let _amb = null;
+function startAmbient(freq = 55, vol = 0.1) {
+  if (_amb || !AudioBus.ctx) return;
+  const ctx = AudioBus.ctx;
+  const o1 = ctx.createOscillator(), o2 = ctx.createOscillator();
+  o1.type = 'sine'; o1.frequency.value = freq;
+  o2.type = 'sine'; o2.frequency.value = freq * 1.005;
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 400;
+  const g = ctx.createGain(); g.gain.value = 0;
+  g.gain.linearRampToValueAtTime(vol, ctx.currentTime + 2);
+  o1.connect(lp); o2.connect(lp); lp.connect(g).connect(AudioBus.amb);
+  o1.start(); o2.start();
+  _amb = { o1, o2, g };
+}
+function stopAmbient() {
+  if (!_amb) return;
+  const t = AudioBus.ctx.currentTime;
+  _amb.g.gain.linearRampToValueAtTime(0, t + 0.8);
+  _amb.o1.stop(t + 0.9); _amb.o2.stop(t + 0.9);
+  _amb = null;
+}
+
+/* =========================================================
+   2 · 节拍时钟（174 BPM，全站时长对齐同一栅格）
+   ========================================================= */
+const BPM = 174;
+const BEAT = 60 / BPM;          // 0.3448s
+const BAR = BEAT * 4;           // 1.3793s
+
+const BeatClock = (() => {
+  let startAt = 0, running = false, raf = 0, last = -1;
+  return {
+    onBeat: null,
+    start() {
+      startAt = AudioBus.now || performance.now() / 1000;
+      running = true; last = -1;
+      const loop = () => {
+        if (!running) return;
+        const t = (AudioBus.now || performance.now() / 1000) - startAt;
+        const idx = Math.floor(t / BEAT);
+        if (idx !== last) {
+          last = idx;
+          this.onBeat?.(idx, idx % 4 === 0);
+        }
+        raf = requestAnimationFrame(loop);
+      };
+      loop();
+    },
+    stop() { running = false; cancelAnimationFrame(raf); },
+    get phase() {
+      const t = (AudioBus.now || performance.now() / 1000) - startAt;
+      return (t % BEAT) / BEAT;
+    }
+  };
+})();
+
+/* =========================================================
+   3 · 状态机（体验的骨架）
+   ========================================================= */
+const Machine = {
+  state: 'GATE',
+  index: -1,
+  scenes: [],
+  locked: false,
+  assetsReady: false,
+  listeners: new Set(),
+
+  register(scene) { this.scenes.push(scene); return this; },
+
+  can(next) {
+    if (this.locked) return false;
+    if (next === 'SCENE' && !this.assetsReady) return false;
+    return true;
+  },
+
+  go(next, payload) {
+    if (!this.can(next)) return false;
+    const prev = this.state;
+    this.scenes[this.index]?.exit?.();
+    this.state = next;
+    if (next === 'SCENE') {
+      this.scenes[this.index]?.enter?.(payload);
+    }
+    this.emit({ from: prev, to: next, index: this.index, payload });
+    return true;
+  },
+
+  nextScene() {
+    if (this.index + 1 >= this.scenes.length) return this.finish();
+    this.locked = true;
+    this.scenes[this.index]?.exit?.();
+    this.index++;
+    this.state = 'SCENE';
+    this.scenes[this.index].enter?.();
+    this.emit({ to: 'SCENE', index: this.index });
+    setTimeout(() => { this.locked = false; }, 260);
+    return true;
+  },
+
+  finish() {
+    this.scenes[this.index]?.exit?.();
+    this.state = 'OUTRO';
+    this.emit({ to: 'OUTRO' });
+  },
+
+  emit(e) { this.listeners.forEach(fn => fn(e)); },
+  on(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
+};
+
+/* =========================================================
+   4 · 场景装配
+   ========================================================= */
+const stage = document.getElementById('stage');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b0c10);
+scene.fog = new THREE.Fog(0x0b0c10, 6, 20);
+
+const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 100);
+camera.position.set(0, 1.2, 5.4);
+camera.lookAt(0, 0.6, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+stage.appendChild(renderer.domElement);
+
+/* —— 环境光照（RoomEnvironment 提供 IBL） —— */
+const pmrem = new THREE.PMREMGenerator(renderer);
+pmrem.compileEquirectangularShader();
+const envRT = pmrem.fromScene(new RoomEnvironment(), 0.04);
+scene.environment = envRT.texture;
+scene.environmentIntensity = 0.42;
+
+/* —— 三光制 —— */
+const key = new THREE.DirectionalLight(0xfff2e2, 2.4);
+key.position.set(4, 6.5, 3.5);
+key.castShadow = true;
+key.shadow.mapSize.set(1024, 1024);
+key.shadow.camera.near = 0.5;
+key.shadow.camera.far = 22;
+key.shadow.camera.left = -6; key.shadow.camera.right = 6;
+key.shadow.camera.top = 6;   key.shadow.camera.bottom = -6;
+key.shadow.bias = -0.0006;
+scene.add(key);
+
+const fill = new THREE.DirectionalLight(0x88aaff, 0.7);
+fill.position.set(-5, 2.5, -3);
+scene.add(fill);
+
+const rim = new THREE.DirectionalLight(0xff5a1f, 1.5);
+rim.position.set(-2.5, 3, -6);
+scene.add(rim);
+
+/* —— 主体：二十面体 + 粒子 + 地面 —— */
+const subject = new THREE.Group();
+scene.add(subject);
+
+const coreGeo = new THREE.IcosahedronGeometry(1.05, 1);
+const coreMat = new THREE.MeshStandardMaterial({
+  color: 0xe9e4d8, metalness: 0.15, roughness: 0.34, flatShading: true
+});
+const core = new THREE.Mesh(coreGeo, coreMat);
+core.castShadow = true; core.receiveShadow = true;
+core.position.y = 1.15;
+subject.add(core);
+
+const wire = new THREE.LineSegments(
+  new THREE.WireframeGeometry(coreGeo),
+  new THREE.LineBasicMaterial({ color: 0xff5a1f, transparent: true, opacity: 0.28 })
+);
+wire.position.copy(core.position);
+wire.scale.setScalar(1.02);
+subject.add(wire);
+
+const floor = new THREE.Mesh(
+  new THREE.CircleGeometry(9, 64),
+  new THREE.MeshStandardMaterial({ color: 0x14161c, roughness: 0.92, metalness: 0.04 })
+);
+floor.rotation.x = -Math.PI / 2;
+floor.receiveShadow = true;
+scene.add(floor);
+
+const COUNT = 420;
+const pos = new Float32Array(COUNT * 3);
+for (let i = 0; i < COUNT; i++) {
+  const r = 2.2 + Math.random() * 5.5;
+  const a = Math.random() * Math.PI * 2;
+  pos[i * 3] = Math.cos(a) * r;
+  pos[i * 3 + 1] = Math.random() * 4.2;
+  pos[i * 3 + 2] = Math.sin(a) * r;
+}
+const pGeo = new THREE.BufferGeometry();
+pGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+const dust = new THREE.Points(pGeo, new THREE.PointsMaterial({
+  color: 0xffd9b0, size: 0.028, transparent: true, opacity: 0.55,
+  depthWrite: false, blending: THREE.AdditiveBlending
+}));
+scene.add(dust);
+
+/* =========================================================
+   5 · 幕表（六段式：GATE→ONBOARDING→JOURNEY→CLIMAX→RESOLUTION→REMNANT）
+   ========================================================= */
+const hintEl = document.getElementById('hint');
+const chapEl = document.getElementById('chap');
+const railEl = document.getElementById('rail');
+const gateEl = document.getElementById('gate');
+const skipBtn = document.getElementById('skip');
+
+let hintTimer = 0;
+function hint(text, ms = 4200) {
+  hintEl.textContent = text;
+  hintEl.classList.add('on');
+  clearTimeout(hintTimer);
+  hintTimer = setTimeout(() => hintEl.classList.remove('on'), ms);
+}
+
+/* 幕 01 · 看（Look） */
+Machine.register({
+  id: 'look', verb: 'look', hint: '移动鼠标 · 看看它',
+  enter() { hint(this.hint); confirm(392); },
+  update(dt, t) {
+    camera.position.x = Math.sin(t * 0.16) * 0.55;
+    camera.position.y = 1.2 + Math.sin(t * 0.22) * 0.12;
+    camera.lookAt(0, 0.95, 0);
+  },
+  exit() {}
+});
+
+/* 幕 02 · 转（Turn） */
+Machine.register({
+  id: 'turn', verb: 'turn', hint: '拖拽 · 转动',
+  drag: { on: false, x: 0, vx: 0, rot: 0 },
+  enter() {
+    hint(this.hint);
+    const d = this.drag;
+    d.on = false;
+    const el = renderer.domElement;
+    this._down = e => { d.on = true; d.x = (e.touches ? e.touches[0] : e).clientX; };
+    this._move = e => {
+      if (!d.on) return;
+      const x = (e.touches ? e.touches[0] : e).clientX;
+      d.vx = (x - d.x) * 0.006;
+      d.rot += d.vx;
+      d.x = x;
+    };
+    this._up = () => { d.on = false; };
+    el.addEventListener('pointerdown', this._down);
+    el.addEventListener('pointermove', this._move);
+    addEventListener('pointerup', this._up);
+  },
+  update(dt, t) {
+    const d = this.drag;
+    if (!d.on) { d.rot += d.vx; d.vx *= Math.pow(0.9, dt * 60); }
+    subject.rotation.y = d.rot;
+    if (Math.abs(d.rot) > 1.6) Machine.nextScene();
+  },
+  exit() {
+    const el = renderer.domElement;
+    el.removeEventListener('pointerdown', this._down);
+    el.removeEventListener('pointermove', this._move);
+    removeEventListener('pointerup', this._up);
+    if (Math.abs(this.drag.rot) > 1.6) whoosh(0.45, 300, 2600);
+  }
+});
+
+/* 幕 03 · 按（Hold） */
+Machine.register({
+  id: 'hold', verb: 'hold', hint: '按住 · 蓄力',
+  charge: 0, holding: false,
+  enter() {
+    hint(this.hint, 5000);
+    this.charge = 0;
+    const el = renderer.domElement;
+    this._d = () => { this.holding = true; click(1200, 0.05, 0.12); };
+    this._u = () => { this.holding = false; };
+    el.addEventListener('pointerdown', this._d);
+    addEventListener('pointerup', this._u);
+  },
+  update(dt) {
+    if (this.holding) this.charge = Math.min(1, this.charge + dt * 0.62);
+    else this.charge = Math.max(0, this.charge - dt * 0.9);
+
+    const k = 1 + this.charge * 0.42;
+    core.scale.setScalar(k);
+    wire.scale.setScalar(k * 1.02);
+    coreMat.emissive = new THREE.Color(0xff5a1f);
+    coreMat.emissiveIntensity = this.charge * 0.85;
+
+    if (this.charge >= 1) { Machine.nextScene(); }
+  },
+  exit() {
+    const el = renderer.domElement;
+    el.removeEventListener('pointerdown', this._d);
+    removeEventListener('pointerup', this._u);
+    core.scale.setScalar(1);
+    wire.scale.setScalar(1.02);
+    coreMat.emissiveIntensity = 0;
+  }
+});
+
+/* 幕 04 · 破（Break）—— CLIMAX */
+Machine.register({
+  id: 'break', verb: 'break', hint: '敲击 · 击碎它',
+  hits: 0, burst: false,
+  enter() {
+    hint(this.hint, 5000);
+    this.hits = 0; this.burst = false;
+    const el = renderer.domElement;
+    this._hit = () => {
+      if (this.burst) return;
+      this.hits++;
+      impact(0.5 + this.hits * 0.16);
+      coreMat.color.setHex(0xffffff);
+      setTimeout(() => coreMat.color.setHex(0xe9e4d8), 60);
+      if (this.hits >= 4) this.detonate();
+    };
+    el.addEventListener('pointerdown', this._hit);
+  },
+  detonate() {
+    this.burst = true;
+    const p = pGeo.attributes.position.array;
+    for (let i = 0; i < COUNT; i++) {
+      p[i * 3] *= 1.9; p[i * 3 + 1] *= 1.5; p[i * 3 + 2] *= 1.9;
+    }
+    pGeo.attributes.position.needsUpdate = true;
+    core.visible = false; wire.visible = false;
+    scene.fog.far = 34;
+    rim.intensity = 4.2;
+    setTimeout(() => Machine.nextScene(), 1200 * TS);
+  },
+  update(dt, t) {
+    if (!this.burst) {
+      core.rotation.y += dt * 0.9;
+      core.rotation.x += dt * 0.35;
+      wire.rotation.copy(core.rotation);
+    } else {
+      dust.rotation.y += dt * 0.7;
+    }
+  },
+  exit() {
+    renderer.domElement.removeEventListener('pointerdown', this._hit);
+  }
+});
+
+/* 幕 05 · 收束（Resolution + Remnant） */
+Machine.register({
+  id: 'outro', verb: 'read', hint: '',
+  enter() {
+    stopAmbient();
+    confirm(659.25);
+    setTimeout(() => confirm(880), 160);
+    setTimeout(() => showResult(), 520 * TS);
+  },
+  update(dt, t) {
+    camera.position.x = Math.sin(t * 0.1) * 0.9;
+    camera.position.y = 1.5 + Math.sin(t * 0.14) * 0.2;
+    camera.position.z = 6.4;
+    camera.lookAt(0, 0.9, 0);
+    dust.rotation.y += dt * 0.12;
+  },
+  exit() {}
+});
+
+/* =========================================================
+   6 · HUD / 进度 / 结算
+   ========================================================= */
+function buildRail() {
+  railEl.innerHTML = '';
+  Machine.scenes.forEach(() => railEl.appendChild(document.createElement('i')));
+}
+buildRail();
+
+Machine.on(e => {
+  const n = Machine.scenes.length;
+  const i = Math.max(0, Machine.index);
+  chapEl.textContent = String(Math.min(i + 1, n)).padStart(2, '0') + ' / ' + String(n).padStart(2, '0');
+  [...railEl.children].forEach((el, k) => {
+    el.className = k < i ? 'done' : (k === i ? 'on' : '');
+  });
+  if (e.to === 'SCENE') whoosh(0.42, 260, 2400);
+});
+
+function showResult() {
+  const score = 1000 + Machine.scenes.length * 137;
+  gateEl.querySelector('.gate-in').innerHTML = `
+    <h1>THE END.</h1>
+    <div class="score">${score}</div>
+    <div class="rank">GLASS BREAKER</div>
+    <p>五个动作全部完成 · 用时约 20 秒<br>这段骨架可替换成任何主题，幕表在 <code>Machine.register()</code> 处。</p>
+    <div class="cta"><button class="btn" id="again">Play Again</button></div>`;
+  gateEl.hidden = false;
+  gateEl.querySelector('#again').addEventListener('click', () => location.reload());
+  skipBtn.hidden = true;
+}
+
+/* =========================================================
+   7 · 交互装配：门槛 / 声音 / 跳过
+   ========================================================= */
+const soundBtn = document.getElementById('sound');
+
+soundBtn.addEventListener('click', async () => {
+  const next = soundBtn.getAttribute('aria-pressed') !== 'true';
+  soundBtn.setAttribute('aria-pressed', String(next));
+  soundBtn.textContent = next ? 'Sound On' : 'Sound Off';
+  AudioBus.setMuted(!next);
+  if (next) { await AudioBus.unlock(); confirm(); startAmbient(55, 0.09); }
+  else { stopAmbient(); }
+});
+
+document.getElementById('gateBtn').addEventListener('click', async () => {
+  gateEl.hidden = true;
+  Machine.assetsReady = true;
+  await AudioBus.unlock();
+  Machine.index = -1;
+  Machine.nextScene();
+  BeatClock.onBeat = (idx, isBar) => {
+    if (isBar && !AudioBus.muted && Machine.state === 'SCENE') {
+      click(2400, 0.02, 0.05);
+    }
+  };
+  BeatClock.start();
+  setTimeout(() => { skipBtn.hidden = false; }, 3000);
+});
+
+skipBtn.addEventListener('click', () => {
+  Machine.scenes[Machine.index]?.exit?.();
+  Machine.index = Machine.scenes.length - 1;
+  Machine.state = 'SCENE';
+  Machine.scenes[Machine.index].enter?.();
+  Machine.emit({ to: 'SCENE', index: Machine.index });
+});
+
+/* —— 键盘：Enter/Space 推进主交互，Esc 跳过 —— */
+addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (!skipBtn.hidden) { skipBtn.click(); e.preventDefault(); }
+    return;
+  }
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  if (!gateEl.hidden) { document.getElementById('gateBtn')?.click(); e.preventDefault(); return; }
+  if (Machine.state === 'SCENE') {
+    const el = renderer.domElement;
+    el.dispatchEvent(new PointerEvent('pointerdown', {
+      clientX: innerWidth / 2, clientY: innerHeight / 2, bubbles: true
+    }));
+    setTimeout(() => dispatchEvent(new PointerEvent('pointerup', { bubbles: true })), 90);
+    e.preventDefault();
+  }
+});
+
+/* =========================================================
+   8 · 渲染循环 / 尺寸 / 生命周期
+   ========================================================= */
+let running = true;
+const clock = new THREE.Clock();
+let elapsed = 0;
+
+function tick() {
+  if (!running) return;
+  const dt = Math.min(clock.getDelta(), 0.05) * TS;
+  elapsed += dt;
+
+  if (Machine.state === 'SCENE') {
+    Machine.scenes[Machine.index]?.update?.(dt, elapsed);
+  }
+
+  // 呼吸：随节拍相位微动（帧率无关）
+  if (!REDUCE) {
+    const b = 1 + Math.sin(BeatClock.phase * Math.PI * 2) * 0.008;
+    dust.material.opacity = 0.55 * b;
+  }
+
+  renderer.render(scene, camera);
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { running = false; BeatClock.stop(); }
+  else { running = true; clock.getDelta(); requestAnimationFrame(tick); BeatClock.start(); }
+});
+
+renderer.domElement.addEventListener('webglcontextlost', e => {
+  e.preventDefault(); running = false;
+});
+renderer.domElement.addEventListener('webglcontextrestored', () => {
+  running = true; clock.getDelta(); requestAnimationFrame(tick);
+});
+
+/* —— 资源清理（真实项目里在卸载时调用） —— */
+function disposeScene(root) {
+  const texSet = new Set();
+  root.traverse(o => {
+    o.geometry?.dispose?.();
+    const m = o.material;
+    if (!m) return;
+    (Array.isArray(m) ? m : [m]).forEach(mat => {
+      Object.values(mat).forEach(v => { if (v && v.isTexture) texSet.add(v); });
+      mat.dispose?.();
+    });
+  });
+  texSet.forEach(t => t.dispose());
+}
+addEventListener('beforeunload', () => { disposeScene(scene); pmrem.dispose(); renderer.dispose(); });
+</script>
+</body>
+</html>

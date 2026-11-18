@@ -24,7 +24,7 @@
 
 ```
 1. 需要组件复用 / 全局状态 / 多人长期迭代？
-   → 是 → D3（见 11-r3f-track.md）
+   → 是 → D3（见 16-r3f-track.md）
 
 2. 交付对象可能断网、在内网、或需要邮件发送 / 归档留证？
    → 是 → 3
@@ -88,7 +88,7 @@ python3 scripts/validate_scene.py scene.offline.html
 ### D3 · R3F 工程
 
 - `react >=19 <19.4`、`@react-three/fiber 9.x`、`three 0.187.x`。
-- 三条反模式铁律见 `11-r3f-track.md`；`validate_scene.py` 会自动扫 `useFrame` 内 setState。
+- 三条反模式铁律见 `16-r3f-track.md`；`validate_scene.py` 会自动扫 `useFrame` 内 setState。
 
 ---
 
@@ -143,7 +143,7 @@ python3 scripts/bundle.py --src scene.html --out scene.offline.html --vendor <ve
 
 ### D2 → D3（要上 React 应用）
 
-不是简单转换。几何/材质/光照逻辑可以搬，但**渲染循环、状态、生命周期要按 R3F 语义重写**（`useFrame` / `useMemo` / `dispose`）。参见 `11-r3f-track.md`。
+不是简单转换。几何/材质/光照逻辑可以搬，但**渲染循环、状态、生命周期要按 R3F 语义重写**（`useFrame` / `useMemo` / `dispose`）。参见 `16-r3f-track.md`。
 
 ---
 

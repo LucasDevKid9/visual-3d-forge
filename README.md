@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-3d3d3d"></a>
-  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-149-4c8a5a">
+  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-179-4c8a5a">
   <img alt="deps" src="https://img.shields.io/badge/runtime%20deps-0-4c8a5a">
   <img alt="three" src="https://img.shields.io/badge/three.js-r187-000">
 </p>
@@ -258,7 +258,7 @@ python3 scripts/validate_scene.py ./offline.html --strict
 ## 契约不是文档，是测试
 
 ```bash
-python3 -m pytest tests/ -q     # 149 passed
+python3 -m pytest tests/ -q     # 179 passed
 ```
 
 每个数字都有一条断言能在 10 秒内证伪它：
@@ -302,7 +302,7 @@ python3 -m pytest tests/ -q     # 149 passed
 ```
 visual-3d-forge/
 ├── SKILL.md              契约、五闸门、六阶段、算法索引（宿主技能入口）
-├── references/           13 篇按阶段查阅（3033 行：几何 / 材质 / 算法 / R3F / API 查证…）
+├── references/           22 篇按阶段查阅（5545 行：几何 / 材质 / API / 离线 / R3F / 体验…）
 ├── assets/
 │   ├── vendor/           three r187 的 18 文件裁剪集（2.4 MB，带哈希清单）
 │   └── scaffold/         D0 / D2 / D3 三套骨架
@@ -316,9 +316,9 @@ visual-3d-forge/
 │   ├── examples/         NEMA23 装配确认件源文件
 │   └── out/              编译产物（可交互 HTML / IR / 报告）
 ├── tools/                spec_compile.py：YAML → IR → 单文件确认件
-├── guide/                给人用的引导层：五份可填模板 + 一条走通的记录
+├── guide/                给人用的引导层：六份可填模板 + 一条走通的记录
 ├── docs/                 架构、设计笔记、验证记录、Banner 与管线图
-├── tests/                149 项契约测试（含反向用例）
+├── tests/                179 项契约测试（含反向用例）
 └── THIRD-PARTY-NOTICES.md
 ```
 
@@ -326,7 +326,7 @@ visual-3d-forge/
 
 ## 文档
 
-**第一次上手，先看这一份**：[引导：从一张图到一件成品](guide/README.md) —— 需求表、读图、规格书、验收、诊断，五份可填模板加一条走通的路。
+**第一次上手，先看这一份**：[引导：从一张图到一件成品](guide/README.md) —— 需求表、读图、规格书、验收、诊断、体验取舍，六份可填模板加一条走通的路。
 
 - [工程原则：十条准则与反面清单](docs/PRINCIPLES.md) —— [English](docs/PRINCIPLES_EN.md)
 - [路线：26 周四个阶段，每阶段一个可证伪判据](docs/ROADMAP.md) —— [English](docs/ROADMAP_EN.md)
@@ -334,7 +334,7 @@ visual-3d-forge/
 - [文档地图与阅读顺序](docs/README.md)
 - [架构：为什么它是编译器，而不是提示词](docs/ARCHITECTURE.md)
 - [设计笔记：十一个决定与它们各自的反例](docs/DESIGN-NOTES.md)
-- [验证记录：149 项断言分别在防什么](docs/VALIDATION.md)
+- [验证记录：179 项断言分别在防什么](docs/VALIDATION.md)
 - [English README](README_EN.md)
 
 ## 许可

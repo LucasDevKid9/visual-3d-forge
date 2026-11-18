@@ -67,6 +67,8 @@
 
 走不下去的时候看 [`WALKTHROUGH.md`](./WALKTHROUGH.md)，那是一份真实的填表记录，包含**填错的那几版**。
 
+如果过程中有人提「能不能加点动画、加点音效、做得炫一点」，先看 [`06-EXPERIENCE.md`](./06-EXPERIENCE.md)——那里有一套判定，能算出该加多少、以及哪些必须挡住。
+
 ### 路 C · 我要把这套方法搬到别的主体上（不限时）
 
 先读 [`WALKTHROUGH.md`](./WALKTHROUGH.md) 的「哪些是可替换的，哪些不是」一节。核心纪律只有一条：
@@ -106,6 +108,7 @@
 | [`03-SPEC.md`](./03-SPEC.md) | 要落成一份能编译的 SpecSheet |
 | [`04-VERIFY.md`](./04-VERIFY.md) | 东西做出来了，不敢交 |
 | [`05-DIAGNOSE.md`](./05-DIAGNOSE.md) | 做着做着不对了，但说不清哪不对 |
+| [`06-EXPERIENCE.md`](./06-EXPERIENCE.md) | 有人在提「加点动画/音效/仪式感」，你需要一个说不的理由 |
 | [`WALKTHROUGH.md`](./WALKTHROUGH.md) | 想看一眼完整的、带错的那一版 |
 
 ---

@@ -172,14 +172,16 @@ def test_vendor自检通过() -> None:
 
 
 def test_脚本只用标准库() -> None:
-    allowed = {
-        "argparse", "base64", "difflib", "hashlib", "json", "os", "re",
-        "shutil", "sys", "pathlib", "__future__", "textwrap", "typing",
-        "collections", "html", "html.parser", "urllib", "tempfile", "io",
-    }
+    """scripts/ 下不许有第三方依赖：这些脚本要能在任何有 python3 的机器上跑。
+
+    判据用 `sys.stdlib_module_names`（3.10+），不是手写白名单。
+    手写白名单的问题是：每加一个脚本就要补一次，漏了会红，而红的原因是
+    白名单旧了、不是依赖脏了——测试开始替自己造噪音。
+    """
+    stdlib = set(sys.stdlib_module_names)
     for p in SCRIPTS.glob("*.py"):
         mods = re.findall(r"^(?:import|from)\s+([A-Za-z_][\w.]*)", p.read_text(encoding="utf-8"), re.M)
-        third = {m.split(".")[0] for m in mods} - allowed
+        third = {m.split(".")[0] for m in mods} - stdlib
         assert not third, f"{p.name} 引入了非标准库依赖：{third}"
 
 

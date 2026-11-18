@@ -8,6 +8,16 @@
   --ok: #7fbf6a;
   --warn: #d9a24a;
   --std: #8a9199;
+  /* 命名缓动：全站同源。CSS 过渡与 JS 动画取同一组曲线，
+     否则同一个"弹一下"在两处会呈现两种手感。 */
+  --ease-out: cubic-bezier(.33, 1, .68, 1);
+  --ease-in: cubic-bezier(.32, 0, .67, 0);
+  --ease-inout: cubic-bezier(.65, 0, .35, 1);
+  --ease-snap: cubic-bezier(.22, 1.2, .36, 1);
+  --ease-hold: cubic-bezier(.16, 1, .3, 1);
+  /* 时长也走栅格：120 BPM，1 拍 = 0.5s，取 1/4 拍与 1/3 拍 */
+  --t-fast: .125s;
+  --t-base: .17s;
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
 }
@@ -88,9 +98,9 @@ html, body {
 
 .sv-row {
   padding: 10px 20px 12px; border-bottom: 1px solid #201d1a;
-  cursor: pointer; transition: background .18s;
+  cursor: pointer; transition: background var(--t-base) var(--ease-out);
 }
-.sv-row:hover, .sv-row.on { background: rgba(200,160,106,.07); }
+.sv-row.on { background: rgba(200,160,106,.07); }
 .sv-row-h {
   display: flex; align-items: center; gap: 8px;
   font-size: 12.5px; letter-spacing: .01em;
@@ -128,9 +138,9 @@ html, body {
 .sv-dock button {
   font: inherit; font-size: 11px; color: var(--dim);
   background: none; border: 0; padding: 5px 10px; border-radius: 999px;
-  cursor: pointer; transition: all .16s;
+  cursor: pointer; transition: all var(--t-base) var(--ease-out);
 }
-.sv-dock button:hover { color: var(--ink); background: rgba(255,255,255,.05); }
+
 .sv-dock button.on { color: #191512; background: var(--accent); }
 
 .sv-slider { display: flex; align-items: center; gap: 7px; font-size: 10.5px; color: var(--dim); }
@@ -164,6 +174,15 @@ html, body {
   padding: 3px 7px; border: 1px solid var(--line); border-radius: 3px; color: #6f6961;
 }
 
+/* ── 悬停：只在真有指针的设备上生效 ──
+   触屏没有 hover，`:hover` 会在点完后「粘住」上一次的状态，
+   表现为列表项一直亮着。@media (hover:hover) 是这件事的标准写法。 */
+@media (hover: hover) and (pointer: fine) {
+  .sv-row:hover { background: rgba(200,160,106,.07); }
+  .sv-dock button:hover { color: var(--ink); background: rgba(255,255,255,.05); }
+  .sv-row dd:hover { background: rgba(255,255,255,.045); }
+}
+
 /* ── 窄屏 ── */
 @media (max-width: 900px) {
   .sv-panel { display: none; }
@@ -172,13 +191,23 @@ html, body {
   .sv-note { display: none; }
 }
 
+/* ── 安全区：刘海 / 底部手势条 ──
+   env() 在支持的设备上生效，不支持的设备退回 0，不会破坏原有布局。 */
+.sv-head {
+  left: max(clamp(16px, 2.4vw, 32px), env(safe-area-inset-left));
+  top: max(clamp(16px, 2.2vw, 28px), env(safe-area-inset-top));
+}
+.sv-dock {
+  padding-bottom: max(0px, env(safe-area-inset-bottom));
+}
+
 /* ── 悬停提示 ── */
 .sv-tip {
   position: fixed; left: 0; top: 0; z-index: 6; pointer-events: none;
   padding: 7px 11px; border-radius: 6px; white-space: nowrap;
   background: rgba(12,11,10,.92); border: 1px solid var(--line);
   font-size: 11.5px; letter-spacing: .01em;
-  opacity: 0; transition: opacity .14s;
+  opacity: 0; transition: opacity var(--t-fast) var(--ease-out);
 }
 .sv-tip.on { opacity: 1; }
 .sv-tip b { font-weight: 500; }
@@ -195,8 +224,8 @@ html, body {
   content: "◎"; margin-left: 4px; font-size: 9px;
   color: var(--dim); opacity: .55;
 }
-.sv-row dd { cursor: pointer; border-radius: 3px; transition: background .14s, color .14s; }
-.sv-row dd:hover { background: rgba(255,255,255,.045); }
+.sv-row dd { cursor: pointer; border-radius: 3px;
+  transition: background var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out); }
 .sv-row dd.sel {
   background: rgba(232,196,138,.10);
   box-shadow: inset 2px 0 0 var(--accent);

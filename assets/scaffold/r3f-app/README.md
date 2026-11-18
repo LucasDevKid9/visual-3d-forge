@@ -31,4 +31,4 @@ function Model() {
 
 ## 更多
 
-见 Skill 内 `references/11-r3f-track.md`：陷阱清单、性能预算、资源生命周期。
+见 Skill 内 `references/16-r3f-track.md`：陷阱清单、性能预算、资源生命周期。
