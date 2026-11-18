@@ -1,0 +1,140 @@
+{
+  "//": "F*MMXX 的真实提示表结构复刻：122 秒、无 BPM 锁（原片不卡节拍），用来说明 cue sheet 该怎么写",
+  "duration": 122.0,
+  "master_clock": "audio",
+  "reduced_motion": "skip-transitions",
+  "quality_tiers": {
+    "LOW": {
+      "tessellation": 4,
+      "blurSteps": 3,
+      "chromaticSteps": 6,
+      "textureSize": "1k",
+      "bloom": false,
+      "shadowMap": false
+    },
+    "MED": {
+      "tessellation": 5,
+      "blurSteps": 4,
+      "chromaticSteps": 12,
+      "textureSize": "2k",
+      "bloom": true,
+      "shadowMap": true
+    },
+    "HIGH": {
+      "tessellation": 7,
+      "blurSteps": 5,
+      "chromaticSteps": 24,
+      "textureSize": "4k",
+      "bloom": true,
+      "shadowMap": true
+    },
+    "ULTRA": {
+      "tessellation": 7,
+      "blurSteps": 5,
+      "chromaticSteps": 100,
+      "textureSize": "4k",
+      "bloom": true,
+      "shadowMap": true
+    }
+  },
+  "cues": [
+    {
+      "t": 0.0,
+      "id": "fade-in",
+      "dur": 5.0,
+      "ease": "outQuad",
+      "apply": "exposure"
+    },
+    {
+      "t": 5.0,
+      "id": "text-happy",
+      "dur": 5.0,
+      "ease": "parabola",
+      "apply": "lightText"
+    },
+    {
+      "t": 6.087,
+      "id": "glitch-1",
+      "dur": 3.913,
+      "ease": "parabola",
+      "apply": "glitch"
+    },
+    {
+      "t": 10.0,
+      "id": "text-amazing",
+      "dur": 5.0,
+      "ease": "parabola",
+      "apply": "lightText"
+    },
+    {
+      "t": 14.208,
+      "id": "glitch-2",
+      "dur": 0.892,
+      "ease": "parabola",
+      "apply": "glitch"
+    },
+    {
+      "t": 15.0,
+      "id": "text-fine",
+      "dur": 5.0,
+      "ease": "parabola",
+      "apply": "lightText"
+    },
+    {
+      "t": 19.376,
+      "id": "glitch-3",
+      "dur": 8.411,
+      "ease": "inQuad",
+      "apply": "glitch"
+    },
+    {
+      "t": 27.787,
+      "id": "white-flash",
+      "dur": 2.526,
+      "ease": "inQuad",
+      "apply": "white"
+    },
+    {
+      "t": 30.313,
+      "id": "scene-switch",
+      "dur": 0.0,
+      "ease": "none",
+      "apply": "badness"
+    },
+    {
+      "t": 30.313,
+      "id": "dark-ambient",
+      "dur": 60.049,
+      "ease": "linear",
+      "apply": "ambient"
+    },
+    {
+      "t": 47.999,
+      "id": "exposure-lift",
+      "dur": 22.737,
+      "ease": "outQuint",
+      "apply": "exposure"
+    },
+    {
+      "t": 70.736,
+      "id": "mid-section",
+      "dur": 19.626,
+      "ease": "linear",
+      "apply": "aberration"
+    },
+    {
+      "t": 90.362,
+      "id": "explosion",
+      "dur": 28.638,
+      "ease": "inQuad",
+      "apply": "explosion"
+    },
+    {
+      "t": 119.0,
+      "id": "fade-out",
+      "dur": 3.0,
+      "ease": "inQuad",
+      "apply": "opacity"
+    }
+  ]
+}
