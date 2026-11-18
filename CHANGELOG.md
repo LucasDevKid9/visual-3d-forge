@@ -1,5 +1,89 @@
 # CHANGELOG
 
+## v2.5 · 2026-11-18
+
+修三个**真实缺陷**，补两个**相反方向的工具**。这一版没有加新概念——v2.4 的体验层已经够用，
+这次是把「已经在骗人的地方」修好。
+
+### 修复：vendor 里有个被 NUL 截断的模块
+
+`assets/vendor/addons/utils/BufferGeometryUtils.js` 40059 字节里有 23675 个 `0x00`，
+从第 16384 字节（正好 16 KiB）开始全是 NUL，文件尾停在一个未闭合的 `/**` 里。
+
+后果是 `GLTFLoader.js` 一 import 它就崩：
+
+```
+$ node --check assets/vendor/addons/utils/BufferGeometryUtils.js
+SyntaxError: Invalid or unexpected token
+```
+
+而当时**哈希校验、静态校验、179 项测试全绿**——因为哈希是对损坏文件算的，
+静态检查只做正则、不解析 JS。两个机制同时放行，坏文件就这样上线了。
+
+修复：用 npm 官方 `three@0.187.0` 的同名文件替换，同步 manifest 哈希
+（`bf5f7738a2ba` → `7bda2a8ba836`）。新增两条回归用例：
+一条查 vendor 目录有无 NUL，一条用 `node --check` 逐个解析 addon。
+
+### 修复：旗舰示例的「噪点」是三个参数写错了量级
+
+| 参数 | 原值 | 现值 | 等效变化 |
+|---|---|---|---|
+| `uGrain` | `.05` | `.012` | 每像素 ±12.75/255 → ±3/255 |
+| `uCA` | `.0016` | `.0005` | 边缘错位 ±2.5px → ±0.8px |
+| `uVig` | `.42` | `.26` | 四角压暗 42% → 26% |
+
+关键是 `uGrain` 初始化写的是 `.007`（合理），但画质函数在首帧把它覆盖成 `.05`。
+源码里两个值不一致，生效的是更猛的那个。
+
+顺带补三条 demo 一直没做的硬契约：后台停渲染、相机极角下限、`prefers-reduced-motion`
+下关 bloom 与停掉 252 个浮尘。
+
+### 修复：校验器对压缩产物会撒谎
+
+demo 是 673 KB 压缩单文件。`validate_scene.py` 对它报 3 个 FAIL，**全是误报**：
+它在数 `toneMapping` 赋了几次，数到的是 three 库内 PMREM 的临时保存/恢复；
+它在找 `new THREE.DirectionalLight`，而压缩后叫 `new Ki()`。
+
+一个只会误报的检查器，最后会被当成噪音关掉。新增 `is_bundled()`：命中后
+E02/E06/E07/W11/W01 五条计数类检查标记为「不适用」，真正能判的照样判。
+demo 从 `10 通过 / 3 失败` 变成 **15 通过 / 0 失败**，可以纳入 CI 了。
+
+### 修复：形态判定漏掉带层次前缀的 vendor 路径
+
+`detect_mode()` 的正则只认 `./vendor/`，不认 `../assets/vendor/` 与 `../../assets/vendor/`。
+于是 playground 与 spec 产物被判成 D0，报「未锁定 three@0.187.0」——而它们的 importmap
+明明指向本地。改为允许任意层级前缀后两处均判 D2。
+
+### 修复：确认件缺三处契约
+
+`spec/runtime/viewer.js` 补上相机极角限位（`0.12π–0.48π`）、WebGL 能力探测 +
+中文兜底面板、`dt` 钳制。此前无 WebGL 时页面直接抛异常留一块黑屏。
+
+### 新增：`scripts/timeline_check.py`（提示表数据层自检）
+
+`validate_experience.py` 查的是 **HTML 骨架**（X01–X23）；这个查的是**提示表数据**。
+13 条规则：主时钟未声明、id 重号、cue 越界、缓动未登记为硬错误；
+覆盖空洞、节拍不整除、降级只改像素比、无 reduced-motion 为警告。
+
+配套 `examples/timeline-122s/timeline.json`——按 F*MMXX 真实时间点复刻的 14 条 cue。
+`references/19-rhythm-and-timeline.md` 加了第九节说明这套契约。
+
+### 新增：`scripts/mht_unpack.py`（网页存档取件）
+
+与 `export_mht.py` **相反方向**：它导出，这个拆包。用途是「客户发来一个网页快照，
+当成参考素材读」。三个真实样本实测：脚本计数都是 0——Chrome 保存 MHTML 时
+把模块脚本留在了线上，所以它只能当参考，不能当交付。
+
+配套 `references/22-web-archive-intake.md`，写明与 `14-offline` / `15-output-formats`
+的分工。
+
+### 测试 179 → 191
+
+新增 12 条，全部对应真实事故：vendor 无 NUL、addon 可解析、形态判定认层次前缀、
+压缩产物识别不误伤、提示表五条反向用例、MHT 三条边界。
+
+---
+
 ## v2.4 · 2026-11-18
 
 吸收 v3「体验导演层」的增量，同时**挡掉其中不属于确认件的部分**。这次的重点不是加了什么，是可被证否地说明了「什么不该加」。

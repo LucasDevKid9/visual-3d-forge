@@ -273,3 +273,61 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 - 若内容依赖运动表达（如"按住跳舞"），提供**静态替代幕** + 文字说明
 
 **硬要求**：`reduced-motion` 下体验仍能走完六段式。走不完 = 设计缺陷，不是无障碍问题。
+
+---
+
+## 九、提示表要能被机器验（`timeline_check.py`）
+
+上面七节讲的是**怎么设计**时间轴。这一节讲**怎么证明设计没写错**——
+因为提示表最常见的三种死法全是静态可查的：
+
+| 死法 | 症状 | 为什么难查 |
+|---|---|---|
+| 多时钟 | 切标签页后卡节拍的东西散了 | 没有单一「当前时间」可以打印出来看 |
+| 覆盖空洞 | 第 3 幕到第 4 幕之间画面定格 | 看起来像卡死，实际是没人负责 |
+| 缓动缺失 | 全线性，读起来像机械臂 | 单帧看不出，整段才显得廉价 |
+
+把提示表写成**纯数据文件**，就能在交付前用脚本钉死：
+
+```json
+{
+  "duration": 122.0,
+  "master_clock": "audio",
+  "reduced_motion": "skip-transitions",
+  "quality_tiers": {
+    "LOW":  {"tessellation": 4, "blurSteps": 3, "chromaticSteps": 6,  "textureSize": "1k"},
+    "HIGH": {"tessellation": 7, "blurSteps": 5, "chromaticSteps": 24, "textureSize": "4k"}
+  },
+  "cues": [
+    {"t": 0.000, "id": "fade-in", "dur": 5.0, "ease": "outQuad", "apply": "exposure"}
+  ]
+}
+```
+
+```bash
+python3 scripts/timeline_check.py timeline.json --strict
+```
+
+13 条规则分三类：
+
+| 类 | 规则 | 级别 |
+|---|---|---|
+| 结构 | T01 形状 / T03 必备字段（id、t） / T06 id 重号 | 硬错误 |
+| 时间 | T02 主时钟未声明 / T07 越过总时长 / T04 缓动未登记 | 硬错误 |
+| 时间 | T09 覆盖空洞 / T10 节拍不整除 / T11 cue 不在节拍网格 | 警告 |
+| 质量 | T13 降级只改像素比 / T14 无 reduced-motion | 警告 |
+
+**为什么「主时钟未声明」是硬错误**：本章讲的 BPM 栅格、张力曲线、转场
+全部建立在「有一个统一的当前时间」之上。时钟不唯一，后面所有设计都失去意义。
+
+**为什么「降级只改像素比」只是警告**：有些场景确实只靠像素比就够了；
+但默认应当怀疑——只改 `devicePixelRatio` 不降算法复杂度，弱机照样卡。
+
+配套骨架 `assets/scaffold/experience-shell.html` 就是按这套契约写的，
+它同时要过 `validate_scene.py`（三维站不站得住）与 `validate_experience.py`
+（体验成不成立）两把尺子。
+
+### 示例
+
+`examples/timeline-122s/timeline.json`——按样本 A（F*MMXX）的真实时间点复刻的
+122 秒提示表，14 条 cue。它是这套格式的活样板，也被测试盯着。

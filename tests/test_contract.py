@@ -27,6 +27,8 @@ SKILL = ROOT / "SKILL.md"
 REFS = ROOT / "references"
 VENDOR = ROOT / "assets" / "vendor"
 SCAFFOLD = ROOT / "assets" / "scaffold"
+MHT_FIXTURE = ROOT / "tests" / "fixtures" / "sample.mht"
+TIMELINE_EXAMPLE = ROOT / "examples" / "timeline-122s" / "timeline.json"
 
 
 def run(args: list[str], timeout: int = 180) -> subprocess.CompletedProcess[str]:
@@ -247,3 +249,128 @@ class Test端到端:
         # strict 模式：告警即失败，必须变红
         strict = run([str(SCRIPTS / "validate_scene.py"), str(p), "--strict"])
         assert strict.returncode != 0, "strict 模式下缺 importmap 竟然通过了校验"
+
+
+# ---------------------------------------------------------------------------
+# 8. 本仓库真的踩过的坑（每个用例对应一次真实事故）
+# ---------------------------------------------------------------------------
+
+class Test已知回归:
+    def test_vendor_文件不含_NUL(self) -> None:
+        """BufferGeometryUtils.js 曾在 16 KiB 处被 NUL 截断。
+
+        表现是 GLTFLoader 一 import 就 SyntaxError，而哈希校验、静态校验、
+        全部测试都绿——因为哈希是对损坏文件算的，静态检查不解析 JS。
+        """
+        bad = []
+        for p in VENDOR.rglob("*.js"):
+            if b"\x00" in p.read_bytes():
+                bad.append(p.relative_to(ROOT).as_posix())
+        assert not bad, f"vendor 里有二进制损坏的文件（尾部被 NUL 填充）：{bad}"
+
+    def test_vendor_addon_能被解析器读入(self) -> None:
+        """NUL 检查之外再钉一道：用 node 解析每个 addon。没 node 就跳过。"""
+        import shutil as _sh, subprocess as _sp
+        node = _sh.which("node")
+        if not node:
+            import pytest as _pytest
+            _pytest.skip("没有 node，跳过语法解析")
+        broken = []
+        for p in sorted((VENDOR / "addons").rglob("*.js")):
+            r = _sp.run([node, "--check", str(p)], capture_output=True, text=True)
+            if r.returncode != 0:
+                broken.append(p.relative_to(VENDOR).as_posix())
+        assert not broken, f"vendor addon 语法错误：{broken}"
+
+    def test_形态判定认得任意层级的_vendor(self) -> None:
+        """playground 用 ../assets/vendor/，spec/out 用 ../../assets/vendor/。
+
+        旧正则只认 `<.>/vendor/` 紧跟 vendor，这两处会被判成 D0，
+        接着 E03「未锁定 three@0.187.0」假失败——而它们的 importmap 明明指向本地。
+        """
+        import sys as _sys
+        _sys.path.insert(0, str(SCRIPTS))
+        import validate_scene  # noqa: E402
+        for rel in ("../vendor/x.js", "../assets/vendor/x.js",
+                    "../../assets/vendor/x.js", "./assets/vendor/x.js"):
+            html = f'<script type="importmap">{{"imports":{{"three":"{rel}"}}}}</script>'
+            assert "D2" in validate_scene.detect_mode(html), f"{rel} 未识别为 D2"
+
+    def test_压缩产物识别只对压缩产物成立(self) -> None:
+        """is_bundled 一旦误判，所有计数类检查都会被静默跳过——比误报更危险。"""
+        import sys as _sys
+        _sys.path.insert(0, str(SCRIPTS))
+        import validate_scene  # noqa: E402
+        demo = (ROOT / "demo" / "index.html").read_text(encoding="utf-8", errors="replace")
+        got, why = validate_scene.is_bundled(demo)
+        assert got, f"demo 应识别为压缩产物，实际 {got}（{why}）"
+        for rel in ("assets/scaffold/forged-scene.html", "playground/index.html",
+                    "spec/out/nema23-actuator.html"):
+            html = (ROOT / rel).read_text(encoding="utf-8", errors="replace")
+            g, w = validate_scene.is_bundled(html)
+            assert not g, f"{rel} 被误判成压缩产物（{w}），计数类检查会被跳过"
+
+
+# ---------------------------------------------------------------------------
+# 9. 提示表（E2/E3 的数据层）与网页存档（参考素材入口）
+# ---------------------------------------------------------------------------
+
+class Test时序与存档:
+    def test_示例提示表全过(self) -> None:
+        r = run([str(SCRIPTS / "timeline_check.py"), str(TIMELINE_EXAMPLE), "--strict"])
+        assert r.returncode == 0, r.stdout + r.stderr
+        assert "0 警告 / 0 失败" in r.stdout, r.stdout[-400:]
+
+    def test_缺主时钟必然失败(self, tmp_path: Path) -> None:
+        """多时钟是时序作品最难查的 bug，必须当硬错误。"""
+        spec = json.loads(TIMELINE_EXAMPLE.read_text(encoding="utf-8"))
+        spec.pop("master_clock", None)
+        p = tmp_path / "no-clock.json"
+        p.write_text(json.dumps(spec, ensure_ascii=False), encoding="utf-8")
+        r = run([str(SCRIPTS / "timeline_check.py"), str(p)])
+        assert r.returncode == 1 and "T02" in r.stdout, r.stdout[-400:]
+
+    def test_重复id与越界必然失败(self, tmp_path: Path) -> None:
+        spec = {"duration": 5.0, "master_clock": "raf",
+                "cues": [{"t": 0, "id": "x", "dur": 1, "ease": "linear", "apply": "a"},
+                         {"t": 2, "id": "x", "dur": 4, "ease": "linear", "apply": "b"}]}
+        p = tmp_path / "dup.json"
+        p.write_text(json.dumps(spec), encoding="utf-8")
+        r = run([str(SCRIPTS / "timeline_check.py"), str(p)])
+        assert r.returncode == 1
+        assert "T06" in r.stdout and "T07" in r.stdout
+
+    def test_降级档只改像素比会告警(self, tmp_path: Path) -> None:
+        """只降 devicePixelRatio 不叫降级——算法复杂度一点没降。"""
+        spec = {"duration": 10.0, "master_clock": "raf", "reduced_motion": "skip",
+                "quality_tiers": {"LOW": {"pixelRatio": 1}, "HIGH": {"pixelRatio": 2}},
+                "cues": [{"t": 0, "id": "a", "dur": 10, "ease": "linear", "apply": "x"}]}
+        p = tmp_path / "pixonly.json"
+        p.write_text(json.dumps(spec), encoding="utf-8")
+        r = run([str(SCRIPTS / "timeline_check.py"), str(p), "--strict"])
+        assert r.returncode == 1, "只改像素比的降级档竟然通过了 strict"
+        assert "T13" in r.stdout
+
+    def test_拆包_MHT_产出主文档与清单(self, tmp_path: Path) -> None:
+        out = tmp_path / "ref"
+        r = run([str(SCRIPTS / "mht_unpack.py"), str(MHT_FIXTURE), "--out", str(out), "--quiet"])
+        assert r.returncode == 0, r.stdout + r.stderr
+        assert (out / "index.html").is_file()
+        man = json.loads((out / "MANIFEST.json").read_text(encoding="utf-8"))
+        assert man["parts"] >= 10
+        assert man["scripts_in_html"] == 0, "样本快照里本来就没有脚本"
+        assert man["missing_kinds"], "应当推断出缺件"
+
+    def test_拆包后_cid_引用已改写(self, tmp_path: Path) -> None:
+        out = tmp_path / "ref2"
+        run([str(SCRIPTS / "mht_unpack.py"), str(MHT_FIXTURE), "--out", str(out), "--quiet"])
+        html = (out / "index.html").read_text(encoding="utf-8")
+        assert "cid:" not in html, "还有没改写的 cid: 引用，浏览器会加载失败"
+        for m in re.finditer(r'(?:href|src)="(_assets/[^"]+)"', html):
+            assert (out / m.group(1)).is_file(), m.group(1)
+
+    def test_不是_MHTML_时给出可读错误(self, tmp_path: Path) -> None:
+        plain = tmp_path / "x.html"
+        plain.write_text("<html><body>hi</body></html>", encoding="utf-8")
+        r = run([str(SCRIPTS / "mht_unpack.py"), str(plain)])
+        assert r.returncode == 1 and "不是 MHTML" in (r.stdout + r.stderr)

@@ -301,7 +301,8 @@ visual-3d-forge/
 │   ├── 18-experience-architecture.md   六段式、十幕法、状态机、张力曲线、三个样本逆向
 │   ├── 19-rhythm-and-timeline.md       BPM 栅格、五型张力曲线、十种转场、镜头语法
 │   ├── 20-sound-and-feedback.md        Web Audio 三路总线、五个音色配方、三通道反馈
-│   └── 21-game-feel-and-guidance.md    动词设计、三档引导、失败宽容、进度与成就
+│   ├── 21-game-feel-and-guidance.md    动词设计、三档引导、失败宽容、进度与成就
+│   └── 22-web-archive-intake.md       .mht 网页存档拆包为参考素材（与 export_mht 反向）
 ├── assets/
 │   ├── vendor/                         已裁剪的 three 0.187 精选集（18 文件 2.4 MB）
 │   └── scaffold/
