@@ -242,8 +242,8 @@ function buildShell(IR) {
     row.innerHTML = `
       <div class="sv-row-h"><span class="sv-dot ${worstGrade(p.evidence)}"></span>${p.label}<em>${p.kind}</em></div>
       <dl>${evs.map(([k, v]) => `
-        <dt>${k}</dt>
-        <dd class="${v.grade}">${v.value}<small>${v.src || ''}</small></dd>
+        <dt class="${v.anchor ? 'loc' : ''}">${k}</dt>
+        <dd class="${v.grade}" data-ev="${k}" title="${v.anchor ? '点击在模型上定位' : '此项未在几何上定位'}">${v.value}<small>${v.src || ''}</small></dd>
       `).join('')}</dl>
     `;
     list.appendChild(row);
@@ -257,7 +257,10 @@ function buildShell(IR) {
     </div>
     <label class="sv-slider"><span>爆炸</span><input type="range" min="0" max="100" value="0" data-k="explode"><b>0%</b></label>
     <label class="sv-slider"><span>剖切</span><input type="range" min="0" max="100" value="0" data-k="section"><b>关</b></label>
-    <div class="sv-actions"><button class="sv-ghost" data-act="reset">复位</button></div>
+    <div class="sv-actions">
+      <button class="sv-ghost on" data-act="dims">尺寸</button>
+      <button class="sv-ghost" data-act="reset">复位</button>
+    </div>
   `;
 
   const foot = el('div', 'sv-foot');
@@ -396,6 +399,159 @@ function boot(IR) {
   axisLine.computeLineDistances();
   scene.add(axisLine);
 
+  // ── 尺寸线：把每个数字钉回它量过的那一段 ──
+  // 工程图上的尺寸线说的是一句很具体的话：「我量了这一段」。
+  // 把它画在模型上，「这个数有依据」才从一句声明变成可以指认的东西。
+  const dimGroup = new THREE.Group();
+  scene.add(dimGroup);
+  const dims = [];
+  // 标注文字用屏幕空间尺寸：工程标注的大小不该随推拉镜头变化，
+  // 否则一放大就变成压住模型的巨字。
+  const TAG_W = 0.082;
+  const TAG_H = TAG_W / 3.81;
+  const DIM_HEX = { measured: 0x9ccf86, inferred: 0xd9a24a, standard: 0x99a0a8 };
+
+  function makeTag(text, grade) {
+    const cv = document.createElement('canvas');
+    cv.width = 320;
+    cv.height = 84;
+    const g = cv.getContext('2d');
+    g.font = '600 36px ui-monospace, SFMono-Regular, Menlo, monospace';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillStyle = '#' + DIM_HEX[grade].toString(16).padStart(6, '0');
+    g.fillText(text, 160, 44);
+    const tex = new THREE.CanvasTexture(cv);
+    tex.minFilter = THREE.LinearFilter;
+    tex.anisotropy = 4;
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: tex, transparent: true, depthTest: false, depthWrite: false,
+      opacity: 0.62, sizeAttenuation: false,
+    }));
+    sp.scale.set(TAG_W, TAG_H, 1);
+    sp.renderOrder = 20;
+    return sp;
+  }
+
+  function seg(points, color, opacity) {
+    const g = new THREE.BufferGeometry().setFromPoints(points);
+    const m = new THREE.LineBasicMaterial({ color, transparent: true, opacity, depthWrite: false });
+    m.userData.base = opacity;   // 记住基准，亮度切换时按比例缩放而不是覆盖
+    return new THREE.Line(g, m);
+  }
+
+  (function buildDims() {
+    // 两遍：先收集，再按「朝向」分桶统一布局。
+    // 一遍布局的问题是每个零件各自外推，结果同一侧的标注高低不齐、互相压住 ——
+    // 工程图的读法依赖「同一方向的东西排成一列」，这是排版问题，不是画线问题。
+    const specs = [];
+    const seenVal = new Set();   // 同一数值只标一次：重复标注会让人去找不存在差异
+
+    IR.parts.forEach((p) => {
+      const pbb = new THREE.Box3().setFromObject(built.get(p.uid).holder);
+      const ph = pbb.getSize(new THREE.Vector3()).multiplyScalar(0.5);
+      Object.entries(p.evidence || {}).forEach(([key, ev]) => {
+        const an = ev.anchor;
+        if (!an) return;
+        const vkey = (Math.round(ev.value * 100) / 100).toFixed(2);
+        if (seenVal.has(vkey)) return;
+        seenVal.add(vkey);
+
+        const a = new THREE.Vector3(...an.a).multiplyScalar(MM);
+        const b = new THREE.Vector3(...an.b).multiplyScalar(MM);
+        const dir = b.clone().sub(a);
+        if (dir.lengthSq() < 1e-10) return;
+        dir.normalize();
+
+        // 偏移方向：与尺寸方向垂直、且尽量朝上
+        const up = new THREE.Vector3(0, 1, 0);
+        if (Math.abs(dir.dot(up)) > 0.85) up.set(0, 0, 1);
+        const off = up.clone().addScaledVector(dir, -up.dot(dir)).normalize();
+
+        // 越过这个零件在该方向上的轮廓，否则标注压在模型上
+        const reach = Math.abs(ph.x * off.x) + Math.abs(ph.y * off.y) + Math.abs(ph.z * off.z);
+        specs.push({ p, key, ev, a, b, dir, off, reach });
+      });
+    });
+
+    const buckets = new Map();
+    const dk = (v) => `${Math.round(v.x * 2)},${Math.round(v.y * 2)},${Math.round(v.z * 2)}`;
+    specs.forEach((sp) => {
+      const k = dk(sp.off);
+      if (!buckets.has(k)) buckets.set(k, []);
+      buckets.get(k).push(sp);
+    });
+
+    buckets.forEach((arr) => {
+      const maxReach = Math.max(...arr.map((sp) => sp.reach));
+      arr.forEach((sp, i) => {
+        drawDim(sp, maxReach + maxDim * (0.028 + 0.038 * i));
+      });
+    });
+
+    function drawDim(sp, gap) {
+      const { p, key, ev, a, b, dir, off } = sp;
+      const a2 = a.clone().addScaledVector(off, gap);
+      const b2 = b.clone().addScaledVector(off, gap);
+      const color = DIM_HEX[ev.grade] || DIM_HEX.standard;
+      const tint = ev.grade === 'inferred' ? 0.30 : 0.42;
+
+      const g = new THREE.Group();
+      g.userData = { uid: p.uid, key, ev };
+      g.add(seg([a, a2], color, tint * 0.55));     // 引出线
+      g.add(seg([b, b2], color, tint * 0.55));
+      g.add(seg([a2, b2], color, tint));           // 尺寸线
+
+      const perp = new THREE.Vector3().crossVectors(dir, off).normalize();
+      const tip = maxDim * 0.022;
+      [a2, b2].forEach((pt, i) => {
+        const sgn = i === 0 ? 1 : -1;
+        const back = pt.clone().addScaledVector(dir, tip * sgn);
+        g.add(seg([pt, back.clone().addScaledVector(perp, tip * 0.34)], color, tint));
+        g.add(seg([pt, back.clone().addScaledVector(perp, -tip * 0.34)], color, tint));
+      });
+
+      const sym = (sp.ev.anchor.kind === 'diameter' || sp.ev.anchor.kind === 'hole'
+        || sp.ev.anchor.kind === 'pitch') ? '⌀' : '';
+      const tag = makeTag(sym + (Math.round(ev.value * 100) / 100), ev.grade);
+      tag.position.copy(a2).lerp(b2, 0.5).addScaledVector(off, maxDim * 0.020);
+      g.add(tag);
+
+      dimGroup.add(g);
+      dims.push({ uid: p.uid, key, group: g, tag, value: ev.value, grade: ev.grade });
+    }
+  })();
+
+  function setDimsVisible(on) {
+    dimGroup.visible = on;
+  }
+
+  let activeDim = -1;
+
+  // 标注的亮度只有一个真相：选中的最亮，其次是鼠标指着的那个件的，其余退成背景。
+  // 26 条尺寸同时全亮会盖住模型；全暗又等于没做。分层才是工程图的读法。
+  function applyDimAlphas() {
+    const hov = state.hover;
+    dims.forEach((d, i) => {
+      let k;
+      if (activeDim >= 0) k = i === activeDim ? 1 : 0.07;
+      else if (hov) k = d.uid === hov ? 1 : 0.10;
+      else k = 0.52;
+      const f = k === 1 ? 2.4 : (k < 0.2 ? 0.14 : 0.62);
+      d.group.traverse((o) => {
+        if (o.isLine) o.material.opacity = Math.min(1, (o.material.userData.base || 0.42) * f);
+      });
+      d.tag.material.opacity = k === 1 ? 1 : (k < 0.2 ? 0.08 : 0.5);
+      const sc = k === 1 ? 1.18 : 1;
+      d.tag.scale.set(TAG_W * sc, TAG_H * sc, 1);
+    });
+  }
+
+  function highlightDim(idx) {
+    activeDim = idx;
+    applyDimAlphas();
+  }
+
   // ── 相机与控制器 ──
   // 按方向算取景距离：包围球法对长条形物体太保守，正视时会把模型缩成一小截。
   // 正确做法是把 8 个角投到相机平面上取最大半宽，再除以 tan(fov/2)。
@@ -425,7 +581,9 @@ function boot(IR) {
       const needH = cr >= 0 ? cr / (tanH * (1 + k)) : -cr / (tanH * (1 - k));
       need = Math.max(need, Math.abs(c.dot(up)) / tanV - depth, needH - depth);
     }
-    return need * 0.97;
+    // 1.06 而不是 1.0：尺寸线画在零件外侧，取景若只按模型算，
+    // 最外圈的数字必然被切掉一半。留白是给标注的，不是给模型的。
+    return need * 1.06;
   }
 
   // 右侧明细面板会吃掉 340px。正确做法不是平移取景框（那会把左边推出画面），
@@ -506,6 +664,8 @@ function boot(IR) {
       const d = rec.holder.userData.explode;
       rec.holder.position.copy(rec.holder.userData.basePos).addScaledVector(d, amp);
     });
+    updateDimVisibility();
+    tip.classList.remove('on');
     // 零件散开后整体变宽，相机跟着退一点；不退的话两端一定出画。
     const dir = camera.position.clone().sub(controls.target);
     const want = (dollyBase || dist) * (1 + 0.55 * v);
@@ -533,10 +693,53 @@ function boot(IR) {
     ground.visible = !on;
     grid.visible = !on;
     axisLine.visible = !on;
+    updateDimVisibility();
+    tip.classList.remove('on');
+  }
+
+  let dimsOn = true;
+
+  function updateDimVisibility() {
+    dimGroup.visible = dimsOn && state.explode < 0.02 && state.section < 0.02;
+  }
+
+  // 相机飞到某个点：面板里点一条尺寸，视线就该落到那个件上。
+  function flyToPoint(pt, d) {
+    const v = camera.position.clone().sub(controls.target).normalize();
+    const from = camera.position.clone();
+    const fromT = controls.target.clone();
+    const to = pt.clone().addScaledVector(v, d);
+    const t0 = performance.now();
+    controls.autoRotate = false;
+    (function step() {
+      const k = Math.min((performance.now() - t0) / 620, 1);
+      const e = 1 - Math.pow(1 - k, 3);
+      camera.position.lerpVectors(from, to, e);
+      controls.target.lerpVectors(fromT, pt, e);
+      controls.update();
+      if (k < 1) requestAnimationFrame(step);
+    })();
+  }
+
+  function focusEvidence(uid, key) {
+    const idx = dims.findIndex((d) => d.uid === uid && d.key === key);
+    highlightDim(idx);
+    const rec = built.get(uid);
+    if (rec) {
+      const bb = new THREE.Box3().setFromObject(rec.holder);
+      const c = bb.getCenter(new THREE.Vector3());
+      const r = bb.getSize(new THREE.Vector3()).length();
+      flyToPoint(c, Math.max(r * 2.35, maxDim * 0.8));
+    }
   }
 
   // ── 交互 ──
   const ray = new THREE.Raycaster();
+  // 拾取阈值的单位是「世界单位」。这个场景是毫米制、模型只有 0.145 米，
+  // 而 Line 的默认阈值是 1 —— 等于整个屏幕都在任一描边的命中范围里，
+  // 鼠标放在空白处也会点亮某个零件。三行代码，查了一下午。
+  ray.params.Line.threshold = maxDim * 0.008;
+  ray.params.Points.threshold = maxDim * 0.008;
   const pointer = new THREE.Vector2();
 
   function pick(ev) {
@@ -544,8 +747,10 @@ function boot(IR) {
     pointer.x = ((ev.clientX - r.left) / r.width) * 2 - 1;
     pointer.y = -((ev.clientY - r.top) / r.height) * 2 + 1;
     ray.setFromCamera(pointer, camera);
+    // 只认实体面。描边是给人看的，不是给鼠标点的。
     const hits = ray.intersectObjects(world.children, true);
     for (const h of hits) {
+      if (!h.object.isMesh) continue;
       const uid = h.object.userData.partUid;
       if (uid) return uid;
     }
@@ -569,6 +774,7 @@ function boot(IR) {
       const row = document.querySelector(`.sv-row[data-uid="${uid}"]`);
       if (row) row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
+    applyDimAlphas();
   }
 
   // 画布上的即时反馈：鼠标停在哪，就报出这是哪个件、成色如何。
@@ -594,11 +800,21 @@ function boot(IR) {
   ui.list.addEventListener('click', (ev) => {
     const row = ev.target.closest('.sv-row');
     if (!row) return;
-    setHover(row.dataset.uid);
-    const rec = built.get(row.dataset.uid);
-    if (rec) {
-      const b = new THREE.Box3().setFromObject(rec.holder).getCenter(new THREE.Vector3());
-      controls.target.copy(b);
+    const uid = row.dataset.uid;
+    setHover(uid);
+    ui.list.querySelectorAll('dd').forEach((d) => d.classList.remove('sel'));
+    const cell = ev.target.closest('dd[data-ev]');
+    const ev0 = cell && built.get(uid) && (built.get(uid).part.evidence || {})[cell.dataset.ev];
+    if (cell && ev0 && ev0.anchor) {
+      cell.classList.add('sel');
+      focusEvidence(uid, cell.dataset.ev);
+    } else {
+      highlightDim(-1);
+      const rec = built.get(uid);
+      if (rec) {
+        const c = new THREE.Box3().setFromObject(rec.holder).getCenter(new THREE.Vector3());
+        flyToPoint(c, maxDim * 0.95);
+      }
     }
   });
 
@@ -623,9 +839,18 @@ function boot(IR) {
       secSlider.value < 3 ? '关' : secSlider.value + '%';
   });
 
+  ui.dock.querySelector('[data-act="dims"]').addEventListener('click', (e) => {
+    dimsOn = !dimsOn;
+    e.currentTarget.classList.toggle('on', dimsOn);
+    updateDimVisibility();
+  });
+
   ui.dock.querySelector('[data-act="reset"]').addEventListener('click', () => {
     expSlider.value = 0; applyExplode(0);
     secSlider.value = 0; applySection(0);
+    highlightDim(-1);
+    ui.list.querySelectorAll('dd').forEach((d) => d.classList.remove('sel'));
+    updateDimVisibility();
     flyTo('iso');
   });
 
@@ -639,6 +864,7 @@ function boot(IR) {
   }
   window.addEventListener('resize', resize);
   resize();
+  applyDimAlphas();
 
   // ── 循环 ──
   function tick() {
@@ -651,7 +877,7 @@ function boot(IR) {
   // 首屏：先摆好，再轻轻转，3 秒后停 —— 让人先看清，再给一点动感
   setTimeout(() => { controls.autoRotate = false; }, 3200);
 
-  window.__spec = { scene, camera, renderer, controls, built, applyExplode, applySection, flyTo, bbox, center, size, maxDim, fitDist, THREE };
+  window.__spec = { scene, camera, renderer, controls, built, applyExplode, applySection, flyTo, bbox, center, size, maxDim, fitDist, THREE, dims, dimGroup, focusEvidence, highlightDim };
 }
 
 boot(window.__IR);

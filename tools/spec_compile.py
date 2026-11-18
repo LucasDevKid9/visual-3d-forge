@@ -263,6 +263,164 @@ def solve_assembly(parts: list[dict], constraints: list[dict]) -> tuple[dict, li
 
 # ────────────────────────────── ③ 检查 ──────────────────────────────
 
+def _local_xy_to_world(p: dict, at: list[float]) -> list[float]:
+    """把拉伸体的局部平面坐标换成世界偏移。
+
+    必须和运行时 alignExtrude 对齐，否则尺寸标注会落在零件外面 ——
+    ExtrudeGeometry 默认沿 +Z 拉伸，axis=x 时整体绕 Y 转 90°，形状的 x 轴因此变成 −z。
+    """
+    ax = p.get("axis", "x")
+    if ax == "x":
+        return [0.0, at[1], -at[0]]
+    if ax == "y":
+        return [at[0], 0.0, -at[1]]
+    return [at[0], at[1], 0.0]
+
+
+PARAM_HINTS = ("齿数", "模数", "减速比", "级数", "个数", "数量", "角度", "重量", "材质")
+
+
+def is_param(key: str, ev: dict) -> bool:
+    """无量纲量不参与几何定位。
+
+    齿数、模数、减速比是生成几何的**输入**，不是能从几何上量出来的**结果**。
+    把它们算进分母，会让定位率永远虚低，也会掩盖真正量错的尺寸。
+    """
+    if ev.get("param") is True:
+        return True
+    return any(h in key for h in PARAM_HINTS)
+
+
+def locate_evidence(parts: list[dict], pos: dict, tol_abs: float = 0.8,
+                    tol_rel: float = 0.02) -> dict:
+    """把每条尺寸钉回几何上。
+
+    人只写「机身长 56」，编译器去量这个零件的包围盒：X 跨 56.00 → 钉上。
+    这不是显示技巧。**一个数字如果在几何上找不到落点，它就没有被验证过** ——
+    它可能量的是别的零件，也可能是笔误。P1 的全部意义就是让这句话可执行。
+
+    五种落点，按误差最小者胜：
+      span      沿某轴的跨度（长、宽、厚、法兰边长）
+      diameter  回转体的径向直径（车身直径、内径）
+      profile   回转轮廓某一段的直径（扁位、台阶）
+      hole      单个孔的直径
+      pitch     孔心距 / 孔分布圆直径
+    容差取 max(0.8 mm, 2%)：更小的偏差在确认件阶段没有意义，
+    但放宽到 5% 时「分布圆」会误配到别的跨度上，反而骗人。
+    """
+    def tol(v: float) -> float:
+        return max(tol_abs, abs(v) * tol_rel)
+
+    located = total = 0
+    orphans: list[str] = []
+    params: list[str] = []
+
+    for p in parts:
+        uid = p["uid"]
+        evs = p.get("evidence") or {}
+        if not evs:
+            continue
+        lo, hi = part_aabb(p, pos[uid])
+        span = {"x": hi[0] - lo[0], "y": hi[1] - lo[1], "z": hi[2] - lo[2]}
+        c = [(lo[i] + hi[i]) / 2.0 for i in range(3)]
+        rax = {"x": ("y", "z"), "y": ("x", "z"), "z": ("x", "y")}[p.get("axis", "x")]
+        prm = p.get("params") or {}
+
+        # 孔心（世界坐标）与孔心距，先算一遍
+        hole_pts: list[list[float]] = []
+        hole_ds: list[float] = []
+        # holes 在 IR 里已展开成多边形：中心和直径从包围盒反推，
+        # 圆形与任意形状都适用，不用再回看 DSL。
+        for h in (prm.get("holes") or []):
+            if not h:
+                continue
+            xs = [q[0] for q in h]
+            ys = [q[1] for q in h]
+            d = max(max(xs) - min(xs), max(ys) - min(ys))
+            if d <= 1e-6:
+                continue
+            off = _local_xy_to_world(p, [(max(xs) + min(xs)) / 2, (max(ys) + min(ys)) / 2])
+            hole_pts.append([pos[uid][i] + off[i] for i in range(3)])
+            hole_ds.append(float(d))
+
+        for key, ev in evs.items():
+            if is_param(key, ev):
+                params.append(f"{uid}·{key}")
+                continue
+            total += 1
+            v = float(ev["value"])
+            cands: list[tuple[float, str, list[float], list[float], str]] = []
+
+            def add(err, kind, a, b):
+                if err <= tol(v):
+                    cands.append((err, kind, a, b, kind))
+
+            # ① bbox 跨度
+            for ax in "xyz":
+                i = "xyz".index(ax)
+                a = list(c); a[i] = lo[i]
+                b = list(c); b[i] = hi[i]
+                add(abs(span[ax] - v), "span", a, b)
+
+            # ② 回转体径向直径
+            if p["kind"] in ("revolve", "gear"):
+                i = "xyz".index(rax[1])
+                dia = max(span[rax[0]], span[rax[1]])
+                a = list(c); a[i] = c[i] - dia / 2
+                b = list(c); b[i] = c[i] + dia / 2
+                add(abs(dia - v), "diameter", a, b)
+
+                # ③ 轮廓某一段的直径（扁位、台阶、内腔）
+                ai = "xyz".index(p.get("axis", "x"))
+                # 轮廓某一段的直径：落点是该段中点处的一条径向线，
+                # 不是轴向跨度 —— 扁位、台阶这类特征只沿径向可量。
+                for (r1, a1), (r2, a2) in zip(prm["profile"], prm["profile"][1:]):
+                    if abs(r1 - r2) > 1e-6 or r1 <= 1e-3:
+                        continue
+                    rj = "xyz".index(rax[1])
+                    mid = pos[uid][ai] + (min(a1, a2) + max(a1, a2)) / 2.0
+                    a = list(c); b = list(c)
+                    a[ai] = mid; b[ai] = mid
+                    a[rj] = c[rj] - r1
+                    b[rj] = c[rj] + r1
+                    add(abs(2 * r1 - v), "profile", a, b)
+
+            # ④ 单个孔
+            if hole_ds:
+                k = min(range(len(hole_ds)), key=lambda j: abs(hole_ds[j] - v))
+                d = abs(hole_ds[k] - v)
+                if d <= tol(v):
+                    # 孔的直径要横着量：孔轴是拉伸方向，沿轴量到的是壁厚。
+                    rj = "xyz".index(rax[1])
+                    r = v / 2
+                    a = list(hole_pts[k]); a[rj] -= r
+                    b = list(hole_pts[k]); b[rj] += r
+                    cands.append((d, "hole", a, b, "hole"))
+
+                # ⑤ 孔心距 / 分布圆
+                for i in range(len(hole_pts)):
+                    for j in range(i + 1, len(hole_pts)):
+                        dd = sum((hole_pts[i][t] - hole_pts[j][t]) ** 2 for t in range(3)) ** 0.5
+                        if dd >= v - tol(v):
+                            a, b = list(hole_pts[i]), list(hole_pts[j])
+                            cands.append((abs(dd - v), "pitch", a, b, "pitch"))
+
+            if not cands:
+                orphans.append(f"{uid}·{key}")
+                continue
+
+            err, kind, a, b, _ = min(cands, key=lambda t: t[0])
+            ev["anchor"] = {
+                "uid": uid, "kind": kind, "axis": p.get("axis", "x"),
+                "err": round(err, 3),
+                "a": [round(x, 3) for x in a],
+                "b": [round(x, 3) for x in b],
+            }
+            located += 1
+
+    return {"located": located, "total": total, "orphans": orphans, "params": params}
+
+
 def run_checks(parts, constraints, pos) -> dict:
     checks: list[dict] = []
     by_uid = {p["uid"]: p for p in parts}
@@ -366,13 +524,31 @@ def run_checks(parts, constraints, pos) -> dict:
                   f"推断 {counts['inferred']} 项已在页面以琥珀色标出",
     })
 
-    return {"checks": checks, "coverage": round(coverage, 4), "counts": counts, "total": total}
+    # C6 证据定位率：每个数字必须能在几何上找到落点
+    loc = locate_evidence(parts, pos)
+    loc_rate = loc["located"] / (loc["total"] or 1)
+    checks.append({
+        "code": "C6", "level": "pass" if loc_rate >= 0.7 else "warn",
+        "title": "证据定位率",
+        "detail": (
+            f"{loc['located']}/{loc['total']} 项尺寸已在几何上定位（容差 0.8 mm / 2%）；"
+            f"另 {len(loc['params'])} 项为无量纲参数，不参与定位"
+            + ("；未定位：" + "、".join(loc["orphans"][:5]) + ("…" if len(loc["orphans"]) > 5 else "")
+               if loc["orphans"] else "；全部尺寸可定位")
+        ),
+    })
+
+    return {"checks": checks, "coverage": round(coverage, 4), "counts": counts,
+            "total": total, "located": loc["located"], "ev_total": loc["total"],
+            "orphans": loc["orphans"], "params": loc["params"]}
+
 
 
 # ────────────────────────────── 输出 ──────────────────────────────
 
 def build_ir(spec: dict) -> dict:
-    parts = [expand_part(dict(p)) for p in spec["parts"]]
+    # 深拷贝：anchor 要写回 evidence，不能污染调用方传进来的 spec
+    parts = [expand_part(json.loads(json.dumps(p, ensure_ascii=False))) for p in spec["parts"]]
     constraints = spec.get("assembly") or []
     pos, notes = solve_assembly(parts, constraints)
     report = run_checks(parts, constraints, pos)

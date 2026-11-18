@@ -189,3 +189,16 @@ html, body {
 .sv-tip i.measured { color: var(--ok); background: rgba(127,191,106,.12); }
 .sv-tip i.inferred { color: var(--warn); background: rgba(217,162,74,.12); }
 .sv-tip i.standard { color: var(--std); background: rgba(138,145,153,.12); }
+
+/* ── 尺寸定位：点一条证据，模型上对应的那段亮起来 ── */
+.sv-row dt.loc::after {
+  content: "◎"; margin-left: 4px; font-size: 9px;
+  color: var(--dim); opacity: .55;
+}
+.sv-row dd { cursor: pointer; border-radius: 3px; transition: background .14s, color .14s; }
+.sv-row dd:hover { background: rgba(255,255,255,.045); }
+.sv-row dd.sel {
+  background: rgba(232,196,138,.10);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.sv-actions .sv-ghost.on { color: var(--accent); border-color: rgba(232,196,138,.45); }

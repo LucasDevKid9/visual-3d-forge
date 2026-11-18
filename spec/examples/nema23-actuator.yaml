@@ -88,7 +88,7 @@ parts:
         - [26.0, 0]
     evidence:
       壳体直径: { value: 60.0, src: "图注 A2", grade: measured }
-      壳体长: { value: 45.0, src: "图注 A2", grade: measured }
+      壳体长: { value: 46.0, src: "图注 A2", grade: measured }
       减速比: { value: 10.0, src: "铭牌 10:1", grade: measured }
     explode: [0.10, 0, 0]
 

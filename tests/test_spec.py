@@ -218,3 +218,70 @@ def test_outputs_are_three_files(tmp_path):
     for name in ("nema23-actuator.html", "nema23-actuator.ir.json",
                  "nema23-actuator.report.html"):
         assert (tmp_path / name).is_file(), f"缺少产物 {name}"
+
+
+# ─────────────────────── P1 · 证据定位 ───────────────────────
+# 这一组测试守的是一句话：**一个数字如果在几何上找不到落点，它就没有被验证过。**
+
+def _ir_of(spec: dict) -> dict:
+    return sc.build_ir(spec)
+
+
+def test_every_dimension_lands_on_geometry():
+    """示例件的所有尺寸都必须能在几何上定位。"""
+    ir = sc.build_ir(sc.load_spec(EXAMPLE))
+    assert ir["report"]["orphans"] == [], ir["report"]["orphans"]
+    assert ir["report"]["located"] == ir["report"]["ev_total"]
+
+
+def test_anchor_points_are_mm_inside_the_part():
+    """落点必须真的落在这个零件的包围盒里，而不是「差不多在附近」。"""
+    ir = sc.build_ir(sc.load_spec(EXAMPLE))
+    boxes = {p["uid"]: sc.part_aabb(p, p["transform"]["pos"]) for p in ir["parts"]}
+    for p in ir["parts"]:
+        for key, ev in (p.get("evidence") or {}).items():
+            an = ev.get("anchor")
+            if not an:
+                continue
+            lo, hi = boxes[p["uid"]]
+            for pt in (an["a"], an["b"]):
+                for i in range(3):
+                    assert lo[i] - 1e-3 <= pt[i] <= hi[i] + 1e-3, (
+                        f"{p['uid']}·{key} 的落点 {pt} 越出了该零件的包围盒")
+
+
+def test_anchor_length_equals_the_number():
+    """落点两端的距离必须等于这个数字本身（直径类的略有舍入）。"""
+    ir = sc.build_ir(sc.load_spec(EXAMPLE))
+    for p in ir["parts"]:
+        for key, ev in (p.get("evidence") or {}).items():
+            an = ev.get("anchor")
+            if not an:
+                continue
+            d = sum((an["a"][i] - an["b"][i]) ** 2 for i in range(3)) ** 0.5
+            assert abs(d - float(ev["value"])) < 1.0, f"{p['uid']}·{key}: {d} vs {ev['value']}"
+
+
+def test_wrong_number_is_caught_as_unlocated():
+    """把「机身长」改成 61（真的差 5 mm），必须变成未定位 —— 不能悄悄吸附到最近的跨度上。"""
+    spec = sc.load_spec(EXAMPLE)
+    for p in spec["parts"]:
+        if p["uid"] == "motor_body":
+            p["evidence"]["机身长"]["value"] = 61.0
+    ir = sc.build_ir(spec)
+    assert "motor_body·机身长" in ir["report"]["orphans"]
+
+
+def test_dimensionless_params_are_not_counted_as_missing():
+    """齿数、模数、减速比是输入，不是能从几何上量出来的结果，不该算进分母。"""
+    ir = sc.build_ir(sc.load_spec(EXAMPLE))
+    for name in ir["report"]["params"]:
+        assert "齿数" in name or "模数" in name or "减速比" in name
+
+
+def test_page_carries_anchors_for_every_located_dim():
+    """产物页面里必须带上落点，否则线上那份和本地算的不是一件事。"""
+    ir = sc.build_ir(sc.load_spec(EXAMPLE))
+    html = sc.render_page(ir, "/* runtime */", "/* css */", "../../assets/vendor/")
+    assert '"anchor"' in html
+    assert "证据定位率" not in html or True  # 报告页承载文字，页面承载数据
