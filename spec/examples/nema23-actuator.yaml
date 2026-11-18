@@ -1,0 +1,257 @@
+# NEMA23 行星减速执行器 · 装配确认件
+#
+# 这是一份 SpecSheet：人只做「指认」——这是什么件、几个数、装在哪。
+# 不写坐标、不写旋转、不建拓扑。位置由装配链求解，几何由五个基元生成。
+#
+# 尺寸来源：NEMA23 标准（法兰 57.15 / 孔位 47.14 / 轴 8）+ 厂商规格书 A1、A2。
+# 每个数字都必须标成色，这是这份文件存在的意义。
+
+spec_version: "0.1"
+id: nema23-actuator
+title: NEMA23 行星减速执行器
+subtitle: 步进电机 + 10:1 行星减速头 · 装配确认件
+units: mm
+
+source:
+  image: spec/examples/nema23-actuator.png
+  grade: R1
+  note: 外廓与孔位取自规格书三视图；内部轮系按 10:1 反推，标注为推断
+
+intent:
+  object: NEMA23 步进电机 + 单级行星减速头
+  purpose: 确认装配顺序、轴向总长、安装孔位与减速比
+  audience: 有基础
+  scale: 1:1
+  must: [电机机身, 前端法兰, 减速头, 输出轴, 安装底板, 行星轮系]
+  drop: [绕组, 编码器, 线缆, 螺纹牙型, 表面涂装]
+  delivery: D1
+
+parts:
+  # ── 装配链（从 -X 到 +X，顺序即装配顺序）─────────────────────────
+  - uid: motor_body
+    label: 电机机身
+    kind: revolve
+    axis: x
+    material: anodized_black
+    params:
+      segments: 72
+      profile:                       # [半径, 轴向] mm，局部坐标从 0 起
+        - [0, 0]
+        - [25.0, 0]
+        - [25.0, 3.0]
+        - [28.575, 3.0]
+        - [28.575, 56.0]
+        - [0, 56.0]
+    evidence:
+      法兰边长: { value: 57.15, src: "NEMA23 标准", grade: standard }
+      机身长: { value: 56.0, src: "图注 A1", grade: measured }
+      机身直径: { value: 57.15, src: "NEMA23 标准", grade: standard }
+    explode: [-1.0, 0, 0]
+
+  - uid: motor_flange
+    label: 电机前端法兰
+    kind: extrude
+    axis: x
+    material: aluminum
+    params:
+      depth: 6.35
+      bevel: 0.6
+      outline: { type: rect, w: 57.15, h: 57.15 }
+      holes:
+        - { type: circle, d: 38.0 }
+        - { type: circle, d: 5.5, at: [23.57, 23.57] }
+        - { type: circle, d: 5.5, at: [-23.57, 23.57] }
+        - { type: circle, d: 5.5, at: [-23.57, -23.57] }
+        - { type: circle, d: 5.5, at: [23.57, -23.57] }
+    evidence:
+      法兰边长: { value: 57.15, src: "NEMA23 标准", grade: standard }
+      法兰厚度: { value: 6.35, src: "NEMA23 标准", grade: standard }
+      安装孔位: { value: 47.14, src: "NEMA23 标准", grade: standard }
+      安装孔径: { value: 5.5, src: "NEMA23 标准", grade: standard }
+      止口直径: { value: 38.0, src: "NEMA23 标准", grade: standard }
+    explode: [-0.55, 0, 0]
+
+  - uid: gearhead_body
+    label: 减速头壳体
+    kind: revolve
+    axis: x
+    material: cast_iron
+    params:
+      segments: 72
+      profile:                       # 前端开口、后端封底：真实壳体的样子
+        - [26.0, 0]
+        - [26.0, 40.0]
+        - [0.02, 40.0]
+        - [0.02, 46.0]
+        - [30.0, 46.0]
+        - [30.0, 0.0]
+        - [26.0, 0]
+    evidence:
+      壳体直径: { value: 60.0, src: "图注 A2", grade: measured }
+      壳体长: { value: 45.0, src: "图注 A2", grade: measured }
+      减速比: { value: 10.0, src: "铭牌 10:1", grade: measured }
+    explode: [0.10, 0, 0]
+
+  - uid: gearhead_flange
+    label: 输出法兰
+    kind: extrude
+    axis: x
+    material: aluminum
+    params:
+      depth: 8.0
+      bevel: 0.6
+      outline: { type: circle, d: 70.0 }
+      holes:
+        - { type: circle, d: 22.0 }
+        - { type: circle, d: 4.5, at: [31.0, 0] }
+        - { type: circle, d: 4.5, at: [15.5, 26.85] }
+        - { type: circle, d: 4.5, at: [-15.5, 26.85] }
+        - { type: circle, d: 4.5, at: [-31.0, 0] }
+        - { type: circle, d: 4.5, at: [-15.5, -26.85] }
+        - { type: circle, d: 4.5, at: [15.5, -26.85] }
+    evidence:
+      法兰直径: { value: 70.0, src: "图注 A3", grade: measured }
+      法兰厚度: { value: 8.0, src: "图注 A3", grade: measured }
+      孔分布圆: { value: 62.0, src: "图注 A3", grade: measured }
+      孔径: { value: 4.5, src: "推断：M4 通孔", grade: inferred }
+    explode: [0.75, 0, 0]
+
+  - uid: output_shaft
+    label: 输出轴
+    kind: revolve
+    axis: x
+    material: steel
+    params:
+      segments: 48
+      profile:
+        - [0, 0]
+        - [6.0, 0]
+        - [6.0, 12.0]
+        - [5.0, 12.0]
+        - [5.0, 25.0]
+        - [0, 25.0]
+    evidence:
+      轴径: { value: 12.0, src: "图注 A4", grade: measured }
+      伸出长: { value: 25.0, src: "图注 A4", grade: measured }
+      扁位直径: { value: 10.0, src: "推断：D 形轴标准", grade: inferred }
+    explode: [1.25, 0, 0]
+
+  # ── 安装底板（不参与轴向链）──────────────────────────────────────
+  - uid: base_plate
+    label: 安装底板
+    kind: extrude
+    axis: y
+    material: cast_iron
+    mount: { to: motor_body, at: 0.0, shift: [32.5, -40.0, 0.0] }
+    params:
+      depth: 8.0
+      bevel: 0.8
+      outline: { type: rect, w: 145.0, h: 80.0 }
+      holes:
+        - { type: circle, d: 9.0, at: [60.0, 30.0] }
+        - { type: circle, d: 9.0, at: [-60.0, 30.0] }
+        - { type: circle, d: 9.0, at: [-60.0, -30.0] }
+        - { type: circle, d: 9.0, at: [60.0, -30.0] }
+        - { type: slot, w: 26.0, h: 9.0, at: [0, 0] }
+    evidence:
+      板长: { value: 145.0, src: "图注 A5", grade: measured }
+      板宽: { value: 80.0, src: "图注 A5", grade: measured }
+      板厚: { value: 8.0, src: "推断：常见钢底板", grade: inferred }
+      安装孔径: { value: 9.0, src: "推断：M8 通孔", grade: inferred }
+    explode: [0, -0.6, 0]
+
+  # ── 内部轮系（默认隐藏，剖切时显现）──────────────────────────────
+  - uid: motor_shaft
+    label: 电机轴（伸入）
+    kind: revolve
+    axis: x
+    material: steel
+    internal: true
+    mount: { to: motor_body, at: 41.0, shift: [0, 0, 0] }
+    params:
+      segments: 32
+      profile:
+        - [0, 0]
+        - [4.0, 0]
+        - [4.0, 21.0]
+        - [0, 21.0]
+    evidence:
+      轴径: { value: 8.0, src: "NEMA23 标准", grade: standard }
+      轴长: { value: 21.0, src: "NEMA23 标准", grade: standard }
+    explode: [-1.0, 0, 0]
+
+  - uid: sun_gear
+    label: 太阳轮
+    kind: gear
+    axis: x
+    material: steel
+    internal: true
+    mount: { to: gearhead_body, at: 12.0, shift: [0, 0, 0] }
+    params:
+      z: 12
+      m: 1.1
+      thickness: 12.0
+      bore: 8.0
+      pressure_angle: 20
+    evidence:
+      齿数: { value: 12, src: "推断：由 10:1 与齿圈 44 反推", grade: inferred }
+      模数: { value: 1.1, src: "推断：受壳体内腔 r26 约束", grade: inferred }
+    explode: [0.10, 0, 0]
+
+  - uid: planet_gears
+    label: 行星轮 ×3
+    kind: pattern
+    axis: x
+    material: brass
+    internal: true
+    mount: { to: gearhead_body, at: 12.0, shift: [0, 0, 0] }
+    params:
+      count: 3
+      radius: 15.4
+      phase: 0
+      proto:
+        kind: gear
+        params:
+          z: 16
+          m: 1.1
+          thickness: 12.0
+          bore: 6.0
+          pressure_angle: 20
+    evidence:
+      齿数: { value: 16, src: "推断：(44-12)/2", grade: inferred }
+      分布圆: { value: 30.8, src: "推断：m(z₁+z₂)/2", grade: inferred }
+    explode: [0.10, 0, 0]
+
+  - uid: ring_gear
+    label: 内齿圈
+    kind: revolve
+    axis: x
+    material: steel
+    internal: true
+    mount: { to: gearhead_body, at: 6.0, shift: [0, 0, 0] }
+    params:
+      segments: 72
+      profile:
+        - [25.5, 0]
+        - [25.9, 0]
+        - [25.9, 24.0]
+        - [25.5, 24.0]
+        - [25.5, 0]
+    evidence:
+      内径: { value: 51.0, src: "推断：模数 1.1 × 44 齿 + 壳体内腔 52", grade: inferred }
+      齿宽: { value: 24.0, src: "推断：与壳体内腔匹配", grade: inferred }
+    explode: [0.10, 0, 0]
+
+assembly:
+  - { type: mate, a: motor_flange, b: motor_body, offset: 0.0, note: 法兰贴合机身前端面 }
+  - { type: mate, a: gearhead_body, b: motor_flange, offset: 0.0, note: 减速头贴合法兰 }
+  - { type: mate, a: gearhead_flange, b: gearhead_body, offset: 0.0, note: 输出法兰贴合减速头 }
+  - { type: mate, a: output_shaft, b: gearhead_flange, offset: -6.0, note: 轴插入法兰止口 6mm }
+  - { type: coax, a: motor_body, b: gearhead_body, note: 同轴 }
+  - { type: coax, a: output_shaft, b: gearhead_body, note: 同轴 }
+
+views:
+  - { id: hero, kind: iso, label: 等轴 }
+  - { id: front, kind: front, label: 正视 }
+  - { id: top, kind: top, label: 俯视 }
+  - { id: side, kind: side, label: 侧视 }

@@ -1,7 +1,8 @@
 name: pages
 
-# 站点结构：根 = 旗舰示例（NOVA X-01），/playground/ = 参数化实验台。
-# 构建只做搬运：两个页面都是零构建产物，部署不该引入它们不需要的环节。
+# 站点结构：根 = 旗舰示例（NOVA X-01），/playground/ = 参数化实验台，
+# /spec/out/ = 图纸直译的确认件（编译产物，同样零构建）。
+# 构建只做搬运：三个页面都是零构建产物，部署不该引入它们不需要的环节。
 
 on:
   push:
@@ -9,6 +10,7 @@ on:
     paths:
       - "demo/**"
       - "playground/**"
+      - "spec/out/**"
       - "assets/vendor/**"
       - "docs/assets/**"
       - ".github/workflows/pages.yml"
@@ -35,7 +37,7 @@ jobs:
       - name: 组装站点
         run: |
           set -eu
-          mkdir -p site/playground site/assets
+          mkdir -p site/playground site/spec/out site/assets
 
           # 旗舰示例：单文件产物，直接放根目录
           cp demo/index.html site/index.html
@@ -43,6 +45,10 @@ jobs:
           # 参数化实验台：挂在 /playground/ 下，相对路径 ../assets/ 正好指向站点根
           cp playground/index.html site/playground/index.html
           cp -r assets/vendor site/assets/vendor
+
+          # 图纸直译：编译产物放在 /spec/out/，相对路径 ../../assets/ 正好指向站点根
+          cp spec/out/*.html site/spec/out/
+          cp spec/out/*.ir.json site/spec/out/ 2>/dev/null || true
 
           python3 - <<'PY'
           import json, re, sys, pathlib
@@ -72,6 +78,21 @@ jobs:
               sys.exit("实验台不应依赖 CDN")
           print("importmap ok:", imports)
           PY
+
+          # 3) 确认件同样不许有远程依赖（importmap 只能指向本地 vendor）
+          sp = pathlib.Path("site/spec/out/nema23-actuator.html")
+          if not sp.is_file():
+              sys.exit("缺少确认件产物")
+          sp_txt = sp.read_text(encoding="utf-8")
+          for pat in ("cdn.jsdelivr", "unpkg.com", "cdnjs.cloudflare.com"):
+              if pat in sp_txt:
+                  sys.exit(f"确认件仍在引用远程资源：{pat}")
+          m2 = re.search(r'<script type="importmap">(.*?)</script>', sp_txt, re.S)
+          if m2:
+              imp = json.loads(m2.group(1))["imports"]
+              if any(v.startswith("http") for v in imp.values()):
+                  sys.exit(f"确认件的 importmap 不许指向远程：{imp}")
+              print("spec importmap ok:", imp)
 
           test -f site/assets/vendor/three.module.js
           test -f site/assets/vendor/addons/controls/OrbitControls.js

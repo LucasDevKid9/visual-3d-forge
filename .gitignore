@@ -9,6 +9,13 @@ out/
 dist/
 *.tmp.html
 
+# 例外：图纸直译的编译产物要入库 —— Pages 直接发布它们，
+# 否则线上就没有这个页面可看。
+!spec/out/
+!spec/out/*.html
+!spec/out/*.json
+spec/out/shots/
+
 # 系统
 .DS_Store
 Thumbs.db

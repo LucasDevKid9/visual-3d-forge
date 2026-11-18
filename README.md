@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-3d3d3d"></a>
-  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-69-4c8a5a">
+  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-86-4c8a5a">
   <img alt="deps" src="https://img.shields.io/badge/runtime%20deps-0-4c8a5a">
   <img alt="three" src="https://img.shields.io/badge/three.js-r187-000">
 </p>
@@ -25,6 +25,73 @@
 <p align="center">
   <sub>NOVA X-01 · 单文件 673 KB · 双击即开，不用服务器、不用联网 · 5 场景 / 4 时段 / 3 天气 / 四档交付</sub>
 </p>
+
+---
+
+## Spec Compiler：把一张带标注的图，编译成一个能转的确认件
+
+NOVA 回答「这套管线能做出什么」；Spec Compiler 回答「**规格怎么变成能转的东西**」。
+
+它不做建模，做**确认**——项目时间轴上「建模之前」那一格，目前没有任何工具：
+
+```
+  概念          规格         【确认】         建模          渲染         交付
+   │             │              │              │             │            │
+  草图          图纸/参数        ???          Blender        C4D        成片
+                               ↑
+                          这一格是空的
+```
+
+Blender 放大人的手艺；这里要消灭的是「翻译」这个动作。人只做**指认**——这是什么件、几个数、装在哪——位置由装配链求解，几何由五个基元（回转 / 拉伸 / 齿形 / 阵列 / 孔）生成。
+
+<p align="center">
+  <img src="docs/assets/spec-hero.jpg" alt="NEMA23 行星减速执行器 · 装配确认件：电机 + 前端法兰 + 减速头 + 输出法兰 + 输出轴 + 安装底板" width="92%">
+</p>
+
+### 每个数字都必须交代来源
+
+产物里的每一根描边按**成色**着色，右侧明细逐条列出出处：
+
+| 成色 | 含义 | 页面上的表现 |
+|---|---|---|
+| **实测** | 图上有明确标注 | 绿线 · 悬停显示图注编号 |
+| **标准** | 取自 NEMA / GB / ISO | 灰线 · 显示标准号 |
+| **推断** | 按比例、对称或先验得出，**未经图纸确认** | 琥珀线 · 悬停显示依据 |
+
+没有任何一个建模工具会告诉你「这个数是我猜的」，因为那不利于卖软件。但签收的人只关心这一句。
+
+<p align="center">
+  <img src="docs/assets/spec-section.jpg" alt="剖切视图：行星轮系、太阳轮、齿圈与电机轴" width="92%">
+</p>
+
+### 一条命令，三个产物
+
+```bash
+python3 tools/spec_compile.py spec/examples/nema23-actuator.yaml --out spec/out/
+```
+
+```
+  NEMA23 行星减速执行器  ·  10 构件  ·  指纹 4fce2725a272d9dd
+  ──────────────────────────────────────────────────────────────
+  [PASS] C1  同轴          所有 coax 约束的横向偏移为 0（≤0.5 mm）
+  [PASS] C2  贴合间隙      4 处贴合，最大偏差 0.000 mm
+  [PASS] C3  孔位在轮廓内   所有孔洞均落在轮廓内，无越界
+  [PASS] C4  包围盒干涉    无未声明干涉（贴合对与内部件已排除）
+  [PASS] C5  证据覆盖率    可信 67%（实测 11 + 标准 9）/ 共 30 项
+  ──────────────────────────────────────────────────────────────
+```
+
+| 产物 | 给谁 | 解决什么 |
+|---|---|---|
+| `*.html` | 客户 / 老板 / 销售 | 30 秒看懂，能转、能剖、能量 |
+| `*.report.html` + `*.ir.json` | 项目 / 质量 | 哪些数对上了，哪些是推断，误差多少 |
+| IR | 建模师（后续导出 glTF） | 不用从零开始，改细节就行 |
+
+同一份 SpecSheet 编译两次，指纹必须一致——这条写进了 `tests/test_spec.py`：**改一个数指纹就变，不改就永远一样**。
+
+- 输入契约：[`spec/schema/specsheet.schema.json`](spec/schema/specsheet.schema.json)
+- 示例规格表：[`spec/examples/nema23-actuator.yaml`](spec/examples/nema23-actuator.yaml)
+- 路线与边界：[`docs/ROADMAP.md`](docs/ROADMAP.md) —— 26 周，四个阶段，每阶段一个可证伪判据
 
 ---
 

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NEMA23 行星减速执行器 · 一致性报告</title>
+<style>
+:root{--bg:#121110;--ink:#ece7df;--dim:#8f887e;--line:#2e2a26;--ok:#7fbf6a;--warn:#d9a24a;--bad:#c2604f;--acc:#c8a06a;
+--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--sans:-apple-system,"PingFang SC","Noto Sans SC",sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+padding:clamp(24px,5vw,72px);line-height:1.7}
+h1{font-size:clamp(20px,3vw,30px);font-weight:600;margin:0 0 6px;letter-spacing:-.02em}
+.sub{color:var(--dim);font-size:13px;margin:0 0 4px}
+.meta{font-family:var(--mono);font-size:10.5px;color:#6f6961;letter-spacing:.06em;margin-top:14px}
+h2{font-size:11px;font-family:var(--mono);letter-spacing:.22em;text-transform:uppercase;
+color:var(--acc);margin:46px 0 14px;font-weight:400;border-bottom:1px solid var(--line);padding-bottom:10px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;font-weight:500;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+color:var(--dim);padding:0 10px 8px;border-bottom:1px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid #1e1b18;vertical-align:top}
+.code{font-family:var(--mono);color:var(--acc);width:44px}
+.lvl{width:56px;font-size:11px;text-align:right}
+tr.pass .lvl{color:var(--ok)}tr.warn .lvl{color:var(--warn)}tr.error .lvl{color:var(--bad)}
+tr.warn{background:rgba(217,162,74,.05)}tr.error{background:rgba(194,96,79,.07)}
+.num{font-family:var(--mono);text-align:right;width:90px}
+.g-measured{color:var(--ok)}.g-inferred{color:var(--warn)}.g-standard{color:var(--dim)}
+.src{color:#6f6961;font-size:11.5px}
+.note{margin-top:40px;padding:16px 18px;border-left:2px solid var(--acc);background:#191614;
+font-size:12.5px;color:var(--dim);line-height:1.85}
+.note b{color:var(--ink);font-weight:500}
+</style></head><body>
+<h1>NEMA23 行星减速执行器</h1>
+<p class="sub">步进电机 + 10:1 行星减速头 · 装配确认件</p>
+<p class="meta">IR 0.1 · 指纹 9ec707673cade1ec · 参考等级 R1 · 10 个构件</p>
+
+<h2>一、结构检查</h2>
+<table><thead><tr><th>编号</th><th>检查项</th><th>结果</th><th>结论</th></tr></thead>
+<tbody><tr class="pass"><td class="code">C1</td><td class="title">同轴</td><td class="detail">所有 coax 约束的横向偏移为 0（≤0.5 mm）</td><td class="lvl">通过</td></tr><tr class="pass"><td class="code">C2</td><td class="title">贴合间隙</td><td class="detail">4 处贴合，最大偏差 0.000 mm</td><td class="lvl">通过</td></tr><tr class="pass"><td class="code">C3</td><td class="title">孔位在轮廓内</td><td class="detail">所有孔洞均落在轮廓内，无越界</td><td class="lvl">通过</td></tr><tr class="pass"><td class="code">C4</td><td class="title">包围盒干涉</td><td class="detail">无未声明干涉（AABB 粗筛；贴合对与内部件已排除）</td><td class="lvl">通过</td></tr><tr class="pass"><td class="code">C5</td><td class="title">证据覆盖率</td><td class="detail">可信 67%（实测 11 + 标准 9）/ 共 30 项；推断 10 项已在页面以琥珀色标出</td><td class="lvl">通过</td></tr></tbody></table>
+
+<h2>二、尺寸来源</h2>
+<table><thead><tr><th>构件</th><th>尺寸</th><th>值</th><th>成色</th><th>来源</th></tr></thead>
+<tbody><tr><td>电机机身</td><td>法兰边长</td><td class="num">57.15</td><td class="g-standard">标准</td><td class="src">NEMA23 标准</td></tr><tr><td>电机机身</td><td>机身长</td><td class="num">56.0</td><td class="g-measured">实测</td><td class="src">图注 A1</td></tr><tr><td>电机机身</td><td>机身直径</td><td class="num">57.15</td><td class="g-standard">标准</td><td class="src">NEMA23 标准</td></tr><tr><td>电机前端法兰</td><td>法兰边长</td><td class="num">57.15</td><td class="g-standard">标准</td><td class="src">NEMA23 标准</td></tr><tr><td>电机前端法兰</td><td>法兰厚度</td><td class="num">6.35</td><td class="g-standard">标准</td><td class="src">NEMA23 标准</td></tr><tr><td>电机前端法兰</td><td>安装孔位</td><td class="num">47.14</td><td class="g-standard">标准</td><td class="src">NEMA23 标准</td></tr><tr><td>电机前端法兰</td><td>安装孔径</td><td class="num">5.5</td><td class="g-standard">标准</td><td class="src">NEMA23 标准</td></tr><tr><td>电机前端法兰</td><td>止口直径</td><td class="num">38.0</td><td class="g-standard">标准</td><td class="src">NEMA23 标准</td></tr><tr><td>减速头壳体</td><td>壳体直径</td><td class="num">60.0</td><td class="g-measured">实测</td><td class="src">图注 A2</td></tr><tr><td>减速头壳体</td><td>壳体长</td><td class="num">45.0</td><td class="g-measured">实测</td><td class="src">图注 A2</td></tr><tr><td>减速头壳体</td><td>减速比</td><td class="num">10.0</td><td class="g-measured">实测</td><td class="src">铭牌 10:1</td></tr><tr><td>输出法兰</td><td>法兰直径</td><td class="num">70.0</td><td class="g-measured">实测</td><td class="src">图注 A3</td></tr><tr><td>输出法兰</td><td>法兰厚度</td><td class="num">8.0</td><td class="g-measured">实测</td><td class="src">图注 A3</td></tr><tr><td>输出法兰</td><td>孔分布圆</td><td class="num">62.0</td><td class="g-measured">实测</td><td class="src">图注 A3</td></tr><tr><td>输出法兰</td><td>孔径</td><td class="num">4.5</td><td class="g-inferred">推断</td><td class="src">推断：M4 通孔</td></tr><tr><td>输出轴</td><td>轴径</td><td class="num">12.0</td><td class="g-measured">实测</td><td class="src">图注 A4</td></tr><tr><td>输出轴</td><td>伸出长</td><td class="num">25.0</td><td class="g-measured">实测</td><td class="src">图注 A4</td></tr><tr><td>输出轴</td><td>扁位直径</td><td class="num">10.0</td><td class="g-inferred">推断</td><td class="src">推断：D 形轴标准</td></tr><tr><td>安装底板</td><td>板长</td><td class="num">145.0</td><td class="g-measured">实测</td><td class="src">图注 A5</td></tr><tr><td>安装底板</td><td>板宽</td><td class="num">80.0</td><td class="g-measured">实测</td><td class="src">图注 A5</td></tr><tr><td>安装底板</td><td>板厚</td><td class="num">8.0</td><td class="g-inferred">推断</td><td class="src">推断：常见钢底板</td></tr><tr><td>安装底板</td><td>安装孔径</td><td class="num">9.0</td><td class="g-inferred">推断</td><td class="src">推断：M8 通孔</td></tr><tr><td>电机轴（伸入）</td><td>轴径</td><td class="num">8.0</td><td class="g-standard">标准</td><td class="src">NEMA23 标准</td></tr><tr><td>电机轴（伸入）</td><td>轴长</td><td class="num">21.0</td><td class="g-standard">标准</td><td class="src">NEMA23 标准</td></tr><tr><td>太阳轮</td><td>齿数</td><td class="num">12</td><td class="g-inferred">推断</td><td class="src">推断：由 10:1 与齿圈 44 反推</td></tr><tr><td>太阳轮</td><td>模数</td><td class="num">1.1</td><td class="g-inferred">推断</td><td class="src">推断：受壳体内腔 r26 约束</td></tr><tr><td>行星轮 ×3</td><td>齿数</td><td class="num">16</td><td class="g-inferred">推断</td><td class="src">推断：(44-12)/2</td></tr><tr><td>行星轮 ×3</td><td>分布圆</td><td class="num">30.8</td><td class="g-inferred">推断</td><td class="src">推断：m(z₁+z₂)/2</td></tr><tr><td>内齿圈</td><td>内径</td><td class="num">51.0</td><td class="g-inferred">推断</td><td class="src">推断：模数 1.1 × 44 齿 + 壳体内腔 52</td></tr><tr><td>内齿圈</td><td>齿宽</td><td class="num">24.0</td><td class="g-inferred">推断</td><td class="src">推断：与壳体内腔匹配</td></tr></tbody></table>
+
+<div class="note">
+<b>怎么读这份报告。</b>「实测」指图上有明确标注；「标准」指取自公开标准（NEMA / GB / ISO）；
+「推断」指按比例、对称性或工程先验得出，<b>未经图纸确认</b>。<br>
+推断项不是缺陷，是<b>待确认清单</b>——请把它们当作问题，逐条回答，比看一版"看起来对"的渲染有用得多。
+</div>
+</body></html>

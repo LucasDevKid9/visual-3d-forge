@@ -1,0 +1,120 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://visual-3d-forge/spec/specsheet.schema.json",
+  "title": "SpecSheet · 图纸直译输入契约",
+  "description": "一张图 + 一张标注表 + 一张意图卡。人只做「指认」，不做「建模」：不写坐标，只写关系。",
+  "type": "object",
+  "required": ["spec_version", "id", "units", "intent", "parts"],
+  "additionalProperties": false,
+  "properties": {
+    "spec_version": { "type": "string", "const": "0.1" },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,40}$" },
+    "title": { "type": "string" },
+    "subtitle": { "type": "string" },
+    "units": { "type": "string", "enum": ["mm", "cm", "m"] },
+
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "image": { "type": "string" },
+        "grade": {
+          "type": "string",
+          "enum": ["R1", "R2", "R3", "R4", "R5"],
+          "description": "R1 工程图带标注 / R2 多视角 / R3 单照片 / R4 草图 / R5 纯文字"
+        },
+        "note": { "type": "string" }
+      }
+    },
+
+    "intent": {
+      "type": "object",
+      "required": ["object", "purpose", "audience", "scale", "delivery"],
+      "additionalProperties": false,
+      "properties": {
+        "object": { "type": "string" },
+        "purpose": { "type": "string" },
+        "audience": { "enum": ["外行", "有基础", "专业"] },
+        "scale": { "type": "string" },
+        "must": { "type": "array", "items": { "type": "string" } },
+        "drop": { "type": "array", "items": { "type": "string" } },
+        "delivery": { "enum": ["D0", "D1", "D2", "D3"] }
+      }
+    },
+
+    "parts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["uid", "kind", "label"],
+        "additionalProperties": false,
+        "properties": {
+          "uid": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "description": "稳定 ID。不是数组下标——它是 L2 回写时外部工具「认领」构件的唯一凭据。"
+          },
+          "label": { "type": "string" },
+          "kind": { "enum": ["revolve", "extrude", "gear", "pattern", "primitive"] },
+          "axis": { "enum": ["x", "y", "z"], "default": "x" },
+          "material": { "type": "string", "default": "steel" },
+          "params": { "type": "object" },
+          "evidence": {
+            "type": "object",
+            "description": "尺寸 → 来源。grade 三档：measured（图上有标注）/ inferred（推断）/ standard（标准件）",
+            "additionalProperties": {
+              "type": "object",
+              "required": ["value", "grade"],
+              "additionalProperties": false,
+              "properties": {
+                "value": { "type": "number" },
+                "src": { "type": "string" },
+                "grade": { "enum": ["measured", "inferred", "standard"] }
+              }
+            }
+          },
+          "explode": {
+            "type": "array",
+            "items": { "type": "number" },
+            "minItems": 3,
+            "maxItems": 3,
+            "description": "爆炸方向（世界坐标，会在归一化后乘爆炸度）"
+          }
+        }
+      }
+    },
+
+    "assembly": {
+      "type": "array",
+      "description": "用约束说，不用坐标说。编译器负责求解世界变换。",
+      "items": {
+        "type": "object",
+        "required": ["type"],
+        "additionalProperties": false,
+        "properties": {
+          "type": { "enum": ["coax", "mate", "offset", "pattern"] },
+          "a": { "type": "string" },
+          "b": { "type": "string" },
+          "offset": { "type": "number", "default": 0 },
+          "face": { "type": "string" },
+          "note": { "type": "string" }
+        }
+      }
+    },
+
+    "views": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "kind": { "enum": ["iso", "front", "side", "top"] },
+          "label": { "type": "string" }
+        }
+      }
+    }
+  }
+}

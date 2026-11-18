@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NEMA23 行星减速执行器 · 确认件</title>
+<meta name="description" content="NEMA23 行星减速执行器——由 SpecSheet 编译生成的装配确认件，含证据链与尺寸来源。">
+<meta name="generator" content="visual-3d-forge / spec_compile.py">
+<style>:root {
+  --bg: #121110;
+  --bg2: #1a1816;
+  --ink: #ece7df;
+  --dim: #8f887e;
+  --line: #2e2a26;
+  --accent: #c8a06a;
+  --ok: #7fbf6a;
+  --warn: #d9a24a;
+  --std: #8a9199;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0; height: 100%; overflow: hidden;
+  background: var(--bg); color: var(--ink);
+  font-family: var(--sans);
+}
+
+.sv-stage {
+  position: fixed; inset: 0;
+  background: radial-gradient(circle at 44% 40%, #1f1d1a 0%, #141312 54%, #0a0a09 100%);
+}
+.sv-canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+
+/* ── 左上标题 ── */
+.sv-head {
+  position: fixed; left: clamp(16px, 2.4vw, 32px); top: clamp(16px, 2.2vw, 28px);
+  pointer-events: none; max-width: min(42vw, 400px);
+}
+.sv-kicker {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .24em;
+  text-transform: uppercase; color: var(--accent);
+}
+.sv-head h1 {
+  margin: .55em 0 .2em; font-size: clamp(19px, 2.3vw, 27px);
+  font-weight: 600; letter-spacing: -.02em; line-height: 1.22;
+}
+.sv-sub { margin: 0; font-size: clamp(11px, 1.15vw, 13px); color: var(--dim); line-height: 1.6; }
+.sv-note {
+  margin: .9em 0 0; font-size: 11px; line-height: 1.7; color: #6f6961;
+  border-left: 2px solid var(--line); padding-left: 10px; max-width: 30em;
+}
+
+/* ── 左下证据图例 ── */
+.sv-legend {
+  position: fixed; left: clamp(16px, 2.4vw, 32px); bottom: 92px;
+  width: min(36vw, 300px); pointer-events: none;
+}
+.sv-bar {
+  height: 3px; background: #241f1b; border-radius: 2px; overflow: hidden; margin-bottom: 8px;
+}
+.sv-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--ok), var(--warn)); }
+.sv-cov { font-family: var(--mono); font-size: 10px; color: var(--dim); letter-spacing: .04em; }
+.sv-cov b { color: var(--ink); font-weight: 500; }
+.sv-legend ul {
+  list-style: none; margin: 10px 0 0; padding: 0;
+  display: flex; gap: 16px; font-size: 10.5px; color: var(--dim);
+}
+.sv-legend li { display: flex; align-items: center; gap: 6px; }
+.sv-legend s { width: 16px; height: 2px; display: block; text-decoration: none; }
+.g-m { background: var(--ok); }
+.g-i { background: repeating-linear-gradient(90deg, var(--warn) 0 4px, transparent 4px 7px); }
+.g-s { background: var(--std); }
+
+/* ── 右侧明细 ── */
+.sv-panel {
+  position: fixed; right: 0; top: 0; bottom: 0; width: min(340px, 34vw);
+  background: linear-gradient(180deg, rgba(20,18,16,.92), rgba(14,13,12,.96));
+  border-left: 1px solid var(--line);
+  backdrop-filter: blur(14px);
+  display: flex; flex-direction: column;
+  padding: 22px 0 0;
+  z-index: 3;
+}
+.sv-panel-h {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--dim);
+  padding: 0 20px 14px; border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between;
+}
+.sv-panel-h span { color: var(--accent); }
+.sv-list { overflow-y: auto; flex: 1; padding: 6px 0 80px; scrollbar-width: thin; }
+.sv-list::-webkit-scrollbar { width: 4px; }
+.sv-list::-webkit-scrollbar-thumb { background: #2e2a26; }
+
+.sv-row {
+  padding: 10px 20px 12px; border-bottom: 1px solid #201d1a;
+  cursor: pointer; transition: background .18s;
+}
+.sv-row:hover, .sv-row.on { background: rgba(200,160,106,.07); }
+.sv-row-h {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12.5px; letter-spacing: .01em;
+}
+.sv-row-h em {
+  margin-left: auto; font-style: normal; font-family: var(--mono);
+  font-size: 9.5px; color: #5f5a53; letter-spacing: .06em;
+}
+.sv-dot { width: 5px; height: 5px; border-radius: 50%; flex: none; }
+.sv-dot.measured { background: var(--ok); }
+.sv-dot.inferred { background: var(--warn); }
+.sv-dot.standard { background: var(--std); }
+
+.sv-row dl {
+  margin: 8px 0 0; display: grid; grid-template-columns: auto 1fr;
+  gap: 3px 10px; font-size: 10.5px;
+}
+.sv-row dt { color: #6f6961; }
+.sv-row dd { margin: 0; text-align: right; font-family: var(--mono); font-size: 10.5px; }
+.sv-row dd small { display: block; color: #57524b; font-size: 9px; margin-top: 1px; }
+.sv-row dd.measured { color: var(--ok); }
+.sv-row dd.inferred { color: var(--warn); }
+.sv-row dd.standard { color: var(--std); }
+
+/* ── 底部工具条 ── */
+.sv-dock {
+  position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 18px;
+  padding: 9px 14px; border-radius: 999px;
+  background: rgba(22,20,18,.86); border: 1px solid var(--line);
+  backdrop-filter: blur(12px); z-index: 4;
+  max-width: calc(100vw - 380px);
+}
+.sv-group { display: flex; gap: 2px; }
+.sv-dock button {
+  font: inherit; font-size: 11px; color: var(--dim);
+  background: none; border: 0; padding: 5px 10px; border-radius: 999px;
+  cursor: pointer; transition: all .16s;
+}
+.sv-dock button:hover { color: var(--ink); background: rgba(255,255,255,.05); }
+.sv-dock button.on { color: #191512; background: var(--accent); }
+
+.sv-slider { display: flex; align-items: center; gap: 7px; font-size: 10.5px; color: var(--dim); }
+.sv-slider span { font-family: var(--mono); letter-spacing: .08em; }
+.sv-slider b {
+  font-family: var(--mono); font-weight: 400; font-size: 10px;
+  color: var(--accent); min-width: 26px; text-align: right;
+}
+.sv-slider input {
+  -webkit-appearance: none; appearance: none; width: 74px; height: 2px;
+  background: #332e29; border-radius: 2px; outline: none; cursor: pointer;
+}
+.sv-slider input::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--accent); cursor: pointer;
+}
+.sv-slider input::-moz-range-thumb {
+  width: 10px; height: 10px; border: 0; border-radius: 50%; background: var(--accent);
+}
+
+.sv-ghost { border: 1px solid var(--line) !important; }
+
+/* ── 页脚戳 ── */
+.sv-foot {
+  position: fixed; left: clamp(16px, 2.4vw, 32px); bottom: 26px;
+  font-size: 10px; color: #57524b; letter-spacing: .02em;
+  display: flex; gap: 12px; align-items: center; pointer-events: none;
+}
+.sv-stamp {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .12em;
+  padding: 3px 7px; border: 1px solid var(--line); border-radius: 3px; color: #6f6961;
+}
+
+/* ── 窄屏 ── */
+@media (max-width: 900px) {
+  .sv-panel { display: none; }
+  .sv-dock { max-width: calc(100vw - 32px); flex-wrap: wrap; justify-content: center; gap: 10px; }
+  .sv-legend { width: 60vw; bottom: 118px; }
+  .sv-note { display: none; }
+}
+
+/* ── 悬停提示 ── */
+.sv-tip {
+  position: fixed; left: 0; top: 0; z-index: 6; pointer-events: none;
+  padding: 7px 11px; border-radius: 6px; white-space: nowrap;
+  background: rgba(12,11,10,.92); border: 1px solid var(--line);
+  font-size: 11.5px; letter-spacing: .01em;
+  opacity: 0; transition: opacity .14s;
+}
+.sv-tip.on { opacity: 1; }
+.sv-tip b { font-weight: 500; }
+.sv-tip i {
+  font-style: normal; font-family: var(--mono); font-size: 9.5px;
+  letter-spacing: .1em; margin-left: 9px; padding: 2px 5px; border-radius: 3px;
+}
+.sv-tip i.measured { color: var(--ok); background: rgba(127,191,106,.12); }
+.sv-tip i.inferred { color: var(--warn); background: rgba(217,162,74,.12); }
+.sv-tip i.standard { color: var(--std); background: rgba(138,145,153,.12); }
+</style>
+</head>
+<body>
+<script type="importmap">
+{"imports":{"three":"../../assets/vendor/three.module.js","three/addons/":"../../assets/vendor/addons/"}}
+</script>
+<script type="module">
+window.__IR = {"ir_version":"0.1","id":"nema23-actuator","title":"NEMA23 行星减速执行器","subtitle":"步进电机 + 10:1 行星减速头 · 装配确认件","units":"mm","scale":0.001,"grade":"R1","source":{"image":"spec/examples/nema23-actuator.png","grade":"R1","note":"外廓与孔位取自规格书三视图；内部轮系按 10:1 反推，标注为推断"},"intent":{"object":"NEMA23 步进电机 + 单级行星减速头","purpose":"确认装配顺序、轴向总长、安装孔位与减速比","audience":"有基础","scale":61,"must":["电机机身","前端法兰","减速头","输出轴","安装底板","行星轮系"],"drop":["绕组","编码器","线缆","螺纹牙型","表面涂装"],"delivery":"D1"},"parts":[{"uid":"motor_body","label":"电机机身","kind":"revolve","axis":"x","material":"anodized_black","params":{"segments":72,"profile":[[0.0,0.0],[25.0,0.0],[25.0,3.0],[28.575,3.0],[28.575,56.0],[0.0,56.0]]},"evidence":{"法兰边长":{"value":57.15,"src":"NEMA23 标准","grade":"standard"},"机身长":{"value":56.0,"src":"图注 A1","grade":"measured"},"机身直径":{"value":57.15,"src":"NEMA23 标准","grade":"standard"}},"explode":[-1.0,0,0],"internal":false,"transform":{"pos":[0.0,0.0,0.0],"rot":[0,0,0]}},{"uid":"motor_flange","label":"电机前端法兰","kind":"extrude","axis":"x","material":"aluminum","params":{"depth":6.35,"bevel":0.6,"outline":[[-28.575,-28.575],[28.575,-28.575],[28.575,28.575],[-28.575,28.575]],"holes":[[[19.0,0.0],[18.8375,2.48],[18.3526,4.9176],[17.5537,7.271],[16.4545,9.5],[15.0737,11.5665],[13.435,13.435],[11.5665,15.0737],[9.5,16.4545],[7.271,17.5537],[4.9176,18.3526],[2.48,18.8375],[0.0,19.0],[-2.48,18.8375],[-4.9176,18.3526],[-7.271,17.5537],[-9.5,16.4545],[-11.5665,15.0737],[-13.435,13.435],[-15.0737,11.5665],[-16.4545,9.5],[-17.5537,7.271],[-18.3526,4.9176],[-18.8375,2.48],[-19.0,0.0],[-18.8375,-2.48],[-18.3526,-4.9176],[-17.5537,-7.271],[-16.4545,-9.5],[-15.0737,-11.5665],[-13.435,-13.435],[-11.5665,-15.0737],[-9.5,-16.4545],[-7.271,-17.5537],[-4.9176,-18.3526],[-2.48,-18.8375],[-0.0,-19.0],[2.48,-18.8375],[4.9176,-18.3526],[7.271,-17.5537],[9.5,-16.4545],[11.5665,-15.0737],[13.435,-13.435],[15.0737,-11.5665],[16.4545,-9.5],[17.5537,-7.271],[18.3526,-4.9176],[18.8375,-2.48]],[[26.32,23.57],[26.2965,23.9289],[26.226300000000002,24.2818],[26.1107,24.6224],[25.9516,24.945],[25.7517,25.2441],[25.5145,25.5145],[25.2441,25.7517],[24.945,25.9516],[24.6224,26.1107],[24.2818,26.226300000000002],[23.9289,26.2965],[23.57,26.32],[23.211100000000002,26.2965],[22.8582,26.226300000000002],[22.5176,26.1107],[22.195,25.9516],[21.8959,25.7517],[21.6255,25.5145],[21.3883,25.2441],[21.1884,24.945],[21.0293,24.6224],[20.9137,24.2818],[20.8435,23.9289],[20.82,23.57],[20.8435,23.211100000000002],[20.9137,22.8582],[21.0293,22.5176],[21.1884,22.195],[21.3883,21.8959],[21.6255,21.6255],[21.8959,21.3883],[22.195,21.1884],[22.5176,21.0293],[22.8582,20.9137],[23.211100000000002,20.8435],[23.57,20.82],[23.9289,20.8435],[24.2818,20.9137],[24.6224,21.0293],[24.945,21.1884],[25.2441,21.3883],[25.5145,21.6255],[25.7517,21.8959],[25.9516,22.195],[26.1107,22.5176],[26.226300000000002,22.8582],[26.2965,23.211100000000002]],[[-20.82,23.57],[-20.8435,23.9289],[-20.9137,24.2818],[-21.0293,24.6224],[-21.1884,24.945],[-21.3883,25.2441],[-21.6255,25.5145],[-21.8959,25.7517],[-22.195,25.9516],[-22.5176,26.1107],[-22.8582,26.226300000000002],[-23.211100000000002,26.2965],[-23.57,26.32],[-23.9289,26.2965],[-24.2818,26.226300000000002],[-24.6224,26.1107],[-24.945,25.9516],[-25.2441,25.7517],[-25.5145,25.5145],[-25.7517,25.2441],[-25.9516,24.945],[-26.1107,24.6224],[-26.226300000000002,24.2818],[-26.2965,23.9289],[-26.32,23.57],[-26.2965,23.211100000000002],[-26.226300000000002,22.8582],[-26.1107,22.5176],[-25.9516,22.195],[-25.7517,21.8959],[-25.5145,21.6255],[-25.2441,21.3883],[-24.945,21.1884],[-24.6224,21.0293],[-24.2818,20.9137],[-23.9289,20.8435],[-23.57,20.82],[-23.211100000000002,20.8435],[-22.8582,20.9137],[-22.5176,21.0293],[-22.195,21.1884],[-21.8959,21.3883],[-21.6255,21.6255],[-21.3883,21.8959],[-21.1884,22.195],[-21.0293,22.5176],[-20.9137,22.8582],[-20.8435,23.211100000000002]],[[-20.82,-23.57],[-20.8435,-23.211100000000002],[-20.9137,-22.8582],[-21.0293,-22.5176],[-21.1884,-22.195],[-21.3883,-21.8959],[-21.6255,-21.6255],[-21.8959,-21.3883],[-22.195,-21.1884],[-22.5176,-21.0293],[-22.8582,-20.9137],[-23.211100000000002,-20.8435],[-23.57,-20.82],[-23.9289,-20.8435],[-24.2818,-20.9137],[-24.6224,-21.0293],[-24.945,-21.1884],[-25.2441,-21.3883],[-25.5145,-21.6255],[-25.7517,-21.8959],[-25.9516,-22.195],[-26.1107,-22.5176],[-26.226300000000002,-22.8582],[-26.2965,-23.211100000000002],[-26.32,-23.57],[-26.2965,-23.9289],[-26.226300000000002,-24.2818],[-26.1107,-24.6224],[-25.9516,-24.945],[-25.7517,-25.2441],[-25.5145,-25.5145],[-25.2441,-25.7517],[-24.945,-25.9516],[-24.6224,-26.1107],[-24.2818,-26.226300000000002],[-23.9289,-26.2965],[-23.57,-26.32],[-23.211100000000002,-26.2965],[-22.8582,-26.226300000000002],[-22.5176,-26.1107],[-22.195,-25.9516],[-21.8959,-25.7517],[-21.6255,-25.5145],[-21.3883,-25.2441],[-21.1884,-24.945],[-21.0293,-24.6224],[-20.9137,-24.2818],[-20.8435,-23.9289]],[[26.32,-23.57],[26.2965,-23.211100000000002],[26.226300000000002,-22.8582],[26.1107,-22.5176],[25.9516,-22.195],[25.7517,-21.8959],[25.5145,-21.6255],[25.2441,-21.3883],[24.945,-21.1884],[24.6224,-21.0293],[24.2818,-20.9137],[23.9289,-20.8435],[23.57,-20.82],[23.211100000000002,-20.8435],[22.8582,-20.9137],[22.5176,-21.0293],[22.195,-21.1884],[21.8959,-21.3883],[21.6255,-21.6255],[21.3883,-21.8959],[21.1884,-22.195],[21.0293,-22.5176],[20.9137,-22.8582],[20.8435,-23.211100000000002],[20.82,-23.57],[20.8435,-23.9289],[20.9137,-24.2818],[21.0293,-24.6224],[21.1884,-24.945],[21.3883,-25.2441],[21.6255,-25.5145],[21.8959,-25.7517],[22.195,-25.9516],[22.5176,-26.1107],[22.8582,-26.226300000000002],[23.211100000000002,-26.2965],[23.57,-26.32],[23.9289,-26.2965],[24.2818,-26.226300000000002],[24.6224,-26.1107],[24.945,-25.9516],[25.2441,-25.7517],[25.5145,-25.5145],[25.7517,-25.2441],[25.9516,-24.945],[26.1107,-24.6224],[26.226300000000002,-24.2818],[26.2965,-23.9289]]]},"evidence":{"法兰边长":{"value":57.15,"src":"NEMA23 标准","grade":"standard"},"法兰厚度":{"value":6.35,"src":"NEMA23 标准","grade":"standard"},"安装孔位":{"value":47.14,"src":"NEMA23 标准","grade":"standard"},"安装孔径":{"value":5.5,"src":"NEMA23 标准","grade":"standard"},"止口直径":{"value":38.0,"src":"NEMA23 标准","grade":"standard"}},"explode":[-0.55,0,0],"internal":false,"transform":{"pos":[56.0,0.0,0.0],"rot":[0,0,0]}},{"uid":"gearhead_body","label":"减速头壳体","kind":"revolve","axis":"x","material":"cast_iron","params":{"segments":72,"profile":[[26.0,0.0],[30.0,0.0],[30.0,46.0],[0.02,46.0],[0.02,40.0],[26.0,40.0],[26.0,0.0]]},"evidence":{"壳体直径":{"value":60.0,"src":"图注 A2","grade":"measured"},"壳体长":{"value":45.0,"src":"图注 A2","grade":"measured"},"减速比":{"value":10.0,"src":"铭牌 10:1","grade":"measured"}},"explode":[0.1,0,0],"internal":false,"transform":{"pos":[62.35,0.0,0.0],"rot":[0,0,0]}},{"uid":"gearhead_flange","label":"输出法兰","kind":"extrude","axis":"x","material":"aluminum","params":{"depth":8.0,"bevel":0.6,"outline":[[35.0,0.0],[34.7006,4.5684],[33.8074,9.0587],[32.3358,13.3939],[30.3109,17.5],[27.7674,21.3067],[24.7487,24.7487],[21.3067,27.7674],[17.5,30.3109],[13.3939,32.3358],[9.0587,33.8074],[4.5684,34.7006],[0.0,35.0],[-4.5684,34.7006],[-9.0587,33.8074],[-13.3939,32.3358],[-17.5,30.3109],[-21.3067,27.7674],[-24.7487,24.7487],[-27.7674,21.3067],[-30.3109,17.5],[-32.3358,13.3939],[-33.8074,9.0587],[-34.7006,4.5684],[-35.0,0.0],[-34.7006,-4.5684],[-33.8074,-9.0587],[-32.3358,-13.3939],[-30.3109,-17.5],[-27.7674,-21.3067],[-24.7487,-24.7487],[-21.3067,-27.7674],[-17.5,-30.3109],[-13.3939,-32.3358],[-9.0587,-33.8074],[-4.5684,-34.7006],[-0.0,-35.0],[4.5684,-34.7006],[9.0587,-33.8074],[13.3939,-32.3358],[17.5,-30.3109],[21.3067,-27.7674],[24.7487,-24.7487],[27.7674,-21.3067],[30.3109,-17.5],[32.3358,-13.3939],[33.8074,-9.0587],[34.7006,-4.5684]],"holes":[[[11.0,0.0],[10.9059,1.4358],[10.6252,2.847],[10.1627,4.2095],[9.5263,5.5],[8.7269,6.6964],[7.7782,7.7782],[6.6964,8.7269],[5.5,9.5263],[4.2095,10.1627],[2.847,10.6252],[1.4358,10.9059],[0.0,11.0],[-1.4358,10.9059],[-2.847,10.6252],[-4.2095,10.1627],[-5.5,9.5263],[-6.6964,8.7269],[-7.7782,7.7782],[-8.7269,6.6964],[-9.5263,5.5],[-10.1627,4.2095],[-10.6252,2.847],[-10.9059,1.4358],[-11.0,0.0],[-10.9059,-1.4358],[-10.6252,-2.847],[-10.1627,-4.2095],[-9.5263,-5.5],[-8.7269,-6.6964],[-7.7782,-7.7782],[-6.6964,-8.7269],[-5.5,-9.5263],[-4.2095,-10.1627],[-2.847,-10.6252],[-1.4358,-10.9059],[-0.0,-11.0],[1.4358,-10.9059],[2.847,-10.6252],[4.2095,-10.1627],[5.5,-9.5263],[6.6964,-8.7269],[7.7782,-7.7782],[8.7269,-6.6964],[9.5263,-5.5],[10.1627,-4.2095],[10.6252,-2.847],[10.9059,-1.4358]],[[33.25,0.0],[33.2308,0.2937],[33.1733,0.5823],[33.0787,0.861],[32.9486,1.125],[32.785,1.3697],[32.591,1.591],[32.3697,1.785],[32.125,1.9486],[31.861,2.0787],[31.5823,2.1733],[31.2937,2.2308],[31.0,2.25],[30.7063,2.2308],[30.4177,2.1733],[30.139,2.0787],[29.875,1.9486],[29.6303,1.785],[29.409,1.591],[29.215,1.3697],[29.0514,1.125],[28.9213,0.861],[28.8267,0.5823],[28.7692,0.2937],[28.75,0.0],[28.7692,-0.2937],[28.8267,-0.5823],[28.9213,-0.861],[29.0514,-1.125],[29.215,-1.3697],[29.409,-1.591],[29.6303,-1.785],[29.875,-1.9486],[30.139,-2.0787],[30.4177,-2.1733],[30.7063,-2.2308],[31.0,-2.25],[31.2937,-2.2308],[31.5823,-2.1733],[31.861,-2.0787],[32.125,-1.9486],[32.3697,-1.785],[32.591,-1.591],[32.785,-1.3697],[32.9486,-1.125],[33.0787,-0.861],[33.1733,-0.5823],[33.2308,-0.2937]],[[17.75,26.85],[17.7308,27.143700000000003],[17.6733,27.4323],[17.5787,27.711000000000002],[17.4486,27.975],[17.285,28.219700000000003],[17.091,28.441000000000003],[16.8697,28.635],[16.625,28.7986],[16.361,28.928700000000003],[16.0823,29.023300000000003],[15.7937,29.0808],[15.5,29.1],[15.2063,29.0808],[14.9177,29.023300000000003],[14.639,28.928700000000003],[14.375,28.7986],[14.1303,28.635],[13.909,28.441000000000003],[13.715,28.219700000000003],[13.5514,27.975],[13.4213,27.711000000000002],[13.3267,27.4323],[13.2692,27.143700000000003],[13.25,26.85],[13.2692,26.5563],[13.3267,26.2677],[13.4213,25.989],[13.5514,25.725],[13.715,25.4803],[13.909,25.259],[14.1303,25.065],[14.375,24.901400000000002],[14.639,24.7713],[14.9177,24.6767],[15.2063,24.619200000000003],[15.5,24.6],[15.7937,24.619200000000003],[16.0823,24.6767],[16.361,24.7713],[16.625,24.901400000000002],[16.8697,25.065],[17.091,25.259],[17.285,25.4803],[17.4486,25.725],[17.5787,25.989],[17.6733,26.2677],[17.7308,26.5563]],[[-13.25,26.85],[-13.2692,27.143700000000003],[-13.3267,27.4323],[-13.4213,27.711000000000002],[-13.5514,27.975],[-13.715,28.219700000000003],[-13.909,28.441000000000003],[-14.1303,28.635],[-14.375,28.7986],[-14.639,28.928700000000003],[-14.9177,29.023300000000003],[-15.2063,29.0808],[-15.5,29.1],[-15.7937,29.0808],[-16.0823,29.023300000000003],[-16.361,28.928700000000003],[-16.625,28.7986],[-16.8697,28.635],[-17.091,28.441000000000003],[-17.285,28.219700000000003],[-17.4486,27.975],[-17.5787,27.711000000000002],[-17.6733,27.4323],[-17.7308,27.143700000000003],[-17.75,26.85],[-17.7308,26.5563],[-17.6733,26.2677],[-17.5787,25.989],[-17.4486,25.725],[-17.285,25.4803],[-17.091,25.259],[-16.8697,25.065],[-16.625,24.901400000000002],[-16.361,24.7713],[-16.0823,24.6767],[-15.7937,24.619200000000003],[-15.5,24.6],[-15.2063,24.619200000000003],[-14.9177,24.6767],[-14.639,24.7713],[-14.375,24.901400000000002],[-14.1303,25.065],[-13.909,25.259],[-13.715,25.4803],[-13.5514,25.725],[-13.4213,25.989],[-13.3267,26.2677],[-13.2692,26.5563]],[[-28.75,0.0],[-28.7692,0.2937],[-28.8267,0.5823],[-28.9213,0.861],[-29.0514,1.125],[-29.215,1.3697],[-29.409,1.591],[-29.6303,1.785],[-29.875,1.9486],[-30.139,2.0787],[-30.4177,2.1733],[-30.7063,2.2308],[-31.0,2.25],[-31.2937,2.2308],[-31.5823,2.1733],[-31.861,2.0787],[-32.125,1.9486],[-32.3697,1.785],[-32.591,1.591],[-32.785,1.3697],[-32.9486,1.125],[-33.0787,0.861],[-33.1733,0.5823],[-33.2308,0.2937],[-33.25,0.0],[-33.2308,-0.2937],[-33.1733,-0.5823],[-33.0787,-0.861],[-32.9486,-1.125],[-32.785,-1.3697],[-32.591,-1.591],[-32.3697,-1.785],[-32.125,-1.9486],[-31.861,-2.0787],[-31.5823,-2.1733],[-31.2937,-2.2308],[-31.0,-2.25],[-30.7063,-2.2308],[-30.4177,-2.1733],[-30.139,-2.0787],[-29.875,-1.9486],[-29.6303,-1.785],[-29.409,-1.591],[-29.215,-1.3697],[-29.0514,-1.125],[-28.9213,-0.861],[-28.8267,-0.5823],[-28.7692,-0.2937]],[[-13.25,-26.85],[-13.2692,-26.5563],[-13.3267,-26.2677],[-13.4213,-25.989],[-13.5514,-25.725],[-13.715,-25.4803],[-13.909,-25.259],[-14.1303,-25.065],[-14.375,-24.901400000000002],[-14.639,-24.7713],[-14.9177,-24.6767],[-15.2063,-24.619200000000003],[-15.5,-24.6],[-15.7937,-24.619200000000003],[-16.0823,-24.6767],[-16.361,-24.7713],[-16.625,-24.901400000000002],[-16.8697,-25.065],[-17.091,-25.259],[-17.285,-25.4803],[-17.4486,-25.725],[-17.5787,-25.989],[-17.6733,-26.2677],[-17.7308,-26.5563],[-17.75,-26.85],[-17.7308,-27.143700000000003],[-17.6733,-27.4323],[-17.5787,-27.711000000000002],[-17.4486,-27.975],[-17.285,-28.219700000000003],[-17.091,-28.441000000000003],[-16.8697,-28.635],[-16.625,-28.7986],[-16.361,-28.928700000000003],[-16.0823,-29.023300000000003],[-15.7937,-29.0808],[-15.5,-29.1],[-15.2063,-29.0808],[-14.9177,-29.023300000000003],[-14.639,-28.928700000000003],[-14.375,-28.7986],[-14.1303,-28.635],[-13.909,-28.441000000000003],[-13.715,-28.219700000000003],[-13.5514,-27.975],[-13.4213,-27.711000000000002],[-13.3267,-27.4323],[-13.2692,-27.143700000000003]],[[17.75,-26.85],[17.7308,-26.5563],[17.6733,-26.2677],[17.5787,-25.989],[17.4486,-25.725],[17.285,-25.4803],[17.091,-25.259],[16.8697,-25.065],[16.625,-24.901400000000002],[16.361,-24.7713],[16.0823,-24.6767],[15.7937,-24.619200000000003],[15.5,-24.6],[15.2063,-24.619200000000003],[14.9177,-24.6767],[14.639,-24.7713],[14.375,-24.901400000000002],[14.1303,-25.065],[13.909,-25.259],[13.715,-25.4803],[13.5514,-25.725],[13.4213,-25.989],[13.3267,-26.2677],[13.2692,-26.5563],[13.25,-26.85],[13.2692,-27.143700000000003],[13.3267,-27.4323],[13.4213,-27.711000000000002],[13.5514,-27.975],[13.715,-28.219700000000003],[13.909,-28.441000000000003],[14.1303,-28.635],[14.375,-28.7986],[14.639,-28.928700000000003],[14.9177,-29.023300000000003],[15.2063,-29.0808],[15.5,-29.1],[15.7937,-29.0808],[16.0823,-29.023300000000003],[16.361,-28.928700000000003],[16.625,-28.7986],[16.8697,-28.635],[17.091,-28.441000000000003],[17.285,-28.219700000000003],[17.4486,-27.975],[17.5787,-27.711000000000002],[17.6733,-27.4323],[17.7308,-27.143700000000003]]]},"evidence":{"法兰直径":{"value":70.0,"src":"图注 A3","grade":"measured"},"法兰厚度":{"value":8.0,"src":"图注 A3","grade":"measured"},"孔分布圆":{"value":62.0,"src":"图注 A3","grade":"measured"},"孔径":{"value":4.5,"src":"推断：M4 通孔","grade":"inferred"}},"explode":[0.75,0,0],"internal":false,"transform":{"pos":[108.35,0.0,0.0],"rot":[0,0,0]}},{"uid":"output_shaft","label":"输出轴","kind":"revolve","axis":"x","material":"steel","params":{"segments":48,"profile":[[0.0,0.0],[6.0,0.0],[6.0,12.0],[5.0,12.0],[5.0,25.0],[0.0,25.0]]},"evidence":{"轴径":{"value":12.0,"src":"图注 A4","grade":"measured"},"伸出长":{"value":25.0,"src":"图注 A4","grade":"measured"},"扁位直径":{"value":10.0,"src":"推断：D 形轴标准","grade":"inferred"}},"explode":[1.25,0,0],"internal":false,"transform":{"pos":[110.35,0.0,0.0],"rot":[0,0,0]}},{"uid":"base_plate","label":"安装底板","kind":"extrude","axis":"y","material":"cast_iron","params":{"depth":8.0,"bevel":0.8,"outline":[[-72.5,-40.0],[72.5,-40.0],[72.5,40.0],[-72.5,40.0]],"holes":[[[64.5,30.0],[64.4615,30.5874],[64.3467,31.1647],[64.1575,31.7221],[63.8971,32.25],[63.5701,32.7394],[63.182,33.182],[62.7394,33.5701],[62.25,33.8971],[61.7221,34.1575],[61.1647,34.3467],[60.5874,34.4615],[60.0,34.5],[59.4126,34.4615],[58.8353,34.3467],[58.2779,34.1575],[57.75,33.8971],[57.2606,33.5701],[56.818,33.182],[56.4299,32.7394],[56.1029,32.25],[55.8425,31.7221],[55.6533,31.1647],[55.5385,30.5874],[55.5,30.0],[55.5385,29.4126],[55.6533,28.8353],[55.8425,28.2779],[56.1029,27.75],[56.4299,27.2606],[56.818,26.818],[57.2606,26.4299],[57.75,26.102899999999998],[58.2779,25.8425],[58.8353,25.6533],[59.4126,25.5385],[60.0,25.5],[60.5874,25.5385],[61.1647,25.6533],[61.7221,25.8425],[62.25,26.102899999999998],[62.7394,26.4299],[63.182,26.818],[63.5701,27.2606],[63.8971,27.75],[64.1575,28.2779],[64.3467,28.8353],[64.4615,29.4126]],[[-55.5,30.0],[-55.5385,30.5874],[-55.6533,31.1647],[-55.8425,31.7221],[-56.1029,32.25],[-56.4299,32.7394],[-56.818,33.182],[-57.2606,33.5701],[-57.75,33.8971],[-58.2779,34.1575],[-58.8353,34.3467],[-59.4126,34.4615],[-60.0,34.5],[-60.5874,34.4615],[-61.1647,34.3467],[-61.7221,34.1575],[-62.25,33.8971],[-62.7394,33.5701],[-63.182,33.182],[-63.5701,32.7394],[-63.8971,32.25],[-64.1575,31.7221],[-64.3467,31.1647],[-64.4615,30.5874],[-64.5,30.0],[-64.4615,29.4126],[-64.3467,28.8353],[-64.1575,28.2779],[-63.8971,27.75],[-63.5701,27.2606],[-63.182,26.818],[-62.7394,26.4299],[-62.25,26.102899999999998],[-61.7221,25.8425],[-61.1647,25.6533],[-60.5874,25.5385],[-60.0,25.5],[-59.4126,25.5385],[-58.8353,25.6533],[-58.2779,25.8425],[-57.75,26.102899999999998],[-57.2606,26.4299],[-56.818,26.818],[-56.4299,27.2606],[-56.1029,27.75],[-55.8425,28.2779],[-55.6533,28.8353],[-55.5385,29.4126]],[[-55.5,-30.0],[-55.5385,-29.4126],[-55.6533,-28.8353],[-55.8425,-28.2779],[-56.1029,-27.75],[-56.4299,-27.2606],[-56.818,-26.818],[-57.2606,-26.4299],[-57.75,-26.102899999999998],[-58.2779,-25.8425],[-58.8353,-25.6533],[-59.4126,-25.5385],[-60.0,-25.5],[-60.5874,-25.5385],[-61.1647,-25.6533],[-61.7221,-25.8425],[-62.25,-26.102899999999998],[-62.7394,-26.4299],[-63.182,-26.818],[-63.5701,-27.2606],[-63.8971,-27.75],[-64.1575,-28.2779],[-64.3467,-28.8353],[-64.4615,-29.4126],[-64.5,-30.0],[-64.4615,-30.5874],[-64.3467,-31.1647],[-64.1575,-31.7221],[-63.8971,-32.25],[-63.5701,-32.7394],[-63.182,-33.182],[-62.7394,-33.5701],[-62.25,-33.8971],[-61.7221,-34.1575],[-61.1647,-34.3467],[-60.5874,-34.4615],[-60.0,-34.5],[-59.4126,-34.4615],[-58.8353,-34.3467],[-58.2779,-34.1575],[-57.75,-33.8971],[-57.2606,-33.5701],[-56.818,-33.182],[-56.4299,-32.7394],[-56.1029,-32.25],[-55.8425,-31.7221],[-55.6533,-31.1647],[-55.5385,-30.5874]],[[64.5,-30.0],[64.4615,-29.4126],[64.3467,-28.8353],[64.1575,-28.2779],[63.8971,-27.75],[63.5701,-27.2606],[63.182,-26.818],[62.7394,-26.4299],[62.25,-26.102899999999998],[61.7221,-25.8425],[61.1647,-25.6533],[60.5874,-25.5385],[60.0,-25.5],[59.4126,-25.5385],[58.8353,-25.6533],[58.2779,-25.8425],[57.75,-26.102899999999998],[57.2606,-26.4299],[56.818,-26.818],[56.4299,-27.2606],[56.1029,-27.75],[55.8425,-28.2779],[55.6533,-28.8353],[55.5385,-29.4126],[55.5,-30.0],[55.5385,-30.5874],[55.6533,-31.1647],[55.8425,-31.7221],[56.1029,-32.25],[56.4299,-32.7394],[56.818,-33.182],[57.2606,-33.5701],[57.75,-33.8971],[58.2779,-34.1575],[58.8353,-34.3467],[59.4126,-34.4615],[60.0,-34.5],[60.5874,-34.4615],[61.1647,-34.3467],[61.7221,-34.1575],[62.25,-33.8971],[62.7394,-33.5701],[63.182,-33.182],[63.5701,-32.7394],[63.8971,-32.25],[64.1575,-31.7221],[64.3467,-31.1647],[64.4615,-30.5874]],[[8.5,-4.5],[9.3779,-4.4135],[10.2221,-4.1575],[11.0001,-3.7416],[11.682,-3.182],[12.2416,-2.5001],[12.6575,-1.7221],[12.9135,-0.8779],[13.0,0.0],[12.9135,0.8779],[12.6575,1.7221],[12.2416,2.5001],[11.682,3.182],[11.0001,3.7416],[10.2221,4.1575],[9.3779,4.4135],[8.5,4.5],[-8.5,4.5],[-9.3779,4.4135],[-10.2221,4.1575],[-11.0001,3.7416],[-11.682,3.182],[-12.2416,2.5001],[-12.6575,1.7221],[-12.9135,0.8779],[-13.0,0.0],[-12.9135,-0.8779],[-12.6575,-1.7221],[-12.2416,-2.5001],[-11.682,-3.182],[-11.0001,-3.7416],[-10.2221,-4.1575],[-9.3779,-4.4135],[-8.5,-4.5]]]},"evidence":{"板长":{"value":145.0,"src":"图注 A5","grade":"measured"},"板宽":{"value":80.0,"src":"图注 A5","grade":"measured"},"板厚":{"value":8.0,"src":"推断：常见钢底板","grade":"inferred"},"安装孔径":{"value":9.0,"src":"推断：M8 通孔","grade":"inferred"}},"explode":[0,-0.6,0],"internal":false,"transform":{"pos":[32.5,-40.0,0.0],"rot":[0,0,0]}},{"uid":"motor_shaft","label":"电机轴（伸入）","kind":"revolve","axis":"x","material":"steel","internal":true,"params":{"segments":32,"profile":[[0.0,0.0],[4.0,0.0],[4.0,21.0],[0.0,21.0]]},"evidence":{"轴径":{"value":8.0,"src":"NEMA23 标准","grade":"standard"},"轴长":{"value":21.0,"src":"NEMA23 标准","grade":"standard"}},"explode":[-1.0,0,0],"transform":{"pos":[41.0,0.0,0.0],"rot":[0,0,0]}},{"uid":"sun_gear","label":"太阳轮","kind":"gear","axis":"x","material":"steel","internal":true,"params":{"z":12,"m":1.1,"thickness":12.0,"bore":8.0,"pressure_angle":20},"evidence":{"齿数":{"value":12,"src":"推断：由 10:1 与齿圈 44 反推","grade":"inferred"},"模数":{"value":1.1,"src":"推断：受壳体内腔 r26 约束","grade":"inferred"}},"explode":[0.1,0,0],"transform":{"pos":[74.35,0.0,0.0],"rot":[0,0,0]}},{"uid":"planet_gears","label":"行星轮 ×3","kind":"pattern","axis":"x","material":"brass","internal":true,"params":{"count":3,"radius":15.4,"phase":0,"proto":{"kind":"gear","params":{"z":16,"m":1.1,"thickness":12.0,"bore":6.0,"pressure_angle":20}}},"evidence":{"齿数":{"value":16,"src":"推断：(44-12)/2","grade":"inferred"},"分布圆":{"value":30.8,"src":"推断：m(z₁+z₂)/2","grade":"inferred"}},"explode":[0.1,0,0],"transform":{"pos":[74.35,0.0,0.0],"rot":[0,0,0]}},{"uid":"ring_gear","label":"内齿圈","kind":"revolve","axis":"x","material":"steel","internal":true,"params":{"segments":72,"profile":[[25.5,0.0],[25.9,0.0],[25.9,24.0],[25.5,24.0],[25.5,0.0]]},"evidence":{"内径":{"value":51.0,"src":"推断：模数 1.1 × 44 齿 + 壳体内腔 52","grade":"inferred"},"齿宽":{"value":24.0,"src":"推断：与壳体内腔匹配","grade":"inferred"}},"explode":[0.1,0,0],"transform":{"pos":[68.35,0.0,0.0],"rot":[0,0,0]}}],"views":[{"id":"hero","kind":"iso","label":"等轴"},{"id":"front","kind":"front","label":"正视"},{"id":"top","kind":"top","label":"俯视"},{"id":"side","kind":"side","label":"侧视"}],"report":{"checks":[{"code":"C1","level":"pass","title":"同轴","detail":"所有 coax 约束的横向偏移为 0（≤0.5 mm）"},{"code":"C2","level":"pass","title":"贴合间隙","detail":"4 处贴合，最大偏差 0.000 mm"},{"code":"C3","level":"pass","title":"孔位在轮廓内","detail":"所有孔洞均落在轮廓内，无越界"},{"code":"C4","level":"pass","title":"包围盒干涉","detail":"无未声明干涉（AABB 粗筛；贴合对与内部件已排除）"},{"code":"C5","level":"pass","title":"证据覆盖率","detail":"可信 67%（实测 11 + 标准 9）/ 共 30 项；推断 10 项已在页面以琥珀色标出"}],"coverage":0.6667,"counts":{"measured":11,"inferred":10,"standard":9},"total":30}};
+/* SpecViewer · IR → 场景
+ *
+ * 只做一件事：把 Spec-IR 渲染成一个能转、能剖、能量的确认件。
+ * 它不知道图纸长什么样，也不做任何推断——所有判断在编译期已经做完，
+ * 这里只执行。这是「确定性」的物理边界：同一个 IR，永远同一个画面。
+ */
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const MM = 0.001;            // IR 用毫米，世界用米
+const CLIP_AXIS = new THREE.Vector3(0, -1, 0);
+
+/* ─────────────────────────── 材质 ─────────────────────────── */
+
+const MATERIALS = {
+  cast_iron:      { color: 0x4b4f55, metalness: 0.35, roughness: 0.74 },
+  steel:          { color: 0xbabfc7, metalness: 0.96, roughness: 0.24 },
+  aluminum:       { color: 0xc9cdd3, metalness: 0.88, roughness: 0.38 },
+  brass:          { color: 0xb08d57, metalness: 0.92, roughness: 0.32 },
+  anodized_black: { color: 0x343941, metalness: 0.62, roughness: 0.36 },
+  rubber:         { color: 0x1a1c1e, metalness: 0.05, roughness: 0.90 },
+};
+
+const EVIDENCE_COLOR = {
+  measured: 0x7fbf6a,
+  inferred: 0xd9a24a,
+  standard: 0x8a9199,
+};
+
+/* ─────────────────────────── 几何基元 ───────────────────────────
+ * 约定：所有基元沿主轴从 0 开始向外长，单位米。
+ * 这样装配链只需要一个累加器，不需要求包围盒反推位置。
+ */
+
+// 回转体天然沿 Y（Lathe 绕 Y 轴）；拉伸体天然沿 Z（depth 沿 Z）。
+// 两者的对齐规则不同，不能共用一个函数——这是第一版踩过的坑。
+function alignRevolve(geo, axis) {
+  if (axis === 'x') geo.rotateZ(-Math.PI / 2);
+  else if (axis === 'z') geo.rotateX(Math.PI / 2);
+  return geo;
+}
+function alignExtrude(geo, axis) {
+  if (axis === 'x') geo.rotateY(Math.PI / 2);
+  else if (axis === 'y') geo.rotateX(-Math.PI / 2);
+  return geo;
+}
+
+function buildRevolve(p, axis) {
+  const pts = p.profile.map(([r, a]) => new THREE.Vector2(Math.max(r, 1e-4) * MM, a * MM));
+  const g = new THREE.LatheGeometry(pts, p.segments || 64);
+  return alignRevolve(g, axis);
+}
+
+function shapeFromOutline(o) {
+  const s = new THREE.Shape(o.map(([x, y]) => new THREE.Vector2(x * MM, y * MM)));
+  return s;
+}
+
+function buildExtrude(p, axis) {
+  const shape = shapeFromOutline(p.outline);
+  (p.holes || []).forEach((h) => {
+    shape.holes.push(new THREE.Path(h.map(([x, y]) => new THREE.Vector2(x * MM, y * MM))));
+  });
+  const bevel = p.bevel || 0;
+  const g = new THREE.ExtrudeGeometry(shape, {
+    depth: p.depth * MM,
+    bevelEnabled: bevel > 0,
+    bevelSize: bevel * MM * 0.5,
+    bevelThickness: bevel * MM * 0.5,
+    bevelSegments: 2,
+    curveSegments: 48,
+  });
+  return alignExtrude(g, axis);
+}
+
+function gearOutline(z, m) {
+  const rp = (m * z) / 2;
+  const ra = rp + m;
+  const rd = Math.max(rp - 1.25 * m, 0.6);
+  const step = (Math.PI * 2) / z;
+  const pts = [];
+  for (let i = 0; i < z; i++) {
+    const a0 = i * step;
+    // 齿根 → 齿顶 → 齿顶 → 齿根，四点一齿。够看清是齿轮，不必是真渐开线。
+    pts.push([rd * Math.cos(a0), rd * Math.sin(a0)]);
+    pts.push([ra * Math.cos(a0 + step * 0.20), ra * Math.sin(a0 + step * 0.20)]);
+    pts.push([ra * Math.cos(a0 + step * 0.46), ra * Math.sin(a0 + step * 0.46)]);
+    pts.push([rd * Math.cos(a0 + step * 0.66), rd * Math.sin(a0 + step * 0.66)]);
+  }
+  return pts;
+}
+
+function buildGear(p, axis) {
+  const outline = gearOutline(p.z, p.m);
+  const holes = [];
+  if (p.bore > 0) {
+    const seg = 32;
+    const ring = [];
+    for (let i = 0; i < seg; i++) {
+      const a = (i / seg) * Math.PI * 2;
+      ring.push([(p.bore / 2) * Math.cos(a), (p.bore / 2) * Math.sin(a)]);
+    }
+    holes.push(ring);
+  }
+  return buildExtrude(
+    { outline, holes, depth: p.thickness, bevel: 0 },
+    axis,
+  );
+}
+
+function buildPrimitive(p) {
+  if (p.shape === 'box') {
+    return new THREE.BoxGeometry(p.w * MM, p.h * MM, p.d * MM);
+  }
+  return new THREE.BoxGeometry(0.01, 0.01, 0.01);
+}
+
+function buildOne(spec) {
+  const axis = spec.axis || 'x';
+  switch (spec.kind) {
+    case 'revolve': return buildRevolve(spec.params, axis);
+    case 'extrude': return buildExtrude(spec.params, axis);
+    case 'gear': return buildGear(spec.params, axis);
+    case 'primitive': return buildPrimitive(spec.params);
+    default: return new THREE.BoxGeometry(0.01, 0.01, 0.01);
+  }
+}
+
+/* ─────────────────────────── 组装 ─────────────────────────── */
+
+function buildPart(part, group) {
+  const meshes = [];
+
+  if (part.kind === 'pattern') {
+    const { count, radius, phase = 0, proto } = part.params;
+    for (let i = 0; i < count; i++) {
+      const g = buildOne(proto);
+      const m = new THREE.Mesh(g, null);          // 材质在下面统一挂
+      const a = phase + (i / count) * Math.PI * 2;
+      m.position.set(0, radius * MM * Math.sin(a), radius * MM * Math.cos(a));
+      m.rotation.x = a;                           // 行星轮自转，齿面才有咬合感
+      meshes.push(m);
+    }
+  } else {
+    meshes.push(new THREE.Mesh(buildOne(part), null));
+  }
+
+  const mat = new THREE.MeshStandardMaterial({
+    ...MATERIALS[part.material] || MATERIALS.steel,
+    side: THREE.DoubleSide,
+    clippingPlanes: [],
+    clipShadows: true,
+  });
+
+  const edgeMat = new THREE.LineBasicMaterial({
+    color: EVIDENCE_COLOR[worstGrade(part.evidence)],
+    transparent: true,
+    opacity: 0.12,
+    depthTest: true,
+    clippingPlanes: [],
+  });
+
+  const holder = new THREE.Group();
+  meshes.forEach((m) => {
+    m.material = mat;
+    m.castShadow = true;
+    m.receiveShadow = false;
+    m.userData.partUid = part.uid;
+    holder.add(m);
+    const edges = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry, 26), edgeMat);
+    edges.userData.partUid = part.uid;
+    holder.add(edges);
+  });
+
+  holder.position.set(part.transform.pos[0] * MM, part.transform.pos[1] * MM, part.transform.pos[2] * MM);
+  if (part.transform.rot) {
+    holder.rotation.set(...part.transform.rot.map((d) => (d * Math.PI) / 180));
+  }
+  holder.userData.partUid = part.uid;
+  holder.userData.basePos = holder.position.clone();
+  holder.userData.explode = new THREE.Vector3(...(part.explode || [0, 0, 0]));
+
+  group.add(holder);
+  return { holder, mat, edgeMat, meshes };
+}
+
+/** 一个零件里最「弱」的那一档成色，决定它描边的颜色 —— 诚实优先。 */
+function worstGrade(evidence) {
+  if (!evidence) return 'standard';
+  const grades = Object.values(evidence).map((e) => e.grade);
+  if (grades.includes('inferred')) return 'inferred';
+  if (grades.includes('measured')) return 'measured';
+  return 'standard';
+}
+
+/* ─────────────────────────── UI ─────────────────────────── */
+
+function el(tag, cls, html) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (html != null) n.innerHTML = html;
+  return n;
+}
+
+function buildShell(IR) {
+  const root = document.body;
+  root.innerHTML = '';
+
+  const stage = el('div', 'sv-stage');
+  const canvas = el('canvas', 'sv-canvas');
+  stage.appendChild(canvas);
+
+  const head = el('header', 'sv-head');
+  head.innerHTML = `
+    <div class="sv-kicker">装配确认件 · 非生产模型</div>
+    <h1>${IR.title}</h1>
+    <p class="sv-sub">${IR.subtitle || ''}</p>
+    <p class="sv-note">${(IR.source && IR.source.note) || '尺寸来源见右下明细。'}</p>
+  `;
+
+  const legend = el('div', 'sv-legend');
+  const counts = IR.report.counts;
+  const cov = Math.round(IR.report.coverage * 100);
+  legend.innerHTML = `
+    <div class="sv-bar"><i style="width:${cov}%"></i></div>
+    <div class="sv-cov">证据覆盖率 <b>${cov}%</b> · 实测 ${counts.measured} / 推断 ${counts.inferred} / 标准 ${counts.standard}</div>
+    <ul>
+      <li><s class="g-m"></s>图上标注</li>
+      <li><s class="g-i"></s>推断得出</li>
+      <li><s class="g-s"></s>标准件</li>
+    </ul>
+  `;
+
+  const panel = el('aside', 'sv-panel');
+  panel.innerHTML = `<div class="sv-panel-h">构件明细 <span>${IR.parts.length}</span></div>`;
+
+  const list = el('div', 'sv-list');
+  IR.parts.forEach((p) => {
+    const row = el('div', 'sv-row');
+    row.dataset.uid = p.uid;
+    const evs = Object.entries(p.evidence || {});
+    row.innerHTML = `
+      <div class="sv-row-h"><span class="sv-dot ${worstGrade(p.evidence)}"></span>${p.label}<em>${p.kind}</em></div>
+      <dl>${evs.map(([k, v]) => `
+        <dt>${k}</dt>
+        <dd class="${v.grade}">${v.value}<small>${v.src || ''}</small></dd>
+      `).join('')}</dl>
+    `;
+    list.appendChild(row);
+  });
+  panel.appendChild(list);
+
+  const dock = el('div', 'sv-dock');
+  dock.innerHTML = `
+    <div class="sv-group" data-g="views">
+      ${(IR.views || []).map((v) => `<button data-view="${v.kind}">${v.label || v.kind}</button>`).join('')}
+    </div>
+    <label class="sv-slider"><span>爆炸</span><input type="range" min="0" max="100" value="0" data-k="explode"><b>0%</b></label>
+    <label class="sv-slider"><span>剖切</span><input type="range" min="0" max="100" value="0" data-k="section"><b>关</b></label>
+    <div class="sv-actions"><button class="sv-ghost" data-act="reset">复位</button></div>
+  `;
+
+  const foot = el('div', 'sv-foot');
+  foot.innerHTML = `
+    <span class="sv-stamp">IR ${IR.ir_version} · ${IR.grade || ''}</span>
+    <span>这是一份确认件，不是模型。要改？导出起稿交给建模师。</span>
+  `;
+
+  root.append(stage, head, legend, panel, dock, foot);
+  return { canvas, stage, panel, list, legend, dock };
+}
+
+/* ─────────────────────────── 主程序 ─────────────────────────── */
+
+function boot(IR) {
+  const ui = buildShell(IR);
+
+  const renderer = new THREE.WebGLRenderer({ canvas: ui.canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  renderer.localClippingEnabled = true;
+
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x121110, 1.6, 4.2);
+
+  const camera = new THREE.PerspectiveCamera(36, 1, 0.01, 60);
+
+  // 环境反射：用一个小「柔光棚」而不是一张渐变图。
+  // 渐变图在横向只有十几个像素，高粗糙度材质采样最低 mip 时会被放大成大色块——
+  // 表现为曲面上莫名其妙的马赛克。这是必须用真实几何做环境的原因。
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const envScene = new THREE.Scene();
+  const roomGeo = new THREE.BoxGeometry(10, 6, 10);
+  const roomMat = new THREE.MeshBasicMaterial({ color: 0x14171b, side: THREE.BackSide });
+  envScene.add(new THREE.Mesh(roomGeo, roomMat));
+
+  const soft = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const panels = [
+    [3.2, 0.012, 3.2, [0, 2.9, 0], 1.5],       // 顶灯
+    [0.012, 2.0, 3.0, [-4.8, 0.4, 0], 1.1],    // 左侧条光
+    [0.012, 1.6, 2.4, [4.8, 0.2, 1.2], 0.85],  // 右侧条光
+    [2.4, 1.2, 0.012, [0, 0.3, -4.8], 0.5],    // 背后轮廓
+  ];
+  panels.forEach(([w, h, d, pos, k]) => {
+    const m = new THREE.Mesh(
+      new THREE.BoxGeometry(w, h, d),
+      new THREE.MeshBasicMaterial({ color: new THREE.Color(k, k, k * 1.06) }),
+    );
+    m.position.set(...pos);
+    envScene.add(m);
+  });
+
+  const envRT = pmrem.fromScene(envScene, 0.04);
+  const env = envRT.texture;
+  scene.environment = env;
+  scene.environmentIntensity = 0.95;
+
+  // 三光：主光有阴影，补光冷，轮廓光从背后切边
+  scene.add(new THREE.HemisphereLight(0x9fb0c8, 0x231d18, 0.72));
+
+  const key = new THREE.DirectionalLight(0xfff2e0, 1.95);
+  key.position.set(1.8, 2.4, 1.5);
+  key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048);
+  key.shadow.camera.near = 0.1;
+  key.shadow.camera.far = 8;
+  key.shadow.camera.left = -1.2;
+  key.shadow.camera.right = 1.2;
+  key.shadow.camera.top = 1.2;
+  key.shadow.camera.bottom = -1.2;
+  key.shadow.bias = -0.0004;
+  key.shadow.normalBias = 0.04;
+  scene.add(key);
+
+  const fill = new THREE.DirectionalLight(0x9aabc4, 0.48);
+  fill.position.set(-1.6, 0.9, -1.2);
+  scene.add(fill);
+
+  const rim = new THREE.DirectionalLight(0xffd9a8, 0.85);
+  rim.position.set(-0.6, 0.3, -2.2);
+  scene.add(rim);
+
+  // ── 构件 ──
+  const world = new THREE.Group();
+  scene.add(world);
+
+  const built = new Map();
+  const clipPlane = new THREE.Plane(CLIP_AXIS, 10);
+  const allMats = [];
+
+  IR.parts.forEach((part) => {
+    const rec = buildPart(part, world);
+    rec.part = part;
+    rec.visible = true;
+    built.set(part.uid, rec);
+    allMats.push(rec.mat);
+  });
+
+  // ── 包围盒定相机与地面 ──
+  world.updateMatrixWorld(true);
+  const bbox = new THREE.Box3().setFromObject(world);
+  const size = bbox.getSize(new THREE.Vector3());
+  const center = bbox.getCenter(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z);
+
+  const ground = new THREE.Mesh(
+    new THREE.CircleGeometry(maxDim * 2.4, 64),
+    new THREE.ShadowMaterial({ opacity: 0.42 }),
+  );
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.y = bbox.min.y - 0.001;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  const gridR = maxDim * 1.35;
+  const grid = new THREE.PolarGridHelper(gridR, 8, 5, 64, 0x2a2622, 0x201d1a);
+  grid.position.y = ground.position.y + 0.0006;
+  grid.material.transparent = true;
+  grid.material.opacity = 0.3;
+  scene.add(grid);
+
+  // 轴心线：一条贯穿的虚线。同轴是装配的第一约束，它该被看见，而不是被声称。
+  const axisLine = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(bbox.min.x - maxDim * 0.12, center.y, center.z),
+      new THREE.Vector3(bbox.max.x + maxDim * 0.12, center.y, center.z),
+    ]),
+    new THREE.LineDashedMaterial({
+      color: 0x7a6444, dashSize: maxDim * 0.018, gapSize: maxDim * 0.014,
+      transparent: true, opacity: 0.55,
+    }),
+  );
+  axisLine.computeLineDistances();
+  scene.add(axisLine);
+
+  // ── 相机与控制器 ──
+  // 按方向算取景距离：包围球法对长条形物体太保守，正视时会把模型缩成一小截。
+  // 正确做法是把 8 个角投到相机平面上取最大半宽，再除以 tan(fov/2)。
+  function fitDist(dir) {
+    const vFov = (camera.fov * Math.PI) / 180;
+    const tanV = Math.tan(vFov / 2);
+    const tanH = tanV * camera.aspect;
+    const forward = dir.clone().normalize().negate();
+    const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0));
+    if (right.lengthSq() < 1e-6) right.set(1, 0, 0);
+    right.normalize();
+    const up = new THREE.Vector3().crossVectors(right, forward).normalize();
+    let need = 0;
+    for (let i = 0; i < 8; i++) {
+      const c = new THREE.Vector3(
+        i & 1 ? bbox.max.x : bbox.min.x,
+        i & 2 ? bbox.max.y : bbox.min.y,
+        i & 4 ? bbox.max.z : bbox.min.z,
+      ).sub(center);
+      // 透视修正：靠近相机的角点投影更大，必须按「深度」单独求距离，
+      // 否则正视时前端那圈角一定被切掉一截。
+      const depth = c.dot(forward);
+      // 目标点已经为右侧面板右移过了，所以左右两侧的可用半宽不再相等：
+      // 左边只剩 (1−k)，右边有 (1+k)。不分开算，模型左侧必然被切。
+      const k = panelRatio();
+      const cr = c.dot(right);
+      const needH = cr >= 0 ? cr / (tanH * (1 + k)) : -cr / (tanH * (1 - k));
+      need = Math.max(need, Math.abs(c.dot(up)) / tanV - depth, needH - depth);
+    }
+    return need * 0.97;
+  }
+
+  // 右侧明细面板会吃掉 340px。正确做法不是平移取景框（那会把左边推出画面），
+  // 而是把「看的目标点」沿屏幕右方向挪一点 —— 视野保持对称，模型自然落在左侧三分之二。
+  function panelRatio() {
+    const w = window.innerWidth;
+    return w > 900 ? Math.min(340, w * 0.34) / w : 0;
+  }
+
+  function frameFor(dir) {
+    const v = dir.clone().normalize();
+    const d = fitDist(v);
+    const fwd = v.clone().negate();
+    const right = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0, 1, 0));
+    if (right.lengthSq() < 1e-6) right.set(1, 0, 0);
+    right.normalize();
+    const tanH = Math.tan((camera.fov * Math.PI) / 360) * camera.aspect;
+    const target = center.clone().addScaledVector(right, d * tanH * panelRatio());
+    return { target, pos: target.clone().addScaledVector(v, d) };
+  }
+
+  const dirIso = new THREE.Vector3(0.62, 0.52, 0.78);
+  const dist = fitDist(dirIso);
+  const start = frameFor(dirIso);
+  camera.position.copy(start.pos);
+
+  const controls = new OrbitControls(camera, ui.canvas);
+  controls.target.copy(start.target);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.075;
+  controls.minDistance = maxDim * 0.45;
+  controls.maxDistance = maxDim * 6;
+  controls.enablePan = false;
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 0.55;
+  controls.update();
+
+  const VIEWS = {
+    iso:   [0.62, 0.52, 0.78],
+    front: [0.0, 0.10, 1.0],
+    side:  [1.0, 0.10, 0.0],
+    top:   [0.0, 1.0, 0.02],
+  };
+
+  function flyTo(kind) {
+    const v = new THREE.Vector3(...(VIEWS[kind] || VIEWS.iso));
+    // 每个视角单独求距离：正视比等轴需要更远，否则两侧一定被切。
+    const frame = frameFor(v);
+    const from = camera.position.clone();
+    const fromT = controls.target.clone();
+    const t0 = performance.now();
+    const dur = 620;
+    controls.autoRotate = false;
+    function step() {
+      const k = Math.min((performance.now() - t0) / dur, 1);
+      const e = 1 - Math.pow(1 - k, 3);
+      camera.position.lerpVectors(from, frame.pos, e);
+      controls.target.lerpVectors(fromT, frame.target, e);
+      controls.update();
+      if (k < 1) requestAnimationFrame(step);
+    }
+    step();
+  }
+
+  // ── 爆炸 / 剖切 ──
+  const state = { explode: 0, section: 0, hover: null };
+
+  let dollyBase = 0;
+
+  function applyExplode(v) {
+    // 记录开始爆炸前的距离作为基准：否则每拖一次滑块都会在上一次基础上再乘一次，指数膨胀。
+    if (state.explode < 0.001 && v > 0.001) {
+      dollyBase = camera.position.distanceTo(controls.target);
+    }
+    state.explode = v;
+    const amp = maxDim * 0.36 * v;
+    built.forEach((rec) => {
+      const d = rec.holder.userData.explode;
+      rec.holder.position.copy(rec.holder.userData.basePos).addScaledVector(d, amp);
+    });
+    // 零件散开后整体变宽，相机跟着退一点；不退的话两端一定出画。
+    const dir = camera.position.clone().sub(controls.target);
+    const want = (dollyBase || dist) * (1 + 0.55 * v);
+    camera.position.copy(controls.target).add(dir.setLength(want));
+  }
+
+  function applySection(v) {
+    state.section = v;
+    const on = v > 0.02;
+    const y0 = bbox.min.y;
+    const y1 = bbox.max.y;
+    clipPlane.constant = (y0 + (y1 - y0) * (1 - v)) * -1;
+
+    allMats.forEach((m) => {
+      m.clippingPlanes = on ? [clipPlane] : [];
+      m.needsUpdate = true;
+    });
+    built.forEach((rec) => {
+      rec.edgeMat.clippingPlanes = on ? [clipPlane] : [];
+      rec.edgeMat.needsUpdate = true;
+    });
+    built.forEach((rec) => {
+      rec.holder.visible = on || !rec.part.internal;
+    });
+    ground.visible = !on;
+    grid.visible = !on;
+    axisLine.visible = !on;
+  }
+
+  // ── 交互 ──
+  const ray = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
+
+  function pick(ev) {
+    const r = ui.canvas.getBoundingClientRect();
+    pointer.x = ((ev.clientX - r.left) / r.width) * 2 - 1;
+    pointer.y = -((ev.clientY - r.top) / r.height) * 2 + 1;
+    ray.setFromCamera(pointer, camera);
+    const hits = ray.intersectObjects(world.children, true);
+    for (const h of hits) {
+      const uid = h.object.userData.partUid;
+      if (uid) return uid;
+    }
+    return null;
+  }
+
+  function setHover(uid) {
+    if (state.hover === uid) return;
+    state.hover = uid;
+    built.forEach((rec, id) => {
+      const on = id === uid;
+      rec.edgeMat.opacity = on ? 0.95 : 0.18;
+      rec.edgeMat.color.setHex(on ? 0xe8c48a : EVIDENCE_COLOR[worstGrade(rec.part.evidence)]);
+      rec.mat.emissiveIntensity = on ? 0.22 : 0;
+      rec.mat.emissive.setHex(on ? 0x3a2f1e : 0x000000);
+    });
+    document.querySelectorAll('.sv-row').forEach((r) => {
+      r.classList.toggle('on', r.dataset.uid === uid);
+    });
+    if (uid) {
+      const row = document.querySelector(`.sv-row[data-uid="${uid}"]`);
+      if (row) row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }
+
+  // 画布上的即时反馈：鼠标停在哪，就报出这是哪个件、成色如何。
+  const tip = el('div', 'sv-tip');
+  document.body.appendChild(tip);
+  const GRADE_CN = { measured: '图上有标注', inferred: '推断', standard: '标准件' };
+
+  ui.canvas.addEventListener('pointermove', (ev) => {
+    const uid = pick(ev);
+    setHover(uid);
+    if (uid) {
+      const p = built.get(uid).part;
+      const g = worstGrade(p.evidence);
+      tip.innerHTML = `<b>${p.label}</b><i class="${g}">${GRADE_CN[g]}</i>`;
+      tip.style.transform = `translate(${ev.clientX + 16}px, ${ev.clientY + 14}px)`;
+      tip.classList.add('on');
+    } else {
+      tip.classList.remove('on');
+    }
+  });
+  ui.canvas.addEventListener('pointerleave', () => { setHover(null); tip.classList.remove('on'); });
+
+  ui.list.addEventListener('click', (ev) => {
+    const row = ev.target.closest('.sv-row');
+    if (!row) return;
+    setHover(row.dataset.uid);
+    const rec = built.get(row.dataset.uid);
+    if (rec) {
+      const b = new THREE.Box3().setFromObject(rec.holder).getCenter(new THREE.Vector3());
+      controls.target.copy(b);
+    }
+  });
+
+  ui.dock.querySelectorAll('[data-view]').forEach((b) => {
+    b.addEventListener('click', () => {
+      ui.dock.querySelectorAll('[data-view]').forEach((x) => x.classList.remove('on'));
+      b.classList.add('on');
+      flyTo(b.dataset.view);
+    });
+  });
+
+  const expSlider = ui.dock.querySelector('[data-k="explode"]');
+  expSlider.addEventListener('input', () => {
+    applyExplode(expSlider.value / 100);
+    expSlider.parentElement.querySelector('b').textContent = expSlider.value + '%';
+  });
+
+  const secSlider = ui.dock.querySelector('[data-k="section"]');
+  secSlider.addEventListener('input', () => {
+    applySection(secSlider.value / 100);
+    secSlider.parentElement.querySelector('b').textContent =
+      secSlider.value < 3 ? '关' : secSlider.value + '%';
+  });
+
+  ui.dock.querySelector('[data-act="reset"]').addEventListener('click', () => {
+    expSlider.value = 0; applyExplode(0);
+    secSlider.value = 0; applySection(0);
+    flyTo('iso');
+  });
+
+  // ── 尺寸 ──
+  function resize() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ── 循环 ──
+  function tick() {
+    controls.update();
+    renderer.render(scene, camera);
+    requestAnimationFrame(tick);
+  }
+  tick();
+
+  // 首屏：先摆好，再轻轻转，3 秒后停 —— 让人先看清，再给一点动感
+  setTimeout(() => { controls.autoRotate = false; }, 3200);
+
+  window.__spec = { scene, camera, renderer, controls, built, applyExplode, applySection, flyTo, bbox, center, size, maxDim, fitDist, THREE };
+}
+
+boot(window.__IR);
+
+</script>
+</body>
+</html>
