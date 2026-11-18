@@ -302,7 +302,8 @@ visual-3d-forge/
 │   ├── 19-rhythm-and-timeline.md       BPM 栅格、五型张力曲线、十种转场、镜头语法
 │   ├── 20-sound-and-feedback.md        Web Audio 三路总线、五个音色配方、三通道反馈
 │   ├── 21-game-feel-and-guidance.md    动词设计、三档引导、失败宽容、进度与成就
-│   └── 22-web-archive-intake.md       .mht 网页存档拆包为参考素材（与 export_mht 反向）
+│   ├── 22-web-archive-intake.md       .mht 网页存档拆包为参考素材（与 export_mht 反向）
+│   └── 23-official-examples-atlas.md    r187 官方示例反推：12 类 idiom + 覆盖矩阵 + 取舍清单
 ├── assets/
 │   ├── vendor/                         已裁剪的 three 0.187 精选集（18 文件 2.4 MB）
 │   └── scaffold/
@@ -311,6 +312,7 @@ visual-3d-forge/
 │       ├── experience-shell.html       体验型骨架（状态机 + 音频总线 + 节拍时钟）
 │       └── r3f-app/                    D3 骨架（Vite + React 19 + R3F 9）
 ├── spec/                               SpecSheet → 单文件确认件（P1 证据链）
+├── prompts/systematic-prompt.md       资深专家协作协议 v2.0（可粘贴紧凑版 + 逐条映射）
 ├── tools/spec_compile.py               YAML → IR → HTML + 六项检查
 ├── guide/                              给人用的引导层：五份可填模板 + 走通记录
 └── scripts/

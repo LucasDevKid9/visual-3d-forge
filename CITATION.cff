@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this project or its skill in your work, please cite it."
+title: "Visual 3D Forge"
+type: repository
+repository-code: "https://github.com/LucasDevKid9/visual-3d-forge"
+url: "https://lucasdevkid9.github.io/visual-3d-forge/"
+abstract: >-
+  Compile a reference image and a request into a double-clickable 3D web page:
+  intent card, intermediate representation, geometry strategy, code, and
+  contract-checked delivery. Four output modes D0–D3, zero runtime dependencies.
+authors:
+  - name: "cogitomori-Ai"
+    affiliation: "LucasDevKid9"
+license: MIT
+version: v2.6
+date-released: 2026-11-18
+keywords:
+  - three.js
+  - 3D-web
+  - procedural-modeling
+  - skill
+  - visualization

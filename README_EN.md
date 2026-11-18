@@ -10,6 +10,11 @@
   <img alt="tests" src="https://img.shields.io/badge/contract%20tests-191-4c8a5a">
   <img alt="deps" src="https://img.shields.io/badge/runtime%20deps-0-4c8a5a">
   <img alt="three" src="https://img.shields.io/badge/three.js-r187-000">
+  <a href="https://github.com/LucasDevKid9/visual-3d-forge/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/LucasDevKid9/visual-3d-forge?style=flat&logo=github"></a>
+  <a href="https://github.com/LucasDevKid9/visual-3d-forge/network/members"><img alt="Forks" src="https://img.shields.io/github/forks/LucasDevKid9/visual-3d-forge?style=flat&logo=github"></a>
+  <a href="https://github.com/LucasDevKid9/visual-3d-forge/issues"><img alt="Issues" src="https://img.shields.io/github/issues/LucasDevKid9/visual-3d-forge"></a>
+  <a href="https://github.com/LucasDevKid9/visual-3d-forge"><img alt="Repo size" src="https://img.shields.io/github/repo-size/LucasDevKid9/visual-3d-forge"></a>
+  <a href="https://github.com/LucasDevKid9/visual-3d-forge/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/LucasDevKid9/visual-3d-forge/main"></a>
 </p>
 
 <p align="center">
@@ -25,6 +30,19 @@
 <p align="center">
   <sub>NOVA X-01 · 673 KB single file · double-click to open, no server, no network · 5 scenes / 4 times of day / 3 weathers</sub>
 </p>
+
+---
+
+## ✨ Highlights
+
+| | |
+|---|---|
+| 🏗️ **Compile, don't prompt** | Five gates + an IR part tree: model first, code second. Skipping the model and jumping to `new THREE.Mesh` is the starting point this project forbids |
+| 📐 **Every dimension is traceable** | Measured / standard / inferred grades; each value is pinned to a geometry segment, anything unpinned is reported as unlocated |
+| 🎯 **Four delivery modes D0–D3** | CDN single file · fully offline single file · HTML + vendor dir · React Three Fiber project — chosen by runtime environment |
+| 🧪 **191 contract tests** | Including negative cases: removing the importmap or an import must go red. Four layers: docs, deps, tools, end-to-end |
+| 📦 **Zero runtime dependencies** | Ten scripts use the Python standard library only; the offline bundle is a 2.4 MB pruned three r187 set with a hash manifest |
+| 🌐 **Bilingual docs** | README and core docs ship in pairs with aligned structure; English readers don't rely on guessing Chinese code comments |
 
 ---
 
@@ -273,12 +291,35 @@ They're written as negations because **a rule someone can point at and say "you 
 
 ---
 
+## FAQ
+
+**Q: Do I need three.js installed or a build tool?**
+No for D0 / D1 / D2: dependencies either come from the CDN or are already inlined in `vendor/`. Only D3 (a React Three Fiber project) needs the Vite + React toolchain.
+
+**Q: Can I load my own models and textures?**
+Yes. Loaders cover GLTF / OBJ / STL / PLY / SVG / Font / RGBE; DRACO, KTX2 and FBX are on-demand plugins. External models, textures, audio and video must ship with the bundle or fall back to placeholders — the offline build never fakes a path it cannot load.
+
+**Q: Can it do games, animation, process flow showcases?**
+Yes. Confirmation deliverables go through the `spec/` compiler; experience work (game feel, narrative animation, guidance, audio feedback) follows references 18–21 and the `experience-shell.html` scaffold.
+
+**Q: Does it support physics and rigid-body simulation?**
+Physics backends (Rapier / Ammo / Jolt) rely on runtime WASM and are wired on demand, never bundled into the offline package. Offline demos degrade to mass-spring and Verlet integration; the boundary is listed in the reference 23 coverage matrix.
+
+**Q: How do I install it as an AI skill?**
+Drop the whole directory into the host's `skills/` folder; the entry point is `SKILL.md` at the root. The directory name must match the frontmatter `name` (`visual-3d-forge`) — the contract test checks this.
+
+**Q: Why can't `api_lookup.py` run on my machine?**
+It needs the three.js source pack (`npm pack three@0.187.0`). The repository ships build artifacts and the pruned vendor only, so that gate is skipped out of the box — a documented limit.
+
+---
+
 ## Repository layout
 
 ```
 visual-3d-forge/
 ├── SKILL.md              contract, five gates, six phases, algorithm index (skill entry)
-├── references/           22 phase-scoped references (5545 lines: geometry / materials / API / offline / R3F / experience)
+├── references/           23 phase-scoped references (geometry / materials / API / offline / R3F / experience / official examples atlas)
+├── prompts/              Expert collaborative protocol v2.0 (paste-ready compact version + clause mapping)
 ├── assets/
 │   ├── vendor/           pruned three r187 set, 18 files (2.4 MB, hashed manifest)
 │   └── scaffold/         D0 / D2 / D3 scaffolds
@@ -306,8 +347,23 @@ visual-3d-forge/
 - [Document map and reading order](docs/README.md)
 - [Architecture: why this is a compiler, not a prompt](docs/ARCHITECTURE.md)
 - [Design notes: eleven decisions and their counterexamples](docs/DESIGN-NOTES.md)
-- [Validation record: what each of the 179 assertions guards against](docs/VALIDATION.md)
+- [Validation record: what each of the 191 assertions guards against](docs/VALIDATION.md)
+- [Expert collaborative protocol: Systematic Prompt v2.0](prompts/systematic-prompt.md)
 - [中文 README](README.md)
+
+## Community & Contributing
+
+Issues and PRs are welcome: reporting an API hallucination case, adding a domain playbook, or submitting a reproducible failure scene are all high-value contributions.
+
+- [New issue / feature request](https://github.com/LucasDevKid9/visual-3d-forge/issues/new/choose) · [Open issues](https://github.com/LucasDevKid9/visual-3d-forge/issues)
+- [Contributing guide](CONTRIBUTING.md) · [Code of conduct](CODE_OF_CONDUCT.md) · [Security policy](SECURITY.md)
+- [Changelog](CHANGELOG.md) · [Third-party notices](THIRD-PARTY-NOTICES.md)
+
+<p align="center">
+  <a href="https://github.com/LucasDevKid9/visual-3d-forge">
+    <img src="https://api.star-history.com/svg?repo=LucasDevKid9/visual-3d-forge&type=Date&legend=top" alt="Star history" width="80%">
+  </a>
+</p>
 
 ## License
 

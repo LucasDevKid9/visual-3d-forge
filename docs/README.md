@@ -52,6 +52,7 @@ These are implementation notes, Chinese only — their audience is whoever touch
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | 运行时分层、五个基元、装配求解、爆炸与剖切 |
 | [`VALIDATION.md`](./VALIDATION.md) | 验证方法：无头渲染、像素统计、已踩过的坑 |
 | [`DESIGN-NOTES.md`](./DESIGN-NOTES.md) | 视觉决策记录：为什么是暗房、为什么是胶片调色 |
+| [`../prompts/systematic-prompt.md`](../prompts/systematic-prompt.md) | 资深专家协作协议 v2.0：可粘贴紧凑版 + 12 条映射 |
 
 ---
 

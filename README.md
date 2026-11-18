@@ -10,6 +10,11 @@
   <img alt="tests" src="https://img.shields.io/badge/contract%20tests-191-4c8a5a">
   <img alt="deps" src="https://img.shields.io/badge/runtime%20deps-0-4c8a5a">
   <img alt="three" src="https://img.shields.io/badge/three.js-r187-000">
+  <a href="https://github.com/LucasDevKid9/visual-3d-forge/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/LucasDevKid9/visual-3d-forge?style=flat&logo=github"></a>
+  <a href="https://github.com/LucasDevKid9/visual-3d-forge/network/members"><img alt="Forks" src="https://img.shields.io/github/forks/LucasDevKid9/visual-3d-forge?style=flat&logo=github"></a>
+  <a href="https://github.com/LucasDevKid9/visual-3d-forge/issues"><img alt="Issues" src="https://img.shields.io/github/issues/LucasDevKid9/visual-3d-forge"></a>
+  <a href="https://github.com/LucasDevKid9/visual-3d-forge"><img alt="Repo size" src="https://img.shields.io/github/repo-size/LucasDevKid9/visual-3d-forge"></a>
+  <a href="https://github.com/LucasDevKid9/visual-3d-forge/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/LucasDevKid9/visual-3d-forge/main"></a>
 </p>
 
 <p align="center">
@@ -25,6 +30,19 @@
 <p align="center">
   <sub>NOVA X-01 · 单文件 673 KB · 双击即开，不用服务器、不用联网 · 5 场景 / 4 时段 / 3 天气 / 四档交付</sub>
 </p>
+
+---
+
+## ✨ 亮点速览
+
+| | |
+|---|---|
+| 🏗️ **编译，而不是拼提示词** | 五闸门 + IR 构件树，先建模型再写代码；跳过建模直接 `new THREE.Mesh` 是本项目明令禁止的起点 |
+| 📐 **每个尺寸可追溯** | 实测 / 标准 / 推断三成色着色，每个数值钉回几何段，钉不上就报「未定位」 |
+| 🎯 **四档交付 D0–D3** | CDN 单文件 · 全离线单文件 · HTML+vendor 目录 · React Three Fiber 工程，按运行环境选档 |
+| 🧪 **191 项契约测试** | 含反向用例：删 importmap、删 import 必须变红；文档 / 依赖 / 工具 / 端到端四层断言 |
+| 📦 **零运行时依赖** | 十个脚本纯 Python 标准库；离线包是 2.4 MB 裁剪后的 three r187 精选集，带哈希清单 |
+| 🌐 **中英双语文档** | README 与核心文档成对存在，结构对齐；英文读者不靠猜中文代码注释理解 |
 
 ---
 
@@ -303,12 +321,35 @@ python3 -m pytest tests/ -q     # 191 passed
 
 ---
 
+## ❓ 常见问题
+
+**Q：需要安装 three.js 或构建工具吗？**
+D0 / D1 / D2 不需要 npm：依赖要么走 CDN，要么已经内联进 `vendor/`。只有 D3（React Three Fiber 工程）才需要 Vite + React 工具链。
+
+**Q：能加载我自己的模型和贴图吗？**
+可以。加载器覆盖 GLTF / OBJ / STL / PLY / SVG / Font / RGBE；DRACO、KTX2、FBX 为按需插件。外部模型、贴图、音频、视频资产必须随包或提供占位，离线版本不会在代码里伪造一个加载不出来的路径。
+
+**Q：能做游戏、动画、工艺流程展示吗？**
+能。展示型确认件走 `spec/` 编译器；体验型（游戏手感、叙事动画、引导、声音反馈）走 `references/18`–`21` 四篇体验文档与 `experience-shell.html` 骨架。
+
+**Q：支持物理碰撞和刚体模拟吗？**
+物理后端（Rapier / Ammo / Jolt）依赖运行时 WASM，按需接入，不打进离线包；离线演示用质点弹簧与 Verlet 积分降级，边界写在 `references/23` 覆盖矩阵里。
+
+**Q：怎么把它装成一个 AI 技能？**
+把整个目录放进宿主技能的 `skills/` 下即可，入口是根目录的 `SKILL.md`。技能目录名必须与 frontmatter 的 `name` 一致（`visual-3d-forge`），契约测试会核对这一点。
+
+**Q：`api_lookup.py` 为什么在本机跑不起来？**
+它需要 three.js 源码包（`npm pack three@0.187.0`）；仓库只带 build 产物与裁剪后的 vendor，开箱时这一闸跳过，属已知边界。
+
+---
+
 ## 仓库结构
 
 ```
 visual-3d-forge/
 ├── SKILL.md              契约、五闸门、六阶段、算法索引（宿主技能入口）
-├── references/           22 篇按阶段查阅（5545 行：几何 / 材质 / API / 离线 / R3F / 体验…）
+├── references/           23 篇按阶段查阅（几何 / 材质 / API / 离线 / R3F / 体验 / 官方示例图谱…）
+├── prompts/              资深专家协作协议 v2.0（可粘贴紧凑版 + 逐条映射）
 ├── assets/
 │   ├── vendor/           three r187 的 18 文件裁剪集（2.4 MB，带哈希清单）
 │   └── scaffold/         D0 / D2 / D3 三套骨架
@@ -341,7 +382,22 @@ visual-3d-forge/
 - [架构：为什么它是编译器，而不是提示词](docs/ARCHITECTURE.md)
 - [设计笔记：十一个决定与它们各自的反例](docs/DESIGN-NOTES.md)
 - [验证记录：191 项断言分别在防什么](docs/VALIDATION.md)
+- [资深专家协作协议：Systematic Prompt v2.0](prompts/systematic-prompt.md)
 - [English README](README_EN.md)
+
+## 🤝 社区与贡献
+
+欢迎 Issue 与 PR：报告 API 幻觉案例、补充领域剧本、提交可复现的失败场景，都是高价值贡献。
+
+- [新建 Issue / 功能建议](https://github.com/LucasDevKid9/visual-3d-forge/issues/new/choose) · [开放中的 Issue](https://github.com/LucasDevKid9/visual-3d-forge/issues)
+- [贡献指南](CONTRIBUTING.md) · [行为准则](CODE_OF_CONDUCT.md) · [安全策略](SECURITY.md)
+- [变更日志](CHANGELOG.md) · [第三方声明](THIRD-PARTY-NOTICES.md)
+
+<p align="center">
+  <a href="https://github.com/LucasDevKid9/visual-3d-forge">
+    <img src="https://api.star-history.com/svg?repo=LucasDevKid9/visual-3d-forge&type=Date&legend=top" alt="Star history" width="80%">
+  </a>
+</p>
 
 ## 许可
 
