@@ -47,7 +47,12 @@ IMPORTMAP_RE = re.compile(
     re.S | re.I,
 )
 BARE_SPEC_RE = re.compile(r"""['"]([A-Za-z@][^'"\s]*)['"]""")
-REL_IMPORT_RE = re.compile(r"""(['"])(\.{1,2}/[^'"\s]+)\1""")
+# 只匹配 import/export ... from 语句里的相对说明符，
+# 避免把模块体内任意 './x.js' 字符串字面量（注释、常量）误当依赖改写。
+REL_IMPORT_RE = re.compile(
+    r"""(\b(?:import|export)\b[^;'"`]*?)(['"])(\.{1,2}/[^'"\s]+)\2""",
+    re.S,
+)
 INTERNAL_SPEC_RE = re.compile(r"""['"](vf-int-\d+)['"]""")
 
 
@@ -105,7 +110,7 @@ def collect(path: Path, spec: str, out: dict[str, str], seen: dict[str, str],
     text = path.read_text(encoding="utf-8", errors="replace")
 
     def repl(m: re.Match) -> str:
-        quote, rel = m.group(1), m.group(2)
+        prefix, quote, rel = m.group(1), m.group(2), m.group(3)
         target = norm(path.parent / rel)
         if not target.is_file():
             print(f"[bundle] 警告：相对依赖不存在，保留原样：{path.name} → {rel}", file=sys.stderr)
@@ -114,11 +119,11 @@ def collect(path: Path, spec: str, out: dict[str, str], seen: dict[str, str],
         if key_t in seen:
             # 同一模块被引用多次（如 three.module.js 同时 import 与 export './three.core.js'）：
             # 必须复用已注册的 specifier。若仍自增，会产出未注册的 vf-int-N → 白屏。
-            return f"{quote}{seen[key_t]}{quote}"
+            return f"{prefix}{quote}{seen[key_t]}{quote}"
         counter[0] += 1
         sub_spec = f"vf-int-{counter[0]}"
         collect(target, sub_spec, out, seen, counter, stats, depth + 1)
-        return f"{quote}{sub_spec}{quote}"
+        return f"{prefix}{quote}{sub_spec}{quote}"
 
     rewritten = REL_IMPORT_RE.sub(repl, text)
     encoded = to_data_url(rewritten.encode("utf-8"))

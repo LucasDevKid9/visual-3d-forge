@@ -248,11 +248,18 @@ def check(src: str, rep: Report):
     # ---------- 14. 节奏栅格 ----------
     bpm = re.search(r"BPM\s*=\s*([\d.]+)", src)
     if bpm:
-        b = float(bpm.group(1))
-        if 60 <= b <= 240:
-            rep.ok("X19", f"声明了 BPM = {b:.0f}（beat {60/b:.3f}s）")
+        try:
+            b = float(bpm.group(1))
+        except ValueError:
+            b = None
+        if b is None:
+            rep.warn("X19", f"BPM 不是合法数字：{bpm.group(1)}",
+                     "BPM 应为 60–240 之间的数值，如 BPM = 120")
         else:
-            rep.warn("X19", f"BPM 取值异常：{b}")
+            if 60 <= b <= 240:
+                rep.ok("X19", f"声明了 BPM = {b:.0f}（beat {60/b:.3f}s）")
+            else:
+                rep.warn("X19", f"BPM 取值异常：{b}")
         if re.search(r"60\s*/\s*BPM|beat\s*=", src):
             rep.ok("X20", "由 BPM 推导时间栅格")
         else:

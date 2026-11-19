@@ -28,7 +28,7 @@
 </p>
 
 <p align="center">
-  <sub>NOVA X-01 · 673 KB single file · double-click to open, no server, no network · 5 scenes / 4 times of day / 3 weathers</sub>
+  <sub>NOVA X-01 · 673 KB single file · double-click to open, no server · 3D fully offline (fonts load online optionally, fall back to system fonts when offline) · 5 scenes / 4 times of day / 3 weathers</sub>
 </p>
 
 ---
@@ -220,7 +220,9 @@ git clone https://github.com/LucasDevKid9/visual-3d-forge.git
 cd visual-3d-forge
 
 # 1. Start from a scaffold — never hand-write the pipeline in an empty file
-cp assets/scaffold/forged-scene.html ./my-scene.html
+#    To bundle an offline single file, you must use the vendor scaffold
+#    (the CDN scaffold's importmap holds remote URLs and cannot be inlined)
+cp assets/scaffold/forged-scene.vendor.html ./my-scene.html
 
 # 2. Describe your object (you edit the dimension table and part tree, not ad-hoc meshes)
 #    Rules: references/03-geometry-modeling.md
@@ -252,7 +254,7 @@ The `bundle.py` row isn't hypothetical. v2.0 died exactly there: `three.module.j
 ## Contracts, not documentation
 
 ```bash
-python3 -m pytest tests/ -q     # 191 passed
+python3 -m pytest tests/ -q     # 203 passed
 ```
 
 Every number in this README has an assertion that can falsify it in under ten seconds:

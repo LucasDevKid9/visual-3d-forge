@@ -5,7 +5,7 @@
 ## 先跑一遍，再改一行
 
 ```bash
-python3 -m pytest tests/ -q     # 应当是 191 passed
+python3 -m pytest tests/ -q     # 应当是 203 passed
 ```
 
 如果基线不是全绿，先别动手——那是 bug，不是你的环境问题，请开 issue。

@@ -28,7 +28,7 @@
 </p>
 
 <p align="center">
-  <sub>NOVA X-01 · 单文件 673 KB · 双击即开，不用服务器、不用联网 · 5 场景 / 4 时段 / 3 天气 / 四档交付</sub>
+  <sub>NOVA X-01 · 单文件 673 KB · 双击即开，不用服务器 · 3D 全离线（字体可选联网，断网自动回退系统字体） · 5 场景 / 4 时段 / 3 天气 / 四档交付</sub>
 </p>
 
 ---
@@ -114,7 +114,7 @@ python3 tools/spec_compile.py spec/examples/nema23-actuator.yaml --out spec/out/
 ```
 
 ```
-  NEMA23 行星减速执行器  ·  10 构件  ·  指纹 4fce2725a272d9dd
+  NEMA23 行星减速执行器  ·  10 构件  ·  指纹 468d2f13e6ba4b1d
   ──────────────────────────────────────────────────────────────
   [PASS] C1  同轴          所有 coax 约束的横向偏移为 0（≤0.5 mm）
   [PASS] C2  贴合间隙      4 处贴合，最大偏差 0.000 mm
@@ -244,7 +244,8 @@ git clone https://github.com/LucasDevKid9/visual-3d-forge.git
 cd visual-3d-forge
 
 # 1. 直接从骨架起，不要在空文件里手写管线
-cp assets/scaffold/forged-scene.html ./my-scene.html
+#    要打包离线单文件，必须用 vendor 骨架（CDN 版的 importmap 是远程地址，无法内联）
+cp assets/scaffold/forged-scene.vendor.html ./my-scene.html
 
 # 2. 改成你要的物体（改的是尺度表与构件树，不是随手写 mesh）
 #    规则见 references/03-geometry-modeling.md
@@ -282,7 +283,7 @@ python3 scripts/validate_scene.py ./offline.html --strict
 ## 契约不是文档，是测试
 
 ```bash
-python3 -m pytest tests/ -q     # 191 passed
+python3 -m pytest tests/ -q     # 203 passed
 ```
 
 每个数字都有一条断言能在 10 秒内证伪它：
