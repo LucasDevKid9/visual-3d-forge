@@ -32,6 +32,48 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+## assets/three（离线 IIFE 运行时）
+
+`assets/three/` 是同一份 `three@0.187.0` 的另一种打包形态，供 `scripts/build_standalone.py`
+在 `file://` 下使用：
+
+| 路径 | 内容 | 来源 |
+|---|---|---|
+| `three.bundle.min.js` | three r187 + 64 个可解构 addon，IIFE，挂 `globalThis.THREE_BUNDLE` | 由 `three@0.187.0` 与其官方 `examples/jsm/` 模块打包 |
+| `addons/` | 77 个文件，按依赖闭包复制，与 `assets/vendor/addons/` 同源 | 同上 |
+| `LICENSE` | three.js 的 MIT 全文 | 同上 |
+
+打包产物尾部**逐字保留**了上游许可证头，未删改：
+
+```
+/**
+ * @license
+ * Copyright 2010-2026 Three.js Authors
+ * SPDX-License-Identifier: MIT
+ */
+/**
+ * lil-gui
+ * https://lil-gui.georgealways.com
+ * @version 0.17.0
+ * @author George Michael Brower
+ * @license MIT
+ */
+```
+
+其中 `lil-gui@0.17.0` 以 MIT 许可随 `GUI` 导出一并分发。
+
+## 产物里的 URL 不是网络请求
+
+`build_standalone.py` 的产物会包含少量 `<scheme>://` 字面量，全部属于**标识符或署名**，
+不会发起任何请求：
+
+- `http://www.w3.org/1999/xhtml`、`http://www.w3.org/1999/xlink` —— XML 命名空间 URI，
+  按规范就是字符串常量，浏览器只做命名空间比对。
+- 上述许可证注释里的项目主页地址。
+
+`tests/test_contract.py::test_D1_产物零远程引用` 对 `bundle.py` 的产物断言远程引用数为 0；
+IIFE 产物按上述口径单独核对，不以「0 个 URL 字符串」为准。
+
 ## 版本一致性
 
 - `assets/vendor/manifest.json` 记录 `three_version: 0.187.0` 与 18 个文件的 `sha256_12`。

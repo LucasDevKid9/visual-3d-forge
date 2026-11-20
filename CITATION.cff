@@ -7,13 +7,16 @@ url: "https://lucasdevkid9.github.io/visual-3d-forge/"
 abstract: >-
   Compile a reference image and a request into a double-clickable 3D web page:
   intent card, intermediate representation, geometry strategy, code, and
-  contract-checked delivery. Four output modes D0–D3, zero runtime dependencies.
+  contract-checked delivery. Four output modes D0–D3 plus a single-file offline
+  IIFE runtime, zero runtime dependencies. Since v2.8 the contract layers cover
+  interaction and pacing, not only geometry: a six-segment experience skeleton,
+  one state machine, BPM-quantised beats, and procedural audio.
 authors:
   - name: "cogitomori-Ai"
     affiliation: "LucasDevKid9"
 license: MIT
-version: v2.6
-date-released: 2026-11-18
+version: v2.8
+date-released: 2026-11-20
 keywords:
   - three.js
   - 3D-web

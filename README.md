@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-3d3d3d"></a>
-  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-203-4c8a5a">
+  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-204-4c8a5a">
   <img alt="deps" src="https://img.shields.io/badge/runtime%20deps-0-4c8a5a">
   <img alt="three" src="https://img.shields.io/badge/three.js-r187-000">
   <a href="https://github.com/LucasDevKid9/visual-3d-forge/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/LucasDevKid9/visual-3d-forge?style=flat&logo=github"></a>
@@ -40,7 +40,7 @@
 | 🏗️ **编译，而不是拼提示词** | 五闸门 + IR 构件树，先建模型再写代码；跳过建模直接 `new THREE.Mesh` 是本项目明令禁止的起点 |
 | 📐 **每个尺寸可追溯** | 实测 / 标准 / 推断三成色着色，每个数值钉回几何段，钉不上就报「未定位」 |
 | 🎯 **四档交付 D0–D3** | CDN 单文件 · 全离线单文件 · HTML+vendor 目录 · React Three Fiber 工程，按运行环境选档 |
-| 🧪 **203 项契约测试** | 含反向用例：删 importmap、删 import 必须变红；文档 / 依赖 / 工具 / 端到端四层断言 |
+| 🧪 **204 项契约测试** | 含反向用例：删 importmap、删 import 必须变红；文档 / 依赖 / 工具 / 端到端四层断言 |
 | 📦 **零运行时依赖** | 十个脚本纯 Python 标准库；离线包是 2.4 MB 裁剪后的 three r187 精选集，带哈希清单 |
 | 🌐 **中英双语文档** | README 与核心文档成对存在，结构对齐；英文读者不靠猜中文代码注释理解 |
 
@@ -261,7 +261,7 @@ python3 scripts/validate_scene.py ./offline.html --strict
 
 ---
 
-## 十个工具，零第三方依赖
+## 十一个工具，零第三方依赖
 
 | 脚本 | 作用 | 真正的难点 |
 |---|---|---|
@@ -274,6 +274,7 @@ python3 scripts/validate_scene.py ./offline.html --strict
 | `export_mht.py` | 产物封成 `.mht` 归档 | 写明「MHTML 是容器不是运行时」的边界 |
 | `mht_unpack.py` | 拆开别人发来的 `.mht` | 与上一个方向相反：取件而非交付；推断存盘时漏掉的资源 |
 | `experience_plan.py` | 需求 → 体验蓝图 | 六段式填表、幕表、张力曲线、时间栅格 |
+| `build_standalone.py` | 把任意页面压成离线单文件 | 递归内联 module 与 addons，IIFE 化后不残留任何 `import` |
 | `forge_init.py` | 从骨架初始化工程 | — |
 
 `bundle.py` 那条不是理论：v2.0 就死在这里——`three.module.js` 同时 `import` 与 `export from './three.core.js'`，第二次自增出一个从未注册的 `vf-int-2`，浏览器直接白屏。现在有专门的回归样本盯着它。
@@ -283,7 +284,7 @@ python3 scripts/validate_scene.py ./offline.html --strict
 ## 契约不是文档，是测试
 
 ```bash
-python3 -m pytest tests/ -q     # 203 passed
+python3 -m pytest tests/ -q     # 204 passed
 ```
 
 每个数字都有一条断言能在 10 秒内证伪它：
@@ -292,7 +293,7 @@ python3 -m pytest tests/ -q     # 203 passed
 |---|---|
 | **文档** | frontmatter 三字段、索引与文件双向一致、无占位符、无本机绝对路径 |
 | **依赖** | manifest 18 个文件逐个重算 sha256、three `REVISION = 187`、importmap 指向本地 |
-| **工具** | 四个脚本 `--help` 可用、`--self-test` 通过、只 import 标准库 |
+| **工具** | 五个脚本 `--help` 可用、`--self-test` 通过、只 import 标准库 |
 | **端到端** | D0/D2 骨架 18 项全过 → 打包 D1 → 19 项全过 → 零远程引用 → 体积落在 2.0–4.0 MB |
 | **反向** | 删掉 importmap：默认只告警、`--strict` 必须变红；删 import 也必须变红 |
 | **展示** | 实验台的 importmap 逐条落地、求解器三条判据在场、SVG 无脚本、GIF 不是静态图 |
@@ -301,12 +302,18 @@ python3 -m pytest tests/ -q     # 203 passed
 
 ---
 
-## 十条质量红线（命中即不合格）
+## 十五条质量红线（命中即不合格）
 
-> 精度谎言 · API 幻觉 · 材质分裂 · 金属度当光泽滑杆 · 装饰性物理 ·
+> **形体层**：精度谎言 · API 幻觉 · 材质分裂 · 金属度当光泽滑杆 · 装饰性物理 ·
 > 默认机位 · 永动镜头 · 匀速自转当动效 · 粒子遮丑 · 多视图不一致
+>
+> **体验层**（v2.8 新增五条）：体验外衣 · 动词空转 · 沉默交互 · 无出口 · 加载即黑屏
 
 写成否定式清单，是因为**能被指着鼻子说「你犯了」的规范才会被执行**。
+
+前十条守的是「像不像那个物体」，后五条守的是「里面有没有人在做事」。
+一个页面可以十项全绿，仍然是**加了转场动画的说明书**——后五条就是拦这个的。
+逐条判据与反例见 [`SKILL.md`](SKILL.md) 第七章。
 
 ---
 
@@ -354,7 +361,7 @@ visual-3d-forge/
 ├── assets/
 │   ├── vendor/           three r187 的 18 文件裁剪集（2.4 MB，带哈希清单）
 │   └── scaffold/         D0 / D2 / D3 三套骨架
-├── scripts/              十个工具，纯标准库
+├── scripts/              十一个工具，纯标准库
 ├── demo/                 旗舰示例 NOVA X-01（构建产物，673 KB 单文件，源码不随仓库分发）
 ├── playground/           在线实验台（参数化配齿 + 实时重建）
 ├── examples/             可运行示例（行星齿轮减速器）
@@ -366,7 +373,7 @@ visual-3d-forge/
 ├── tools/                spec_compile.py：YAML → IR → 单文件确认件
 ├── guide/                给人用的引导层：六份可填模板 + 一条走通的记录
 ├── docs/                 架构、设计笔记、验证记录、Banner 与管线图
-├── tests/                203 项契约测试（含反向用例）
+├── tests/                204 项契约测试（含反向用例）
 └── THIRD-PARTY-NOTICES.md
 ```
 
@@ -382,7 +389,7 @@ visual-3d-forge/
 - [文档地图与阅读顺序](docs/README.md)
 - [架构：为什么它是编译器，而不是提示词](docs/ARCHITECTURE.md)
 - [设计笔记：十一个决定与它们各自的反例](docs/DESIGN-NOTES.md)
-- [验证记录：203 项断言分别在防什么](docs/VALIDATION.md)
+- [验证记录：204 项断言分别在防什么](docs/VALIDATION.md)
 - [能力地图：three.js 的 620 个示例我们取哪几个，以及为什么不全取](docs/CAPABILITY-MAP.md)
 - [资深专家协作协议：Systematic Prompt v2.0](prompts/systematic-prompt.md)
 - [English README](README_EN.md)

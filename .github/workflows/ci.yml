@@ -35,7 +35,7 @@ jobs:
           # 解析 workflow 需要 PyYAML。
           python -m pip install -r tests/requirements.txt
 
-      - name: 契约测试（203 项）
+      - name: 契约测试（204 项）
         run: python -m pytest tests/ -q
 
       - name: 骨架校验（D0 / D2）

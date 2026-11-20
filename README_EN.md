@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/LucasDevKid9/visual-3d-forge/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-3d3d3d"></a>
-  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-203-4c8a5a">
+  <img alt="tests" src="https://img.shields.io/badge/contract%20tests-204-4c8a5a">
   <img alt="deps" src="https://img.shields.io/badge/runtime%20deps-0-4c8a5a">
   <img alt="three" src="https://img.shields.io/badge/three.js-r187-000">
   <a href="https://github.com/LucasDevKid9/visual-3d-forge/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/LucasDevKid9/visual-3d-forge?style=flat&logo=github"></a>
@@ -40,7 +40,7 @@
 | 🏗️ **Compile, don't prompt** | Five gates + an IR part tree: model first, code second. Skipping the model and jumping to `new THREE.Mesh` is the starting point this project forbids |
 | 📐 **Every dimension is traceable** | Measured / standard / inferred grades; each value is pinned to a geometry segment, anything unpinned is reported as unlocated |
 | 🎯 **Four delivery modes D0–D3** | CDN single file · fully offline single file · HTML + vendor dir · React Three Fiber project — chosen by runtime environment |
-| 🧪 **203 contract tests** | Including negative cases: removing the importmap or an import must go red. Four layers: docs, deps, tools, end-to-end |
+| 🧪 **204 contract tests** | Including negative cases: removing the importmap or an import must go red. Four layers: docs, deps, tools, end-to-end |
 | 📦 **Zero runtime dependencies** | Ten scripts use the Python standard library only; the offline bundle is a 2.4 MB pruned three r187 set with a hash manifest |
 | 🌐 **Bilingual docs** | README and core docs ship in pairs with aligned structure; English readers don't rely on guessing Chinese code comments |
 
@@ -238,7 +238,7 @@ All three must be green before you ship. Measured: 13.3 KB source → 2851.5 KB 
 
 ---
 
-## Ten tools, zero third-party dependencies
+## Eleven tools, zero third-party dependencies
 
 | Script | What it does | The part that's actually hard |
 |---|---|---|
@@ -246,6 +246,13 @@ All three must be green before you ship. Measured: 13.3 KB source → 2851.5 KB 
 | `bundle.py` | Inlines vendor into one file | **a dependency imported once and re-exported once must reuse its specifier** — otherwise: white screen |
 | `api_lookup.py` | Checks whether an API really exists | 488-symbol table, set difference against the artifact, nearest correct name |
 | `validate_scene.py` | Pre-delivery static audit | 19 checks (D1) / 18 (D0, D2); `--strict` turns warnings into failures |
+| `validate_experience.py` | Experience-integrity audit | 23 checks: state machine, act structure, guidance, audio, feedback, a11y |
+| `timeline_check.py` | Cue-sheet data-layer audit | 13 checks: single master clock, cues in range and uniquely numbered, degradation drops structure |
+| `export_mht.py` | Seals the artifact into an `.mht` archive | states the boundary plainly: **MHTML is a container, not a runtime** |
+| `mht_unpack.py` | Unpacks an `.mht` someone sent you | the opposite direction: intake, not delivery; infers resources lost at save time |
+| `experience_plan.py` | Request → experience blueprint | six-segment fill-in, act table, tension curve, time grid |
+| `build_standalone.py` | Squeezes any page into one offline file | recursively inlines module graphs and addons, then IIFE-wraps so no `import` survives |
+| `forge_init.py` | Bootstraps a project from a scaffold | — |
 
 The `bundle.py` row isn't hypothetical. v2.0 died exactly there: `three.module.js` both `import`s and `export ... from './three.core.js'`, the second pass minted a never-registered `vf-int-2`, and the browser refused the whole module graph. There's a dedicated regression fixture on it now.
 
@@ -254,7 +261,7 @@ The `bundle.py` row isn't hypothetical. v2.0 died exactly there: `three.module.j
 ## Contracts, not documentation
 
 ```bash
-python3 -m pytest tests/ -q     # 203 passed
+python3 -m pytest tests/ -q     # 204 passed
 ```
 
 Every number in this README has an assertion that can falsify it in under ten seconds:
@@ -272,12 +279,21 @@ The negative cases are the point. **A test suite that only checks the happy path
 
 ---
 
-## Ten red lines (hitting one disqualifies the output)
+## Fifteen red lines (hitting one disqualifies the output)
 
-> precision lies · API hallucination · material split · metalness-as-gloss · decorative physics ·
-> default camera · perpetual orbit · uniform spin as motion design · particles as camouflage · inconsistent multi-view
+> **Form layer**: precision lies · API hallucination · material split · metalness-as-gloss ·
+> decorative physics · default camera · perpetual orbit · uniform spin as motion design ·
+> particles as camouflage · inconsistent multi-view
+>
+> **Experience layer** (five added in v2.8): experience as a costume · verbs on idle ·
+> silent interaction · no exit · black screen as a loading state
 
 They're written as negations because **a rule someone can point at and say "you broke this" is a rule that gets followed**.
+
+The first ten guard whether *it looks like that object*. The last five guard whether
+*there is a person doing something inside it*. A page can pass all ten and still be
+**an instruction manual with transition animations** — the last five exist to stop that.
+Per-clause criteria and counter-examples: [`SKILL.md`](SKILL.md) chapter 7.
 
 ---
 
@@ -333,7 +349,7 @@ visual-3d-forge/
 ├── tools/                spec_compile.py: YAML → IR → single-file deliverable
 ├── guide/                the human-facing layer: five fillable templates, one worked example
 ├── docs/                 architecture, design notes, validation record, banner, pipeline diagram
-├── tests/                203 contract tests, including negative cases
+├── tests/                204 contract tests, including negative cases
 └── THIRD-PARTY-NOTICES.md
 ```
 
@@ -349,7 +365,7 @@ visual-3d-forge/
 - [Document map and reading order](docs/README.md)
 - [Architecture: why this is a compiler, not a prompt](docs/ARCHITECTURE.md)
 - [Design notes: eleven decisions and their counterexamples](docs/DESIGN-NOTES.md)
-- [Validation record: what each of the 203 assertions guards against](docs/VALIDATION.md)
+- [Validation record: what each of the 204 assertions guards against](docs/VALIDATION.md)
 - [Capability map: which of three.js's 620 examples we take, and why we do not take the rest](docs/CAPABILITY-MAP.md)
 - [Expert collaborative protocol: Systematic Prompt v2.0](prompts/systematic-prompt.md)
 - [中文 README](README.md)

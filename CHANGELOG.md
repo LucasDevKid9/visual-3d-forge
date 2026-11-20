@@ -1,5 +1,104 @@
 # CHANGELOG
 
+## v2.8 · 2026-11-20
+
+把契约从「像不像那个物体」扩到「里面有没有人在做事」。
+
+v2.7 之前所有校验都盯着几何：尺度、材质、API、离线。结果是**一个页面可以 19 项全绿，
+打开之后仍然是一份加了转场动画的说明书**——用户能做的只有滚动。这一版补的就是那一层。
+
+### 硬契约 12 → 18 条，红线 10 → 15 条
+
+新增六条（`SKILL.md` 第六章第 13–18 条），全部是**可静态断言**的，不是审美建议：
+
+| 契约 | 判据 | 拦的是什么 |
+|---|---|---|
+| 形态迁移 | 同一物体在幕间必须真的改变形态，而不是只换颜色 | 十幕同一个东西 |
+| 单一状态机 | 全局只有一个 `go()` 入口，状态转移表可枚举 | 一堆各自为政的 `addEventListener` |
+| BPM 栅格 | 所有时长是 `beat/2` 的整数倍，主时钟唯一 | 每段动画各写各的 `800ms` |
+| 三总线音频 | master / sfx / amb 分离，程序合成，不带音频文件 | 「加个音效」变成塞一个 3 MB mp3 |
+| 引导可退出 | 首幕有引导、全程可跳过、可倒回 | 用户被困在里面 |
+| 性能分档 | low / mid / high 三档，**只降不升**，降级降结构不降帧率 | 弱机上持续卡且越卡越糊 |
+
+红线同步从 10 条到 15 条，新增：**体验外衣 · 动词空转 · 沉默交互 · 无出口 · 加载即黑屏**。
+
+### 载体契约：HTML 只是容器
+
+新的一章，因为「做个网页」这句话底下藏着四种不同诉求：
+
+| 用户意图 | 载体 | 命令 | 硬边界 |
+|---|---|---|---|
+| 打开就能玩 | standalone HTML | `build_standalone.py` | 内联 three，断网可跑 |
+| 发链接 | D0 CDN HTML | `forge_init.py --mode cdn` | 需联网，首屏等 CDN |
+| 要改素材 | D2 local + vendor 目录 | `forge_init.py --mode local` | 不是单文件 |
+| 留档 / 邮件 / OA | MHT | `export_mht.py --poster … --verify` | **脚本不执行**，必须预烘首帧 |
+
+第三条铁律是这次踩出来的：**MHTML 是容器，不是运行时。** 发出去的 `.mht` 在
+Outlook / 企业微信里打开，活动脚本一律不跑，只有一张静态首帧。所以要发 MHT，
+`--poster` 不是可选项。
+
+### 离线单文件换了实现路径
+
+`bundle.py` 走的是 **data-URL 递归**：把 `import` 改写成内联模块，产物里仍是 ESM。
+新增的 `build_standalone.py` 走另一条：把预打包好的 IIFE（`three.bundle.min.js`）
+整块塞进 `<script>`，再把源码里的 `import` 语句换成对 `window.THREE_BUNDLE` 的解构，
+**产物里一个 `import` 都不剩**。
+
+两条路都能产出双击即开的单文件，但**绝不允许混用**：IIFE 版和 ESM 版的 `THREE` 是两个
+不同构造器，`instanceof` 会同时判假——这正是 v2.0 白屏的同族故障。校验器 W21 现在
+专门拦混用。
+
+实测：13.3 KB 源 → 1487 KB 单文件，`file://` 下双击即开，运行时零网络请求
+（残留的 `http://www.w3.org/1999/xhtml`、`xlink` 是 XML 命名空间标识符，不是可请求地址）。
+
+### `export_mht.py`：从「能封」到「封得对」
+
+原版只有 `-o / --no-inline / --json`。补了四个开关，每个都对应一次实际翻车：
+
+- `--poster <png>`：预烘首帧。没有它，收件人看到的是空白页。
+- `--caption`：段落标题，让归档在邮件列表里有名字。
+- `--subject`：`Subject:` 头，决定 Outlook 里的会话归并。
+- `--verify`：封完立刻回读校验，而不是等对方说「打开是白的」。
+
+### 资产：`assets/three/`
+
+- `three.bundle.min.js`（1,500,844 B）——three r187 + **64 个可直接解构的 addon**，
+  IIFE 形态，`globalThis.THREE_BUNDLE` 挂载。
+- `addons/`——**77 个文件**，按依赖闭包复制。其中 64 个是上表里的可解构项，
+  其余是被闭包带进来的 shader / utils / pass 伴随模块，不单独导出。
+- `LICENSE` 随附。
+
+数字口径说明：这一版把仓库里三处互相矛盾的说法统一到可复现判据上——
+`scripts/build_standalone.py` 的 `KNOWN_ADDONS` 与 bundle 内实际对象键做全集比对，
+64 个全部命中，`assets/three/addons/` 磁盘文件 77 个。**两个数字都对，但指的不是一回事。**
+
+### 骨架补无障碍
+
+`assets/scaffold/forged-scene.html` 增加 `prefers-reduced-motion` 分支：系统开启
+「减少动态效果」时不跑入场动画，直接给终态。不是加分项——有些用户开了它是为了防止眩晕。
+
+### 合流说明：哪些**没有**取
+
+这一版不是从零重写，是把一条并行优化的增量部分接回 main。为避免把旧实现当新版推上来，
+以下内容**明确没取**：
+
+| 没取 | 原因 |
+|---|---|
+| `validate_scene.py`、`forge_init.py`、`validate_experience.py` | main 上已是 v2.7 重写版，分支版更旧，取过来是**降级** |
+| `build/three.core.js`、`three.module.js` | 与 `assets/vendor/` 哈希完全相同，纯重复 |
+| 6 篇 references | 与现有篇目内容重合 98–100%，只是编号位移 |
+| `agents/*.yaml` | 分支版描述更薄 |
+
+代价是 `tests/test_contract.py` 的引用白名单要跟着改——`build_standalone.py` 进了
+SKILL.md 的工具链，白名单是**精确集合**断言，不改就红。这是契约演化，不是绕过测试。
+
+### 测试 203 → 204
+
+新增的一条守 `build_standalone.py --help` 退出码与 `usage:` 输出——它必须和其它脚本
+一样只依赖标准库、可被无参数调用而不炸。
+
+---
+
 ## v2.7 · 2026-11-18
 
 照 three.js 官方示例重做光照层。**没有引任何新依赖**，产物仍是单文件。

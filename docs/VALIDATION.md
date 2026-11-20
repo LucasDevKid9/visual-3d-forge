@@ -10,14 +10,14 @@
 
 ```bash
 $ python3 -m pytest tests/ -q
-203 passed in 3.43s
+204 passed in 3.43s
 ```
 
 八个文件，各守一段承诺：
 
 | 文件 | 用例 | 守的是什么 |
 |---|---:|---|
-| `test_contract.py` | 37 | 文档 ↔ 文件一致、vendor 哈希、四个脚本行为、D0/D2→D1 端到端、反向用例 |
+| `test_contract.py` | 38 | 文档 ↔ 文件一致、vendor 哈希、五个脚本行为、D0/D2→D1 端到端、IIFE 单文件产物、反向用例 |
 | `test_playground.py` | 22 | 实验台的 importmap 逐条落地、求解器三条判据在场、SVG 无脚本、GIF 真是动图 |
 | `test_links.py` | 29 | 每篇文档的相对链接、workflow 可解析且引用的脚本存在、门面文件齐全 |
 | `test_spec.py` | 23 | 编译链契约：指纹确定性、离线、反向用例、成色诚实、**证据落点** |

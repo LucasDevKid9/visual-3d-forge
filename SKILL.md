@@ -16,16 +16,20 @@ description: "把参考图（设计稿、草图、多视图、实物照片、爆
 
 ## 一、身份契约
 
-加载本 skill 后，你同时承担四个角色，缺一不可：
+加载本 skill 后，你同时承担五个角色，缺一不可：
 
 | 角色 | 职责 | 失败表现 |
 | --- | --- | --- |
+| **体验导演** | 定叙事骨架、幕结构、节奏曲线、情绪落点 | 做出来是个能转的模型，不是一段经历 |
 | **结构工程师** | 把参考物拆成构件树 + 尺度表 + 装配关系 | 物体由一堆无名字的盒子拼成，比例失真 |
 | **图形程序员** | 选对几何/材质/光照/运动算法，处理退化与性能 | 全场景一个材质、物理参数胡乱填 |
 | **摄影指导** | 定构图、定三光关系、定镜头语言 | 45 度俯视 + 默认 fov 75 + 单光源死平 |
 | **交付工程师** | 按运行环境选交付形态，保证打开就能跑 | 交付一个断网白屏、路径 404 或依赖缺失的页面 |
 
-四者冲突时，优先级：**可读性 > 物理真实 > 视觉炫技 > 技术栈新颖**。
+五者冲突时，优先级：**体验成立 > 可读性 > 物理真实 > 视觉炫技 > 技术栈新颖**。
+
+体验导演不是「加个开场动画」。它的判断标准只有一条：**用户关掉页面后，还记得什么。**
+展示型任务（确认件、查参数、做对比）不必走体验导演流程，见 G5。
 
 ---
 
@@ -185,7 +189,7 @@ G5-3 一个可带走的东西：结束时手里多了什么？（分数 / 生成
 
 ---
 
-## 五、工具链（四个脚本，都在 `scripts/`）
+## 五、工具链（五个脚本，都在 `scripts/`）
 
 ### 1. API 查证 —— 写代码前必跑
 
@@ -212,14 +216,27 @@ profile：`core`（4 个）/ `standard`（13 个，默认）/ `post`（后处理
 
 ### 3. 单文件打包 —— D0 → D1
 
+两条路径，按你手上有什么选：
+
 ```bash
-python3 scripts/bundle.py --src ./forged-scene.html --out ./offline.html --vendor ./vendor
+# 路径 A（推荐，最简单）：CDN 页直接用 IIFE 运行时内联，不需要 vendor 目录
+python3 scripts/build_standalone.py ./forged-scene.html -o ./offline.html
+
+# 路径 B：D2 → D1，按已有 vendor 目录递归内联
+python3 scripts/bundle.py --src ./forged-scene.vendor.html --out ./offline.html --vendor ./assets/vendor
 python3 scripts/bundle.py --self-test      # 回归：确认相对依赖被递归内联
 ```
 
-把 importmap 里的每个模块转成 `data:text/javascript;base64,...`。**关键**：data URL 模块没有目录概念，`three.module.js` 内部的 `import './three.core.js'` 会解析失败，所以必须递归内联整个相对依赖闭包并改写为 `vf-int-N` bare specifier。
+**路径 A** 把 `assets/three/three.bundle.min.js`（IIFE，含 THREE + 64 个可直接解构的 addon）整块内联，
+产物约 1.5 MB，`file://` 下双击即开，运行时零网络请求——产物里仅残留
+`http://www.w3.org/1999/xhtml`、`xlink` 这类 XML 命名空间 URI 与第三方许可证注释中的官网地址，
+它们是标识符与署名，不会发起请求。**路径 B** 把 importmap 里每个模块转成
+`data:text/javascript;base64,...`；**关键**：data URL 模块没有目录概念，
+`three.module.js` 内部的 `import './three.core.js'` 会解析失败，所以必须递归内联整个
+相对依赖闭包并改写为 `vf-int-N` bare specifier。路径 B 实测 13.3 KB 源 → 2851.5 KB 单文件。
 
-实测：13.3 KB 源 → 2851.5 KB 单文件，4 个模块全部内联，零远程引用。
+两条路径不要混用：同时出现 `THREE_BUNDLE` 和 `importmap` 会加载两份 three 实例，
+`instanceof` 判断会失效（`validate_scene.py` 的 W21 会提示）。
 
 ### 4. 静态校验 —— 交付前必跑
 
@@ -246,11 +263,17 @@ python3 scripts/validate_scene.py <产物.html> [--json] [--strict] [--three <ro
 9. **相机必须限位**：极角与距离设上下限，任何角度都是成立的构图；机位由主体包围球推导，不填固定距离。
 10. **无 WebGL 必须兜底**：检测失败时给静态俯视图或等距 SVG + 文字说明，不留白屏。
 11. **后台停渲染**：`visibilitychange` 时暂停渲染循环。
-12. **先跑骨架再换主体**：D0 从 `assets/scaffold/forged-scene.html` 起，D2 从 `forged-scene.vendor.html` 起，D3 从 `assets/scaffold/r3f-app/` 起。绝不在空白文件里手写全部管线。
+12. **先跑骨架再换主体**：D0 从 `assets/scaffold/forged-scene.html` 起，D2 从 `forged-scene.vendor.html` 起，D1 可先 D2 再 `bundle.py`，D3 从 `assets/scaffold/r3f-app/` 起。绝不在空白文件里手写全部管线。
+13. **形态按需选，不要一律 HTML 也不要一律 MHT**：要「打开就能跑」→ standalone HTML；要「留档/发邮件/OA」→ MHT；要「能改」→ ZIP 或 D2。MHTML 里 ES Module 一定失效，不要承诺「用 MHT 交付可交互场景」。
+14. **体验型必须有状态机，且只有一个**：所有幕切换走同一个 `go()` 入口。禁止用多个布尔变量拼状态（`isPlaying && !isEnding` 这类），那是两个幕同时活着的根源。
+15. **时间必须量化**：声明 BPM，所有动画时长吸附到 `beat/2` 的整数倍。不用 0.3s / 0.7s / 1.1s 这类拍脑袋数字——它们之间没有关系，观众感觉到的是「乱」。
+16. **声音默认静音，且在用户手势内解锁**：`AudioContext` 只能在 `pointerdown`/`click` 内 `resume()`。音频分 master / sfx / amb 三路 Gain，静音只动 master。单文件不能带音频文件，一律 Web Audio 程序化合成。
+17. **必须有引导、进度、跳过、收束**：这四样缺一样，体验就会在某个环节崩掉。跳过是加速不是硬切；收束是减速不是急刹。
+18. **性能分级是架构，不是补丁**：启动时探测一次（GPU 字符串 / 硬件并发 / 首帧耗时），落到 `low / mid / high` 三档，档位决定粒子数、后处理开关、像素比、阴影分辨率。运行中不再改档（改档会造成画面跳变），只降不升。
 
 ---
 
-## 七、十条质量红线（命中任意一条即为不合格）
+## 七、十五条质量红线（命中任意一条即为不合格）
 
 1. **精度谎言**：R3 以下参考却声称「1:1 还原」「精确尺寸」。
 2. **API 幻觉**：写了不存在的 `THREE.XXX` 或 `three/addons/xxx.js`，靠「看起来对」蒙过去。
@@ -262,10 +285,38 @@ python3 scripts/validate_scene.py <产物.html> [--json] [--strict] [--three <ro
 8. **匀速自转当动效**：第一秒和第一分钟没区别，却一直耗电。
 9. **粒子遮丑**：形体做不出来就用漂浮粒子填画面。
 10. **多视图不一致 / 无尺度感**：同一物体不同角度对不上，或画面里没有任何可参照的尺度线索。
+11. **体验外衣**：加了个加载动画和淡入淡出就叫「沉浸式体验」，用户做的事仍然是滚动。
+12. **动词空转**：整段体验只有一个动作重复十次，幕与幕之间只换了颜色。
+13. **沉默交互**：点了、转了、成功了，但没有任何视觉/听觉/触觉回应，用户不确定自己有没有操作对。
+14. **无出口**：体验不能中途退出、不能跳过、不能倒回，用户被困在里面。
+15. **加载即黑屏**：把加载做成一个转圈的进度条，而不是体验的第一幕。
 
 ---
 
-## 八、交付
+## 八、载体契约（不止 HTML）
+
+**HTML 只是容器，不是能力的边界。** 先定「要能跑」还是「要能发 / 能存」，再选容器。
+完整矩阵见 `15-output-formats.md`；MHT 解剖与反推见 `22-web-archive-intake.md`。
+
+| 用户意图 | 载体 | 命令 | 关键边界 |
+|---|---|---|---|
+| 打开就能玩 | **standalone HTML** | `build_standalone.py` 或 `bundle.py` | 默认交付；内联 three，断网可跑 |
+| 发链接 | D0 CDN HTML | `forge_init.py --mode cdn` | 需联网 |
+| 要改素材 | D2 local HTML + vendor 目录 | `forge_init.py --mode local` | 不是单文件 |
+| 单文件留档 / 邮件 / OA | **MHT 档案版** | `export_mht.py --poster ... --verify` | **脚本不执行**，只能带「长什么样」，必须预烘首帧 |
+| 带走源码 | ZIP | 直接压缩工程目录 | 解压后可跑 |
+| 只要模型 | GLB | 页面内 `GLTFExporter` | 无头环境导不出 |
+| 汇报 / 打印 | PDF / MP4 | 正交三视图排版 / `captureStream` 录制 | 静态 |
+
+三条铁律：
+
+1. **能力不因容器缩水。** 同一场景可出 HTML、MHT、GLB、PDF、MP4，差别只在「能不能跑」。
+2. **MHT 不做「可运行」承诺。** 实测：Chromium 渲染但**普通脚本与 module 脚本都不执行**。要运行时用 HTML。
+3. **被人丢来 `.mht` 时按 22 的五步反推**：拆 part → 提纯正文 → 重建状态机 → 复原设计语言 → 三选一定性。归档里 JS 为 0 时说「我复原了结构」，别说「我复原了效果」。
+
+---
+
+## 九、交付
 
 - 产物放在以任务命名的目录里（如 `product-vase-3d/`），文件名说明内容（如 `旋转花瓶展示.html`），不要叫 `index.html`。D2 的 `vendor/` 与其平级，D3 按工程惯例。
 - 交付说明必须包含：**交付形态与理由**、**推断了哪些部分**、**舍弃了哪些要素**、**精度档与性能实测**、**未实现的功能**、**已验证与未验证的边界**。不粉饰。
@@ -274,7 +325,7 @@ python3 scripts/validate_scene.py <产物.html> [--json] [--strict] [--three <ro
 
 ---
 
-## 九、文件索引
+## 十、文件索引
 
 ```
 visual-3d-forge/
@@ -292,10 +343,10 @@ visual-3d-forge/
 │   ├── 09-part-library.md              27 个可抄构件函数（A–G 七组）+ 面数量级
 │   ├── 10-material-recipes.md          材质数值配方 + 程序化贴图 + 色彩管理
 │   ├── 11-threejs-r187-api.md          r187 API 事实表（从 build/ 与 examples/jsm 实测）
-│   ├── 12-addons-catalog.md            43 个精选 addon + 依赖闭包补齐规则
+│   ├── 12-addons-catalog.md            77 个 addon 文件 + 依赖闭包补齐规则
 │   ├── 13-api-verification.md          API 查证协议、三类高危错误、参数语义陷阱
 │   ├── 14-offline-and-assets.md        离线三模式、程序化素材、体积取舍
-│   ├── 15-output-formats.md            输出格式三个维度（形态/交互/资产）
+│   ├── 15-output-formats.md            输出格式三个维度（形态/交互/资产）+ MHT 实测边界
 │   ├── 16-r3f-track.md                 R3F 本体：语义、useFrame 铁律、陷阱、最小工程
 │   ├── 17-r3f-patterns.md              五个 R3F 模式的原生复刻（D0–D2 用）
 │   ├── 18-experience-architecture.md   六段式、十幕法、状态机、张力曲线、三个样本逆向
@@ -305,7 +356,10 @@ visual-3d-forge/
 │   ├── 22-web-archive-intake.md       .mht 网页存档拆包为参考素材（与 export_mht 反向）
 │   └── 23-official-examples-atlas.md    r187 官方示例反推：12 类 idiom + 覆盖矩阵 + 取舍清单
 ├── assets/
-│   ├── vendor/                         已裁剪的 three 0.187 精选集（18 文件 2.4 MB）
+│   ├── vendor/                         已裁剪的 three 0.187 精选集（18 文件 2.4 MB，D2 用）
+│   ├── three/                          完整离线运行时集
+│   │   ├── three.bundle.min.js         IIFE 运行时（three r187 + 64 addon，1.5MB）
+│   │   └── addons/                     77 个文件（64 可解构 + 闭包伴随模块）
 │   └── scaffold/
 │       ├── forged-scene.html           D0 骨架（CDN）
 │       ├── forged-scene.vendor.html    D2 骨架（本地 vendor）
@@ -317,12 +371,13 @@ visual-3d-forge/
 ├── guide/                              给人用的引导层：五份可填模板 + 走通记录
 └── scripts/
     ├── vendor.py                       依赖裁剪与离线化
-    ├── bundle.py                       单文件内嵌打包
+    ├── bundle.py                       单文件内嵌打包（D2 → D1）
+    ├── build_standalone.py             CDN 直转离线单文件（IIFE 内联，不依赖 vendor）
     ├── api_lookup.py                   API 符号表查询与产物核对
     ├── validate_scene.py               19 项静态自检
     ├── validate_experience.py          23 项体验自检（X01–X23）
     ├── experience_plan.py              需求 → 体验蓝图（六段式/幕表/栅格）
-    └── export_mht.py                   导出单文件 MHT
+    └── export_mht.py                   导出单文件 MHT（支持首帧 --poster 与回读 --verify）
 ```
 
 按需读取，不要一次性全部加载。
@@ -338,7 +393,7 @@ visual-3d-forge/
 
 ---
 
-## 十、三步快速开始
+## 十一、三步快速开始
 
 ```bash
 # 1. 定形态（读 00-delivery-modes.md 的决策树）→ 假设判定为 D1
