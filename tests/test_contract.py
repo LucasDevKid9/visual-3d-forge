@@ -85,7 +85,8 @@ class Test文档:
 
     def test_脚本路径全部存在(self) -> None:
         cited = set(re.findall(r"scripts/([a-z_]+\.py)", SKILL.read_text(encoding="utf-8")))
-        assert cited == {"api_lookup.py", "bundle.py", "validate_scene.py", "vendor.py"}
+        assert cited == {"api_lookup.py", "bundle.py", "build_standalone.py",
+                         "validate_scene.py", "vendor.py"}
         for name in cited:
             assert (SCRIPTS / name).exists(), name
 
@@ -154,7 +155,8 @@ class Test依赖:
 # 3. 工具行为
 # ---------------------------------------------------------------------------
 
-@pytest.mark.parametrize("script", ["vendor.py", "bundle.py", "api_lookup.py", "validate_scene.py"])
+@pytest.mark.parametrize("script", ["vendor.py", "bundle.py", "build_standalone.py",
+                                    "api_lookup.py", "validate_scene.py"])
 def test_脚本可执行且给出帮助(script: str) -> None:
     r = run([str(SCRIPTS / script), "--help"], timeout=60)
     assert r.returncode == 0, r.stderr

@@ -1,8 +1,9 @@
 # 12 · Addons 目录与依赖闭包
 
 > three.js r187 的 `examples/jsm` 共 **506 个文件**。全部内置既臃肿又没必要。
-> 本 Skill 已精选 **43 个**高频 addon（`assets/three/addons/`，共约 723KB），
-> 其余按需从完整包补齐。补齐时必须遵守本文的**依赖闭包规则**，否则运行时报 404。
+> 本 Skill 已收录 **77 个** addon 文件（`assets/three/addons/`，已按依赖闭包复制），
+> 编译进 `three.bundle.min.js` 供离线版使用；其余按需从完整包补齐，遵守本文**依赖闭包规则**。
+> 官方示例反推出的模式与覆盖矩阵见 `23-official-examples-atlas.md`。
 
 ---
 
@@ -88,6 +89,23 @@
 | `libs/meshopt_simplifier.module.js` | Meshopt 压缩解码 |
 | `shaders/CopyShader.js` `shaders/LuminosityHighPassShader.js` `shaders/OutputShader.js` | Composer / Bloom 依赖的 shader |
 
+### v3.2 对齐官方示例后新增内置
+
+| 类别 | 文件 | 用途 |
+|---|---|---|
+| controls | `TransformControls` `DragControls` `FlyControls` | 拖拽变换 / 平面拖拽 / 自由飞行 |
+| postprocessing | `SSAOPass` `LUTPass` `OutlinePass` `FilmPass` | 缝隙 AO / 调色 LUT / 选中描边 / 颗粒扫描线 |
+| loaders | `STLLoader` `PLYLoader` `MeshoptDecoder` | 3D 打印网格 / 点云 / Meshopt 解码 |
+| geometries | `LoftGeometry` | 截面链放样（车身、管材） |
+| objects | `Refractor` `Lensflare` `LensflareElement` `MarchingCubes` `ShadowMesh` | 折射 / 镜头光斑 / 融球流体 / 软影接收 |
+| math | `SimplexNoise` `ImprovedNoise` | 噪声地形、散布、扰动 |
+| lines | `Line2` `LineGeometry` `LineMaterial` | 像素粗线（核心 Line 仅 1px） |
+| interactive | `SelectionBox` `SelectionHelper` `InteractiveGroup` `HTMLMesh` | 框选 / 3D 内 DOM 标签 |
+| misc | `GPUComputationRenderer` `Gyroscope` | GPGPU 双纹理模拟 / 跟随旋转刚体 |
+| animation | `CCDIKSolver` `CCDIKHelper` | 反向运动学 |
+| exporters | `STLExporter` `PLYExporter` | 打印网格 / 点云导出 |
+| libs | `tween.module.js`（`TWEEN`） | 补间动画（缓动编排） |
+
 ---
 
 ## 二、常用但未内置（按需补齐）
@@ -96,20 +114,14 @@
 
 | 文件 | 何时需要 |
 |---|---|
-| `controls/TransformControls.js` | 可视化编辑器、拖拽变换 |
-| `controls/DragControls.js` | 简单拖拽物体 |
 | `loaders/DRACOLoader.js` | 压缩过的 glTF（需配 decoder 目录） |
 | `loaders/KTX2Loader.js` | KTX2 压缩纹理（移动端省显存） |
 | `loaders/EXRLoader.js` | .exr 环境贴图 |
 | `loaders/FBXLoader.js` | FBX 模型（需 `libs/fflate.module.js`） |
-| `postprocessing/SSAOPass.js` | 屏幕空间环境光遮蔽（缝隙加深） |
 | `postprocessing/SMAAPass.js` | 更高质量的边缘抗锯齿 |
 | `postprocessing/GTAOPass.js` | 更快的 AO |
-| `postprocessing/OutlinePass.js` | 描边高亮（选中态） |
-| `postprocessing/FilmPass.js` | 胶片颗粒 / 扫描线 |
 | `postprocessing/BokehPass.js` | 景深 |
 | `postprocessing/HalftonePass.js` | 半调网点（印刷风） |
-| `objects/MarchingCubes.js` | 融球 / 流体 |
 | `helpers/RectAreaLightHelper.js` | 面光源可视化调试 |
 
 ---
@@ -237,7 +249,7 @@ for (let i = 0; i < 2000; i++) {
 
 ## 五、addon 使用红线
 
-1. **不要在 standalone 模式下 import addon** —— bundle 已内置 43 个，用 `window.THREE_BUNDLE.XXX` 解构。
+1. **不要在 standalone 模式下 import addon** —— bundle 已内置 64 个，用 `window.THREE_BUNDLE.XXX` 解构。
 2. **不要混用 `three/examples/jsm/` 和 `three/addons/`** —— 统一后者。
 3. **RectAreaLight 必须 `RectAreaLightUniformsLib.init()`**，否则面光源不发光。
 4. **Composer 的 OutputPass 必须是最后一个 pass**，否则色彩管线错位。

@@ -6,6 +6,11 @@ assets/vendor/** linguist-vendored
 assets/vendor/** -diff
 assets/vendor/** linguist-generated
 
+# 离线 IIFE 运行时与 addon 都是第三方构建产物：同 vendor 处理
+assets/three/** linguist-vendored
+assets/three/** -diff
+assets/three/** linguist-generated
+
 # 二进制资产
 *.gif binary
 *.png binary

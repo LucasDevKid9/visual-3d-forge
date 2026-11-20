@@ -68,6 +68,7 @@
   </div>
 </div>
 
+<!-- three.js r0.187.0 · 版本锁死，禁止 latest / ^ 浮动 -->
 <script type="importmap">
 {"imports":{
   "three":"https://fastly.jsdelivr.net/npm/three@0.187.0/build/three.module.js",
@@ -254,7 +255,11 @@ function boot() {
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.target.copy(sphere.center);
-  controls.enableDamping = true;
+  /* 无障碍：尊重系统「减少动效」偏好 */
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const syncMotionPref = () => { controls.enableDamping = !reduceMotion.matches; };
+  syncMotionPref();
+  reduceMotion.addEventListener?.('change', syncMotionPref);
   controls.dampingFactor = 0.055;
   controls.minPolarAngle = Math.PI * 0.14;
   controls.maxPolarAngle = Math.PI * 0.56;         // 不许到地面以下
@@ -314,6 +319,38 @@ function boot() {
     else { renderer.setAnimationLoop(null); }
   });
 
+  /* ---- 4.9 WebGL 上下文丢失：休眠/切换显卡后必须能恢复 ---- */
+  renderer.domElement.addEventListener('webglcontextlost', (e) => {
+    e.preventDefault();
+    running = false;
+    renderer.setAnimationLoop(null);
+    document.getElementById('fallback').setAttribute('data-on', '');
+  }, false);
+
+  renderer.domElement.addEventListener('webglcontextrestored', () => {
+    document.getElementById('fallback').removeAttribute('data-on');
+    running = true;
+    renderer.setAnimationLoop(tick);
+  }, false);
+
+  /* ---- 4.10 资源释放：卸载或热重载时逐个 dispose，避免显存泄漏 ---- */
+  function disposeScene(root) {
+    const textures = new Set();
+    root.traverse((o) => {
+      if (o.geometry) o.geometry.dispose();
+      const mats = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : [];
+      for (const m of mats) {
+        for (const k of Object.keys(m)) {
+          const v = m[k];
+          if (v && v.isTexture) textures.add(v);
+        }
+        m.dispose();
+      }
+    });
+    textures.forEach(t => t.dispose());
+    textures.clear();
+  }
+
   /* ---- 4.9 resize：像素比与尺寸一起重算 ---- */
   let resizeTimer = 0;
   addEventListener('resize', () => {
@@ -327,7 +364,7 @@ function boot() {
   });
 
   /* ---- 调试出口：把场景对象挂到 window，方便检查构件树 ---- */
-  window.__forge = { scene, camera, renderer, controls, subject, THREE };
+  window.__forge = { scene, camera, renderer, controls, subject, THREE, disposeScene };
 }
 
 if (hasWebGL()) boot();
