@@ -335,13 +335,13 @@ It needs the three.js source pack (`npm pack three@0.187.0`). The repository shi
 
 ```
 visual-3d-forge/
-├── SKILL.md              contract, five gates, six phases, algorithm index (skill entry)
-├── references/           23 phase-scoped references (geometry / materials / API / offline / R3F / experience / official examples atlas)
+├── SKILL.md              contract, six gates, eight phases, algorithm index (skill entry)
+├── references/           24 phase-scoped references (geometry / materials / API / offline / R3F / experience / official examples atlas)
 ├── prompts/              Expert collaborative protocol v2.0 (paste-ready compact version + clause mapping)
 ├── assets/
 │   ├── vendor/           pruned three r187 set, 18 files (2.4 MB, hashed manifest)
 │   └── scaffold/         D0 / D2 / D3 scaffolds
-├── scripts/              ten tools, stdlib only
+├── scripts/              eleven tools, stdlib only
 ├── demo/                 flagship NOVA X-01 (build artifact, 673 KB single file; source not distributed)
 ├── playground/           live parametric playground (gear solving + live rebuild)
 ├── examples/             runnable example (planetary gearbox)
@@ -362,6 +362,7 @@ visual-3d-forge/
 - [Principles: ten rules and a red-line checklist](docs/PRINCIPLES_EN.md) — [中文](docs/PRINCIPLES.md)
 - [Roadmap: 26 weeks, four stages, one falsifiable gate each](docs/ROADMAP_EN.md) — [中文](docs/ROADMAP.md)
 - [Strategy: moats, algorithm order, market order](docs/STRATEGY-2026_EN.md) — [中文](docs/STRATEGY-2026.md)
+- [Technical whitepaper (Simplified Chinese): architecture, traceability, roadmap](README.zh-CN.md)
 - [Document map and reading order](docs/README.md)
 - [Architecture: why this is a compiler, not a prompt](docs/ARCHITECTURE.md)
 - [Design notes: eleven decisions and their counterexamples](docs/DESIGN-NOTES.md)

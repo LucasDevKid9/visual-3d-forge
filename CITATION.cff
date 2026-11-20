@@ -10,12 +10,14 @@ abstract: >-
   contract-checked delivery. Four output modes D0–D3 plus a single-file offline
   IIFE runtime, zero runtime dependencies. Since v2.8 the contract layers cover
   interaction and pacing, not only geometry: a six-segment experience skeleton,
-  one state machine, BPM-quantised beats, and procedural audio.
+  one state machine, BPM-quantised beats, and procedural audio. Since v2.9
+  README.zh-CN.md carries the design rationale, the industrial meaning of
+  dimensional traceability, and falsifiable criteria for each roadmap step.
 authors:
   - name: "cogitomori-Ai"
     affiliation: "LucasDevKid9"
 license: MIT
-version: v2.8
+version: v2.9
 date-released: 2026-11-20
 keywords:
   - three.js

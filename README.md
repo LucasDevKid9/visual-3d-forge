@@ -37,7 +37,7 @@
 
 | | |
 |---|---|
-| 🏗️ **编译，而不是拼提示词** | 五闸门 + IR 构件树，先建模型再写代码；跳过建模直接 `new THREE.Mesh` 是本项目明令禁止的起点 |
+| 🏗️ **编译，而不是拼提示词** | 六道闸门 + IR 构件树，先建模型再写代码；跳过建模直接 `new THREE.Mesh` 是本项目明令禁止的起点 |
 | 📐 **每个尺寸可追溯** | 实测 / 标准 / 推断三成色着色，每个数值钉回几何段，钉不上就报「未定位」 |
 | 🎯 **四档交付 D0–D3** | CDN 单文件 · 全离线单文件 · HTML+vendor 目录 · React Three Fiber 工程，按运行环境选档 |
 | 🧪 **204 项契约测试** | 含反向用例：删 importmap、删 import 必须变红；文档 / 依赖 / 工具 / 端到端四层断言 |
@@ -167,7 +167,7 @@ python3 tools/spec_compile.py spec/examples/nema23-actuator.yaml --out spec/out/
 | 尺寸来源 | 训练分布里的「差不多」 | 尺度表，一处定义处处派生 |
 | 参考图 | 「照着这个做」 | R1–R5 分级，决定**允许声称**的精度 |
 | 失败方式 | 白屏 / 全黑 / 穿模 | 19 项静态契约拦截（附修复方向） |
-| 可否否决任务 | 不会 | **G0–G4 五道闸门，任一可否决** |
+| 可否否决任务 | 不会 | **G0–G5 六道闸门，任一可否决** |
 | 交付物 | 一段代码 | 一个双击就能开的 `.html` |
 
 最后一行是重点：一个只会说 yes 的流程不是流程，是模板。**G0 的出口是「不要开 WebGL」**——如果只是想让页面「动起来」，CSS 比三维正确得多。
@@ -355,8 +355,8 @@ D0 / D1 / D2 不需要 npm：依赖要么走 CDN，要么已经内联进 `vendor
 
 ```
 visual-3d-forge/
-├── SKILL.md              契约、五闸门、六阶段、算法索引（宿主技能入口）
-├── references/           23 篇按阶段查阅（几何 / 材质 / API / 离线 / R3F / 体验 / 官方示例图谱…）
+├── SKILL.md              契约、六闸门、八阶段、算法索引（宿主技能入口）
+├── references/           24 篇按阶段查阅（几何 / 材质 / API / 离线 / R3F / 体验 / 官方示例图谱…）
 ├── prompts/              资深专家协作协议 v2.0（可粘贴紧凑版 + 逐条映射）
 ├── assets/
 │   ├── vendor/           three r187 的 18 文件裁剪集（2.4 MB，带哈希清单）
@@ -386,6 +386,7 @@ visual-3d-forge/
 - [工程原则：十条准则与反面清单](docs/PRINCIPLES.md) —— [English](docs/PRINCIPLES_EN.md)
 - [路线：26 周四个阶段，每阶段一个可证伪判据](docs/ROADMAP.md) —— [English](docs/ROADMAP_EN.md)
 - [战略：护城河、算法排序、商业顺序](docs/STRATEGY-2026.md) —— [English](docs/STRATEGY-2026_EN.md)
+- [技术白皮书：架构、可追溯性与未来演进](README.zh-CN.md)
 - [文档地图与阅读顺序](docs/README.md)
 - [架构：为什么它是编译器，而不是提示词](docs/ARCHITECTURE.md)
 - [设计笔记：十一个决定与它们各自的反例](docs/DESIGN-NOTES.md)
