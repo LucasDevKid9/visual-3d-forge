@@ -53,6 +53,7 @@ These are implementation notes, Chinese only — their audience is whoever touch
 | [`VALIDATION.md`](./VALIDATION.md) | 验证方法：无头渲染、像素统计、已踩过的坑 |
 | [`DESIGN-NOTES.md`](./DESIGN-NOTES.md) | 视觉决策记录：为什么是暗房、为什么是胶片调色 |
 | [`CAPABILITY-MAP.md`](./CAPABILITY-MAP.md) | three.js 620 个示例的逐类判定：取什么、不取什么、下一批候选 |
+| [`RELATIONAL-LAYER.md`](./RELATIONAL-LAYER.md) | 关系层元规范：位置可溯源、装配约束、传动链图、A1–A6 三栏审计（多构件任务的强制项） |
 
 ---
 
